@@ -26,6 +26,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 
 from crop import crop_w_mouse
 from continousAcq import grayLive
+from camInit import camInit
 
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -35,20 +36,8 @@ div=100
 step=1/float(div)
 
 #Exposure (just here to keep it as global var)
-exp=2
 expMin=0.0277
 expMax=500
-
-#DEVICE to load - Label, description, Name
-DEVICE = ['Camera', 'DemoCamera', 'DCam']
-#DEVICE = ['Zyla','AndorSDK3','Andor sCMOS Camera']
-
-mmc = MMCorePy.CMMCore()  # Instance micromanager core
-
-# Demo camera example, connections non mandatory
-mmc.loadDevice(*DEVICE)
-mmc.initializeAllDevices()
-mmc.setCameraDevice(DEVICE[0])
 
 class MyMainWindow(QtWidgets.QMainWindow):
 
@@ -73,31 +62,19 @@ class MyMainWindow(QtWidgets.QMainWindow):
         # Sliders
         self.expSlider.setMinimum(expMin)
         self.expSlider.setMaximum(expMax)
-        self.expSlider.setValue(exp)  
+        self.expSlider.setValue(float(mmc.getProperty(DEVICE[0], 'Exposure')))  
         self.expSlider.valueChanged.connect(self.expFunc)
         
         #spinbox
         self.C_expSb.setMaximum(expMax)
         self.C_expSb.setMinimum(expMin)
-        self.C_expSb.setValue(exp)
+        self.C_expSb.setValue(float(mmc.getProperty(DEVICE[0], 'Exposure')))
         self.C_expSb.valueChanged.connect(self.expFunc)
         self.C_expSb.setSingleStep(float(step))
         
         
     def liveFunc(self):
         grayLive(mmc)
-#        cv2.namedWindow('Video - press any key to close') #open a new window
-#        mmc.startContinuousSequenceAcquisition(1) #acquisition each 1 ms, images put in circular buffer
-#        while True:
-#                if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer
-#                    g = mmc.getLastImage()
-#                    cv2.imshow('Video - press any key to close', g)
-#                else:
-#                    print('No frame')
-#                if cv2.waitKey(32) >= 0:
-#                    break
-#        cv2.destroyAllWindows()
-#        mmc.stopSequenceAcquisition()
         
     def crop(self):
         mmc.clearROI()
@@ -118,7 +95,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         except:
             print "CMM err, no possibility to set exposure"
             
-    def Histo(self):
+    def Histo(self): #TO FIX : segmentation (continous acq) with ensuring that it works with the cams
         print "press q to quit"
         #Initialize the windows used to display live video and histogram
         cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
@@ -186,6 +163,15 @@ class MyMainWindow(QtWidgets.QMainWindow):
         
 ##Launching everything
 if __name__ == '__main__':
+    
+    """MicroManager Init"""
+
+    mmc = MMCorePy.CMMCore()
+    
+    """Camera Init"""
+    global DEVICE
+    DEVICE = camInit(mmc) # TO FIX, give DEVICE at some function only
+    
     #Launch GUI
     app = QtWidgets.QApplication(sys.argv)
     window = MyMainWindow() 

@@ -139,7 +139,7 @@ for device in locations:
 
 data = [0]
 
-def update():
+def update(): ## respiration rate feature
     global curve, data
     line = ser.readline()
     data.append(int(line))
@@ -659,7 +659,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         cv2.destroyAllWindows()
         mmc.stopSequenceAcquisition()
 
-    def SnapFunc(self):
+    def SnapFunc(self): ## respiration rate feature (older, a simple image snap)
       #open snap window
       #mmc.snapImage()
       #img = mmc.getImage()
@@ -891,7 +891,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
       
       
     '''Other'''
-    def closeEvent(self, event):   # to clean up, closes labjack and windows
+    def closeEvent(self, event):   # to clean up, closes labjack and windows #ODORS feature
       #global device
       self.win.close()
       device.setFIOState(green_lj, 0)
