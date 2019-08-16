@@ -22,3 +22,21 @@ def grayLive(mmc):
             break
     cv2.destroyAllWindows()
     mmc.stopSequenceAcquisition()
+
+####USELESS#### 
+def histoLive(mmc, thd , mask):
+    cv2.namedWindow('Video')
+    mmc.snapImage()
+    g = mmc.getImage() #Initialize g
+    mmc.startContinuousSequenceAcquisition(1)
+    while True:
+            if mmc.getRemainingImageCount() > 0:
+                g = mmc.getLastImage()
+                rgb2 = cv2.cvtColor(g.astype("uint16"),cv2.COLOR_GRAY2RGB)
+                rgb2[g>thd]=mask[g>thd]*256
+                cv2.imshow('Video', rgb2)
+                return g
+                    
+            else:
+                print('No frame')
+    return False #No image captured

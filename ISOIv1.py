@@ -25,9 +25,10 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 #Function import
 
 from crop import crop_w_mouse
-from continousAcq import grayLive
+from continousAcq import grayLive, histoLive
 from camInit import camInit
 from saveFcts import saveImage
+from histogram import histoInit, histoCalc
 
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -49,7 +50,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         # Connect buttons 
         self.liveBtn.clicked.connect(self.liveFunc)
         self.cropBtn.clicked.connect(self.crop)
-        self.histoBtn.clicked.connect(self.Histo)
+        self.histoBtn.clicked.connect(self.histo2)
         self.SaveEBtn.clicked.connect(self.saveImage)
         
         #ComboBoxes
@@ -100,6 +101,42 @@ class MyMainWindow(QtWidgets.QMainWindow):
     def saveImage(self):
         saveImage(mmc)
             
+    def histo2(self):
+        print "histo 2 fct"
+        
+        (mask, h_h, h_w, pixMaxVal, bin_width, nbins) = histoInit(mmc)
+        
+        cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
+        cv2.namedWindow('Video')
+        mmc.snapImage()
+        g = mmc.getImage() #Initialize g
+        mmc.startContinuousSequenceAcquisition(1)
+        while True:
+                if mmc.getRemainingImageCount() > 0:
+                    g = mmc.getLastImage()
+                    rgb2 = cv2.cvtColor(g.astype("uint16"),cv2.COLOR_GRAY2RGB)
+                    rgb2[g>pixMaxVal]=mask[g>pixMaxVal]*256
+                    cv2.imshow('Video', rgb2)
+                        
+                else:
+                    print('No frame')
+                    
+                h = histoCalc(nbins, pixMaxVal, bin_width, h_h, h_w, g)
+                cv2.imshow('Histogram',h)
+                
+                key = cv2.waitKey(1) & 0xFF
+                # if the `q` key is pressed, break from the loop
+                if key == ord("q"):
+                    break
+
+        cv2.destroyAllWindows()
+        mmc.stopSequenceAcquisition()
+        
+        
+        
+        
+        
+    
     def Histo(self): #TO FIX : segmentation (continous acq) with ensuring that it works with the cams
         print "press q to quit"
         #Initialize the windows used to display live video and histogram
@@ -146,7 +183,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
                 cv2.normalize(hist_g,hist_g,hist_height,cv2.NORM_MINMAX)
                 hist=np.uint16(np.around(hist_g))
         
-                #Loop through each bin and plot the rectangle in white
+                #Loop through each bin and plot the rectangle in black
                 for x,y in enumerate(hist):
                     cv2.rectangle(h,(x*bin_width,y),(x*bin_width + bin_width-1,hist_height),(255),-1)
         
@@ -155,7 +192,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         
                 #Show the histogram
                 cv2.imshow('Histogram',h)
-                h = np.zeros((hist_height,hist_width))
+                h = np.zeros((hist_height,hist_width)) ## Back to zeros matrix before update
                 #rgb = np.zeros((mmc.getImageHeight(),mmc.getImageWidth(),3),dtype=np.uint16)
           
                 key = cv2.waitKey(1) & 0xFF

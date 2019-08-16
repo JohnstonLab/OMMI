@@ -52,6 +52,6 @@ def onMouse(event, x, y, flags, params):
 		refPt.append((x, y))
  
 		# draw a rectangle around the region of interest
-		cv2.rectangle(image, refPt[0], refPt[1], (255, 0  , 0), 2)
+		cv2.rectangle(image, refPt[0], refPt[1], (0, 255  , 0), 2)
 		cv2.imshow("Click to crop - Esc to close", image)
         

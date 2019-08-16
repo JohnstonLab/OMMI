@@ -6,6 +6,7 @@ Created on Fri Aug 16 13:59:59 2019
 
 ADD DESCRIPTION
 """
+import numpy as np
 from tifffile import imsave
 
 

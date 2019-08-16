@@ -29,7 +29,7 @@ from OII_ui import Ui_MainWindow
 
 import sys
 import os 
-os.chdir("C:\Program Files\Micro-Manager-1.4")
+os.chdir("C:\Users\johnstonlab\Documents\Micro-Manager-1.4")
 # makes "from OII_ui import Ui_MainWindow" fails, OI_ui.py and OI_ui.ui added to the folder to fix that
 print os.getcwd()
 
@@ -139,7 +139,7 @@ for device in locations:
 
 data = [0]
 
-def update(): ## respiration rate feature
+def update():
     global curve, data
     line = ser.readline()
     data.append(int(line))
@@ -659,7 +659,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         cv2.destroyAllWindows()
         mmc.stopSequenceAcquisition()
 
-    def SnapFunc(self): ## respiration rate feature (older, a simple image snap)
+    def SnapFunc(self):
       #open snap window
       #mmc.snapImage()
       #img = mmc.getImage()
@@ -891,7 +891,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
       
       
     '''Other'''
-    def closeEvent(self, event):   # to clean up, closes labjack and windows #ODORS feature
+    def closeEvent(self, event):   # to clean up, closes labjack and windows
       #global device
       self.win.close()
       device.setFIOState(green_lj, 0)
