@@ -27,6 +27,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 from crop import crop_w_mouse
 from continousAcq import grayLive
 from camInit import camInit
+from saveFcts import saveImage
 
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -49,6 +50,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.liveBtn.clicked.connect(self.liveFunc)
         self.cropBtn.clicked.connect(self.crop)
         self.histoBtn.clicked.connect(self.Histo)
+        self.SaveEBtn.clicked.connect(self.saveImage)
         
         #ComboBoxes
         self.binBox.addItem("1x1","1x1")
@@ -94,6 +96,9 @@ class MyMainWindow(QtWidgets.QMainWindow):
             mmc.setProperty(DEVICE[0], 'Exposure', expVal)
         except:
             print "CMM err, no possibility to set exposure"
+            
+    def saveImage(self):
+        saveImage(mmc)
             
     def Histo(self): #TO FIX : segmentation (continous acq) with ensuring that it works with the cams
         print "press q to quit"
