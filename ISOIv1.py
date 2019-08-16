@@ -25,7 +25,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 #Function import
 
 from crop import crop_w_mouse
-from liveFunc import liveFunc
+from continousAcq import grayLive
 
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -85,18 +85,19 @@ class MyMainWindow(QtWidgets.QMainWindow):
         
         
     def liveFunc(self):
-        cv2.namedWindow('Video - press any key to close') #open a new window
-        mmc.startContinuousSequenceAcquisition(1) #acquisition each 1 ms, images put in circular buffer
-        while True:
-                if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer
-                    g = mmc.getLastImage()
-                    cv2.imshow('Video - press any key to close', g)
-                else:
-                    print('No frame')
-                if cv2.waitKey(32) >= 0:
-                    break
-        cv2.destroyAllWindows()
-        mmc.stopSequenceAcquisition()
+        grayLive(mmc)
+#        cv2.namedWindow('Video - press any key to close') #open a new window
+#        mmc.startContinuousSequenceAcquisition(1) #acquisition each 1 ms, images put in circular buffer
+#        while True:
+#                if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer
+#                    g = mmc.getLastImage()
+#                    cv2.imshow('Video - press any key to close', g)
+#                else:
+#                    print('No frame')
+#                if cv2.waitKey(32) >= 0:
+#                    break
+#        cv2.destroyAllWindows()
+#        mmc.stopSequenceAcquisition()
         
     def crop(self):
         mmc.clearROI()
