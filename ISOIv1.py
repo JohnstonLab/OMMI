@@ -102,8 +102,8 @@ class MyMainWindow(QtWidgets.QMainWindow):
         
     def saveImageSeq(self):
         
-        nbImages = 500
-        frames = sequenceAcq(mmc, nbImages, DEVICE[0])
+        nbImages = 50
+        timeStamps, frames = sequenceAcq(mmc, nbImages, DEVICE[0])
         print "Number of frames : ", len(frames)
         #namep=self.path.text()
         framesnp=np.asarray(frames)
