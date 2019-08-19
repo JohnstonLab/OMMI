@@ -8,8 +8,7 @@ Main file of ISOI software.
 v1 using the demo cam from MM
 
 TASK :
-    1. Display live acquisition to set camera settings
-    2. Save a series of images
+    1. Save a series of images
     
 TO DO :
     - TO fix : minimize global vars number + modulability
@@ -25,16 +24,10 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 #Function import
 
 from crop import crop_w_mouse
-<<<<<<< HEAD
-from continousAcq import grayLive, histoLive
-from camInit import camInit
-from saveFcts import saveImage
 from histogram import histoInit, histoCalc
-=======
 from continousAcq import grayLive, sequenceAcq
 from camInit import camInit
 from saveFcts import saveImage, saveAsMultipageTifPath
->>>>>>> e5d11efe2a19d0e3fa8db96308b2b4c5df70d22b
 
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -56,13 +49,8 @@ class MyMainWindow(QtWidgets.QMainWindow):
         # Connect buttons 
         self.liveBtn.clicked.connect(self.liveFunc)
         self.cropBtn.clicked.connect(self.crop)
-<<<<<<< HEAD
         self.histoBtn.clicked.connect(self.histo2)
-        self.SaveEBtn.clicked.connect(self.saveImage)
-=======
-        self.histoBtn.clicked.connect(self.Histo)
         self.SaveEBtn.clicked.connect(self.saveImageSeq)
->>>>>>> e5d11efe2a19d0e3fa8db96308b2b4c5df70d22b
         
         #ComboBoxes
         self.binBox.addItem("1x1","1x1")
@@ -114,7 +102,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         
     def saveImageSeq(self):
         
-        nbImages = 2000
+        nbImages = 500
         frames = sequenceAcq(mmc, nbImages, DEVICE[0])
         print "Number of frames : ", len(frames)
         #namep=self.path.text()
@@ -126,7 +114,6 @@ class MyMainWindow(QtWidgets.QMainWindow):
         print "histo 2 fct"
         
         (mask, h_h, h_w, pixMaxVal, bin_width, nbins) = histoInit(mmc)
-        
         cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
         cv2.namedWindow('Video')
         mmc.snapImage()
@@ -136,7 +123,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
                 if mmc.getRemainingImageCount() > 0:
                     g = mmc.getLastImage()
                     rgb2 = cv2.cvtColor(g.astype("uint16"),cv2.COLOR_GRAY2RGB)
-                    rgb2[g>pixMaxVal]=mask[g>pixMaxVal]*256
+                    rgb2[g>(pixMaxVal-2)]=mask[g>(pixMaxVal-2)]*256 #It cannot be compared to pixMaxVal because it will never reach this value
                     cv2.imshow('Video', rgb2)
                         
                 else:

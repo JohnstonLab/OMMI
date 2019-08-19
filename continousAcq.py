@@ -27,20 +27,20 @@ def grayLive(mmc):
 def sequenceAcq(mmc, nbImages, deviceLabel):
     
     frames=[]
-    #mmc.prepareSequenceAcquisition(deviceLabel)
-    #mmc.startSequenceAcquisition(nbImages, 10, False)   #numImages	Number of images requested from the camera
+    mmc.prepareSequenceAcquisition(deviceLabel)
+    mmc.startSequenceAcquisition(nbImages, 10, False)   #numImages	Number of images requested from the camera
                                                         #intervalMs	The interval between images, currently only supported by Andor cameras
                                                         #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
     
     
     failureCount=0
     imageCount =0
-    mmc.startContinuousSequenceAcquisition(10)
-    while(imageCount<nbImages): # (failureCount<1000)
-        sleep(0.01) #Delay in seconds (must be in function of the exposure...)
+    #mmc.startContinuousSequenceAcquisition(10)
+    while(imageCount<(nbImages)) & (failureCount<10000): # failure count avoid looping infinitely
+        sleep(0.001) #Delay in seconds
         if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
             #g = mmc.getLastImage()
-            g = mmc.popNextImage() #Gets and removes the next imag from the circular buffer
+            g = mmc.popNextImage() #Gets and removes the next image from the circular buffer
             frames.append(g)
             imageCount +=1
         else:
