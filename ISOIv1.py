@@ -25,10 +25,16 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 #Function import
 
 from crop import crop_w_mouse
+<<<<<<< HEAD
 from continousAcq import grayLive, histoLive
 from camInit import camInit
 from saveFcts import saveImage
 from histogram import histoInit, histoCalc
+=======
+from continousAcq import grayLive, sequenceAcq
+from camInit import camInit
+from saveFcts import saveImage, saveAsMultipageTifPath
+>>>>>>> e5d11efe2a19d0e3fa8db96308b2b4c5df70d22b
 
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -50,8 +56,13 @@ class MyMainWindow(QtWidgets.QMainWindow):
         # Connect buttons 
         self.liveBtn.clicked.connect(self.liveFunc)
         self.cropBtn.clicked.connect(self.crop)
+<<<<<<< HEAD
         self.histoBtn.clicked.connect(self.histo2)
         self.SaveEBtn.clicked.connect(self.saveImage)
+=======
+        self.histoBtn.clicked.connect(self.Histo)
+        self.SaveEBtn.clicked.connect(self.saveImageSeq)
+>>>>>>> e5d11efe2a19d0e3fa8db96308b2b4c5df70d22b
         
         #ComboBoxes
         self.binBox.addItem("1x1","1x1")
@@ -100,6 +111,16 @@ class MyMainWindow(QtWidgets.QMainWindow):
             
     def saveImage(self):
         saveImage(mmc)
+        
+    def saveImageSeq(self):
+        
+        nbImages = 2000
+        frames = sequenceAcq(mmc, nbImages, DEVICE[0])
+        print "Number of frames : ", len(frames)
+        #namep=self.path.text()
+        framesnp=np.asarray(frames)
+        saveAsMultipageTifPath(framesnp,"" ,"defaultName" ,None, 1024)
+        print "Sequence saved"
             
     def histo2(self):
         print "histo 2 fct"
