@@ -25,9 +25,9 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 #Function import
 
 from crop import crop_w_mouse
-from continousAcq import grayLive
+from continousAcq import grayLive, sequenceAcq
 from camInit import camInit
-from saveFcts import saveImage
+from saveFcts import saveImage, saveAsMultipageTifPath
 
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -50,7 +50,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.liveBtn.clicked.connect(self.liveFunc)
         self.cropBtn.clicked.connect(self.crop)
         self.histoBtn.clicked.connect(self.Histo)
-        self.SaveEBtn.clicked.connect(self.saveImage)
+        self.SaveEBtn.clicked.connect(self.saveImageSeq)
         
         #ComboBoxes
         self.binBox.addItem("1x1","1x1")
@@ -99,6 +99,16 @@ class MyMainWindow(QtWidgets.QMainWindow):
             
     def saveImage(self):
         saveImage(mmc)
+        
+    def saveImageSeq(self):
+        
+        nbImages = 2000
+        frames = sequenceAcq(mmc, nbImages, DEVICE[0])
+        print "Number of frames : ", len(frames)
+        #namep=self.path.text()
+        framesnp=np.asarray(frames)
+        saveAsMultipageTifPath(framesnp,"" ,"defaultName" ,None, 1024)
+        print "Sequence saved"
             
     def Histo(self): #TO FIX : segmentation (continous acq) with ensuring that it works with the cams
         print "press q to quit"
