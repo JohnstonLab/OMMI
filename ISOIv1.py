@@ -8,7 +8,10 @@ Main file of ISOI software.
 v1 using the demo cam from MM
 
 TASK :
-    1. Save a series of images
+    1. Connect buttons and parameters set up
+    2. Run short experiment with different LEDs on
+    3. Metadata writing and checking experiment + correct folders names
+    4. Saving each 512 frames
     
 TO DO :
     - TO fix : minimize global vars number + modulability
@@ -101,6 +104,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         saveImage(mmc)
         
     def saveImageSeq(self):
+        ## TO FIX : must save each stacks of 512 images
         
         nbImages = 50
         timeStamps, frames = sequenceAcq(mmc, nbImages, DEVICE[0])

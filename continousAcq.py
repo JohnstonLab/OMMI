@@ -43,7 +43,7 @@ def sequenceAcq(mmc, nbImages, deviceLabel):
     imageCount =0
     #mmc.startContinuousSequenceAcquisition(10)
     while(imageCount<(nbImages)) & (failureCount<10000): # failure count avoid looping infinitely
-        sleep(0.001) #Delay in seconds, cann
+        sleep(0.001*exp) #Delay in seconds, can be closed to intervalMs to limit loops for nothing
         if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
             #g = mmc.getLastImage()
             g = mmc.popNextImage() #Gets and removes the next image from the circular buffer
@@ -55,8 +55,8 @@ def sequenceAcq(mmc, nbImages, deviceLabel):
             failureCount+=1
     print "Failure count = ", failureCount
     #Print the reql interval between images ## Can be done in post-processing with timeStamps
-    #for i in range(0,len(timeStamps)-2):
-        #print  "delta time between t",i+1," and t",i," : ",(timeStamps[i+1] -timeStamps[i])
+    for i in range(0,len(timeStamps)-2):
+        print  "delta time between t",i+1," and t",i," : ",(timeStamps[i+1] -timeStamps[i])
             
     mmc.stopSequenceAcquisition()
     mmc.clearCircularBuffer() 
