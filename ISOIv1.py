@@ -30,7 +30,7 @@ from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
 from continousAcq import grayLive, sequenceAcq, sequenceInit, sequenceAcq2
 from camInit import camInit
-from saveFcts import saveImage, saveAsMultipageTifPath
+from saveFcts import saveImage, saveAsMultipageTifPath, tiffWriterInit, tiffWriterClose
 
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -108,12 +108,16 @@ class MyMainWindow(QtWidgets.QMainWindow):
         duration = 1*1000 ## get duration from text area (Warning, conversion in ms)
         ledRatio = [8,1,1] # [r,g,b]## get LED ratio
         
+        #Initialize tiffWriter object
+        tiffWriter = tiffWriterInit(name)
+        
         #Initialise sequence acqu
         (ledList, nbFrames, intervalMs) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure')))) 
         #Initialise saving file ?
         #TO DO
         #Launch seq acq
-        timeStamps = sequenceAcq2(mmc, nbFrames, intervalMs, DEVICE[0], ledList)
+        sequenceAcq2(mmc, nbFrames, intervalMs, DEVICE[0], ledList, tiffWriter)
+        tiffWriterClose(tiffWriter)
         #print "Number of frames : ", len(frames)
         #namep=self.path.text()
         #framesnp=np.asarray(frames)

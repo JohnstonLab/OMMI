@@ -10,7 +10,7 @@ IDEA : create a sequence class, in this way, sequence param can be saved when in
 # Used packages
 import cv2
 from time import sleep, time
-from saveFcts import saveFrame
+from saveFcts import saveFrame, tiffWriterClose
 
 def grayLive(mmc):
     cv2.namedWindow('Video - press any key to close') #open a new window
@@ -80,24 +80,25 @@ def sequenceAcq(mmc, nbImages, intervalMs, deviceLabel, ledList):
     
     return timeStamps, frames
 
-def sequenceAcq2(mmc, nbImages, intervalMs, deviceLabel, ledList):
+def sequenceAcq2(mmc, nbImages, intervalMs, deviceLabel, ledList, tiffWriter):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition."
     
     #Get the time ##TO FIX : is it the right place to put it on ?
     timeStamps = []
     timeStamps.append(time())
-    #Setting the minimal interval between images?
+    
     print "Interval between images : ", intervalMs,"ms"
     print "Nb of frames : ", nbImages
     mmc.prepareSequenceAcquisition(deviceLabel)
     mmc.startSequenceAcquisition(nbImages, intervalMs, False)   #numImages	Number of images requested from the camera
                                                         #intervalMs	The interval between images, currently only supported by Andor cameras
                                                         #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
+    
     ## Turn red LED on because frame will always begin by that ?
-    failureCount=0
+    
+    failureCount=0 
     imageCount =0
-    #mmc.startContinuousSequenceAcquisition(10)
-    while(imageCount<(nbImages)) & (failureCount<100000): # failure count avoid looping infinitely
+    while(imageCount<(nbImages)): # failure count avoid looping infinitely
         #sleep(0.001*(intervalMs-10)) #Delay in seconds, can be closed to intervalMs to limit loops for nothing
         
         #Launching acquisition
@@ -112,22 +113,24 @@ def sequenceAcq2(mmc, nbImages, intervalMs, deviceLabel, ledList):
                 print "Blue on"
             sleep(0.005) #Wait 5ms to ensure LEDS are on
             #g = mmc.getLastImage()
-            g = mmc.popNextImage() #Gets and removes the next image from the circular buffer
+            img = mmc.popNextImage() #Gets and removes the next image from the circular buffer
             t=time()
             timeStamps.append(t)
-            saveFrame(g)
+            saveFrame(img, tiffWriter, imageCount, ledList[imageCount])
             imageCount +=1
         else:
             failureCount+=1
-            
-        ##Save image captured
 
+    
     print "Failure count = ", failureCount
     #Print the reql interval between images ## Can be done in post-processing with timeStamps
     for i in range(0,len(timeStamps)-2):
         print  "delta time between t",i+1," and t",i," : ",(timeStamps[i+1] -timeStamps[i])
             
+    
+    #Close tiff file open
+    tiffWriterClose(tiffWriter)
     mmc.stopSequenceAcquisition()
     mmc.clearCircularBuffer() 
     
-    return timeStamps
+    #return timeStamps #NO MORE RETURN NEEDED
