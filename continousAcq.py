@@ -35,10 +35,10 @@ def sequenceInit(duration, ledRatio, exp):
     ## Open a Tiff file ?
     ## send all of this to sequence acq
     intervalMs = (exp+10)           ## Calculation of interval between frames (images)
-    nbFrames = int((duration)/intervalMs)  ## Determine number of frames
+    nbFrames = int((duration)/intervalMs)+1  ## Determine number of frames. (+1) ensure to have a list long enough
     ledSeq = ['r']*ledRatio[0]+['g']*ledRatio[1]+['b']*ledRatio[2] #Sequence of LED lighting in function of the ratio
     print 'LED sequence : ', ledSeq
-    ledList = ledSeq*(int(nbFrames/(len(ledSeq)))) ## schedule LED lighting
+    ledList = ledSeq*(int(nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
     return ledList, nbFrames, intervalMs
     
 
@@ -58,7 +58,7 @@ def sequenceAcq(mmc, nbImages, intervalMs, deviceLabel, ledList):
     failureCount=0
     imageCount =0
     #mmc.startContinuousSequenceAcquisition(10)
-    while(imageCount<(nbImages)) & (failureCount<100000): # failure count avoid looping infinitely
+    while(imageCount<(nbImages)): # failure count avoid looping infinitely
         #sleep(0.001*(intervalMs-10)) #Delay in seconds, can be closed to intervalMs to limit loops for nothing
         #CALL TO SAVING FCT (img, expName, num)
         if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
@@ -93,24 +93,24 @@ def sequenceAcq2(mmc, nbImages, intervalMs, deviceLabel, ledList):
     mmc.startSequenceAcquisition(nbImages, intervalMs, False)   #numImages	Number of images requested from the camera
                                                         #intervalMs	The interval between images, currently only supported by Andor cameras
                                                         #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
-    
+    ## Turn red LED on because frame will always begin by that ?
     failureCount=0
     imageCount =0
     #mmc.startContinuousSequenceAcquisition(10)
-    while(imageCount<(nbImages)) & (failureCount<10000): # failure count avoid looping infinitely
+    while(imageCount<(nbImages)) & (failureCount<100000): # failure count avoid looping infinitely
         #sleep(0.001*(intervalMs-10)) #Delay in seconds, can be closed to intervalMs to limit loops for nothing
-        
-        #Lighing good LED
-        if ledList[imageCount] == 'r':
-            #print "Blue off" ## Only one LED to turn off because we know the fire order
-            print "Red on"  
-        if ledList[imageCount] == 'g':
-            print "Green on"
-        if ledList[imageCount] == 'b' :
-            print "Blue on"
         
         #Launching acquisition
         if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
+                    #Lighting good LED
+            if ledList[imageCount] == 'r':
+                #print "Blue off" ## Only one LED to turn off because we know the fire order
+                print "Red on"  
+            elif ledList[imageCount] == 'g':
+                print "Green on"
+            else:
+                print "Blue on"
+            sleep(0.005) #Wait 5ms to ensure LEDS are on
             #g = mmc.getLastImage()
             g = mmc.popNextImage() #Gets and removes the next image from the circular buffer
             t=time()
