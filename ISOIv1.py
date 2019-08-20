@@ -31,6 +31,7 @@ from histogram import histoInit, histoCalc
 from continousAcq import grayLive, sequenceAcq, sequenceInit
 from camInit import camInit
 from saveFcts import tiffWriterInit, tiffWriterClose
+from Labjack import labjackInit, greenOn, greenOff, redOn, redOff
 
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -67,7 +68,12 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.bitBox.addItem("12-bit (high well capacity)","12-bit (high well capacity)")
         self.bitBox.addItem("12-bit (low noise)","12-bit (low noise)")
         self.bitBox.addItem("16-bit (low noise & high well capacity)","16-bit (low noise & high well capacity)")
-
+        self.binBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Binning'))
+        self.bitBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Sensitivity/DynamicRange'))
+        self.binBox.currentIndexChanged.connect(self.binCh)
+        self.bitBox.currentIndexChanged.connect(self.bitCh)
+        
+        
         # Sliders
         self.expSlider.setMinimum(expMin)
         self.expSlider.setMaximum(expMax)
@@ -94,6 +100,15 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.rRatio.setMaximum(ratioMax)
         self.bRatio.setMaximum(ratioMax)
         
+        #####
+        
+        #Name text area
+        self.name.insert("DefaultName")
+        
+        #LEDs toggle buttons
+        self.Green.stateChanged.connect(self.green)
+        self.Red.stateChanged.connect(self.red)
+        
     def liveFunc(self):
         grayLive(mmc)
         
@@ -115,6 +130,28 @@ class MyMainWindow(QtWidgets.QMainWindow):
             mmc.setProperty(DEVICE[0], 'Exposure', expVal)
         except:
             print "CMM err, no possibility to set exposure"
+            
+    def binCh(self):
+        binn = self.binBox.currentText()
+        mmc.setProperty(DEVICE[0], 'Binning', str(binn))
+        print "Binning set at", mmc.getProperty(DEVICE[0],'Binning') 
+
+    def bitCh(self):
+        bit = self.bitBox.currentText()
+        mmc.setProperty(DEVICE[0], 'Sensitivity/DynamicRange', str(bit))
+        print "Bit depth set at", mmc.getProperty(DEVICE[0],'Sensitivity/DynamicRange')
+    
+    def green(self,toggle_g):
+        if toggle_g:
+            greenOn(labjack)
+        else :
+            greenOff(labjack)
+          
+    def red(self,toggle_r):
+        if toggle_r:
+            redOn(labjack)
+        else :
+            redOff(labjack)
 
         
     def saveImageSeq(self):
@@ -129,7 +166,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         (ledList, nbFrames, intervalMs) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))))
         
         #Launch seq acq
-        sequenceAcq(mmc, nbFrames, intervalMs, DEVICE[0], ledList, tiffWriter) #Carries the images acquisition AND saving
+        sequenceAcq(mmc, nbFrames, intervalMs, DEVICE[0], ledList, tiffWriter,labjack) #Carries the images acquisition AND saving
         
         #Close tif file where tiffWriter object wrote
         tiffWriterClose(tiffWriter)
@@ -176,6 +213,9 @@ if __name__ == '__main__':
     global DEVICE
     DEVICE = camInit(mmc) # TO FIX, give DEVICE at some function only
     
+    """Labjack init"""
+    global labjack
+    labjack = labjackInit()
     #Launch GUI
     app = QtWidgets.QApplication(sys.argv)
     window = MyMainWindow() 

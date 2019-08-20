@@ -11,6 +11,7 @@ IDEA : create a sequence class, in this way, sequence param can be saved when in
 import cv2
 from time import sleep, time
 from saveFcts import saveFrame, tiffWriterClose
+from Labjack import greenOn, greenOff
 
 def grayLive(mmc):
     cv2.namedWindow('Video - press any key to close') #open a new window
@@ -41,7 +42,7 @@ def sequenceInit(duration, ledRatio, exp):
     ledList = ledSeq*(int(nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
     return ledList, nbFrames, intervalMs
 
-def sequenceAcq(mmc, nbImages, intervalMs, deviceLabel, ledList, tiffWriter):
+def sequenceAcq(mmc, nbImages, intervalMs, deviceLabel, ledList, tiffWriter, labjack):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition."
     
     #Get the time ##TO FIX : is it the right place to put it on ?
@@ -67,10 +68,12 @@ def sequenceAcq(mmc, nbImages, intervalMs, deviceLabel, ledList, tiffWriter):
                     #Lighting good LED
             if ledList[imageCount] == 'r':
                 #print "Blue off" ## Only one LED to turn off because we know the fire order
-                print "Red on"  
+                print "Red on"
             elif ledList[imageCount] == 'g':
-                print "Green on"
+                print "GREEN"
+                greenOn(labjack)
             else:
+                greenOff(labjack)
                 print "Blue on"
             sleep(0.005) #Wait 5ms to ensure LEDS are on
             #g = mmc.getLastImage()
@@ -91,7 +94,6 @@ def sequenceAcq(mmc, nbImages, intervalMs, deviceLabel, ledList, tiffWriter):
     
     #Close tiff file open
     tiffWriterClose(tiffWriter)
+    #Stop camera acquisition
     mmc.stopSequenceAcquisition()
     mmc.clearCircularBuffer() 
-    
-    #return timeStamps #NO MORE RETURN NEEDED
