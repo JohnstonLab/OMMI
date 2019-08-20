@@ -28,7 +28,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 
 from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
-from continousAcq import grayLive, sequenceAcq
+from continousAcq import grayLive, sequenceAcq, sequenceInit, sequenceAcq2
 from camInit import camInit
 from saveFcts import saveImage, saveAsMultipageTifPath
 
@@ -104,15 +104,21 @@ class MyMainWindow(QtWidgets.QMainWindow):
         saveImage(mmc)
         
     def saveImageSeq(self):
-        ## TO FIX : must save each stacks of 512 images
+        name = 'Exp1'## get Name from text area
+        duration = 1*1000 ## get duration from text area (Warning, conversion in ms)
+        ledRatio = [8,1,1] # [r,g,b]## get LED ratio
         
-        nbImages = 50
-        timeStamps, frames = sequenceAcq(mmc, nbImages, DEVICE[0])
-        print "Number of frames : ", len(frames)
+        #Initialise sequence acqu
+        (ledList, nbFrames, intervalMs) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure')))) 
+        #Initialise saving file ?
+        #TO DO
+        #Launch seq acq
+        timeStamps = sequenceAcq2(mmc, nbFrames, intervalMs, DEVICE[0], ledList)
+        #print "Number of frames : ", len(frames)
         #namep=self.path.text()
-        framesnp=np.asarray(frames)
-        saveAsMultipageTifPath(framesnp,"" ,"defaultName" ,None, 1024)
-        print "Sequence saved"
+        #framesnp=np.asarray(frames)
+        #saveAsMultipageTifPath(framesnp,"defaultName" ,None, 1024)
+        #print "Sequence saved"
             
     def histo(self):
         (mask, h_h, h_w, pixMaxVal, bin_width, nbins) = histoInit(mmc)
