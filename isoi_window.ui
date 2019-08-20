@@ -258,7 +258,7 @@
        <number>24</number>
       </property>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>20</x>
@@ -326,9 +326,6 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QDoubleSpinBox" name="gRatio"/>
-         </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_8">
            <property name="font">
@@ -340,9 +337,6 @@
             <string>Red</string>
            </property>
           </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="rRatio"/>
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="label_9">
@@ -356,8 +350,14 @@
            </property>
           </widget>
          </item>
+         <item row="0" column="1">
+          <widget class="QSpinBox" name="gRatio"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="rRatio"/>
+         </item>
          <item row="2" column="1">
-          <widget class="QDoubleSpinBox" name="bRatio"/>
+          <widget class="QSpinBox" name="bRatio"/>
          </item>
         </layout>
        </item>

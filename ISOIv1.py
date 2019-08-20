@@ -28,9 +28,9 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 
 from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
-from continousAcq import grayLive, sequenceAcq, sequenceInit, sequenceAcq2
+from continousAcq import grayLive, sequenceAcq, sequenceInit
 from camInit import camInit
-from saveFcts import saveImage, saveAsMultipageTifPath, tiffWriterInit, tiffWriterClose
+from saveFcts import tiffWriterInit, tiffWriterClose
 
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -42,6 +42,10 @@ step=1/float(div)
 #Exposure (just here to keep it as global var)
 expMin=0.0277
 expMax=500
+
+#LEDs Ratio
+ratioMax=10
+ratioMin=0
 
 class MyMainWindow(QtWidgets.QMainWindow):
 
@@ -70,13 +74,25 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.expSlider.setValue(float(mmc.getProperty(DEVICE[0], 'Exposure')))  
         self.expSlider.valueChanged.connect(self.expFunc)
         
-        #spinbox
+        #### Spinboxes ###
+        
+        #Exposure
         self.C_expSb.setMaximum(expMax)
         self.C_expSb.setMinimum(expMin)
         self.C_expSb.setValue(float(mmc.getProperty(DEVICE[0], 'Exposure')))
         self.C_expSb.valueChanged.connect(self.expFunc)
         self.C_expSb.setSingleStep(float(step))
         
+        #Experiment duration
+        self.dur.setSingleStep(float(step))
+        
+        #LEDs ratios
+        self.gRatio.setMinimum(ratioMin)
+        self.rRatio.setMinimum(ratioMin)
+        self.bRatio.setMinimum(ratioMin)
+        self.gRatio.setMaximum(ratioMax)
+        self.rRatio.setMaximum(ratioMax)
+        self.bRatio.setMaximum(ratioMax)
         
     def liveFunc(self):
         grayLive(mmc)
@@ -99,30 +115,26 @@ class MyMainWindow(QtWidgets.QMainWindow):
             mmc.setProperty(DEVICE[0], 'Exposure', expVal)
         except:
             print "CMM err, no possibility to set exposure"
-            
-    def saveImage(self): #Not connected to any button
-        saveImage(mmc)
+
         
     def saveImageSeq(self):
-        name = 'Exp1'## get Name from text area
-        duration = 1*1000 ## get duration from text area (Warning, conversion in ms)
-        ledRatio = [8,1,1] # [r,g,b]## get LED ratio
+        name = window.name.text()  ## get Name from text area
+        duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
+        ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
         
         #Initialize tiffWriter object
         tiffWriter = tiffWriterInit(name)
         
         #Initialise sequence acqu
-        (ledList, nbFrames, intervalMs) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure')))) 
-        #Initialise saving file ?
-        #TO DO
+        (ledList, nbFrames, intervalMs) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))))
+        
         #Launch seq acq
-        sequenceAcq2(mmc, nbFrames, intervalMs, DEVICE[0], ledList, tiffWriter)
+        sequenceAcq(mmc, nbFrames, intervalMs, DEVICE[0], ledList, tiffWriter) #Carries the images acquisition AND saving
+        
+        #Close tif file where tiffWriter object wrote
         tiffWriterClose(tiffWriter)
-        #print "Number of frames : ", len(frames)
-        #namep=self.path.text()
-        #framesnp=np.asarray(frames)
-        #saveAsMultipageTifPath(framesnp,"defaultName" ,None, 1024)
-        #print "Sequence saved"
+        
+        print 'Acquisition done'
             
     def histo(self):
         (mask, h_h, h_w, pixMaxVal, bin_width, nbins) = histoInit(mmc)

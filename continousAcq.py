@@ -42,45 +42,45 @@ def sequenceInit(duration, ledRatio, exp):
     return ledList, nbFrames, intervalMs
     
 
-def sequenceAcq(mmc, nbImages, intervalMs, deviceLabel, ledList):
-    #Get the time when save button pressed
-    timeStamps = []
-    timeStamps.append(time())
-    #Setting the minimal interval between images?
-    print "Interval between images : ", intervalMs,"ms"
-    #Initialize frame list that will contain all images snapped
-    frames=[]
-    mmc.prepareSequenceAcquisition(deviceLabel)
-    mmc.startSequenceAcquisition(nbImages, intervalMs, False)   #numImages	Number of images requested from the camera
-                                                        #intervalMs	The interval between images, currently only supported by Andor cameras
-                                                        #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
-    
-    failureCount=0
-    imageCount =0
-    #mmc.startContinuousSequenceAcquisition(10)
-    while(imageCount<(nbImages)): # failure count avoid looping infinitely
-        #sleep(0.001*(intervalMs-10)) #Delay in seconds, can be closed to intervalMs to limit loops for nothing
-        #CALL TO SAVING FCT (img, expName, num)
-        if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
-            #g = mmc.getLastImage()
-            g = mmc.popNextImage() #Gets and removes the next image from the circular buffer
-            frames.append(g)
-            timeStamps.append(time())
-            imageCount +=1
-        else:
-            #print('No frame')
-            failureCount+=1
-    print "Failure count = ", failureCount
-    #Print the reql interval between images ## Can be done in post-processing with timeStamps
-    for i in range(0,len(timeStamps)-2):
-        print  "delta time between t",i+1," and t",i," : ",(timeStamps[i+1] -timeStamps[i])
-            
-    mmc.stopSequenceAcquisition()
-    mmc.clearCircularBuffer() 
-    
-    return timeStamps, frames
+#def sequenceAcq(mmc, nbImages, intervalMs, deviceLabel, ledList):
+#    #Get the time when save button pressed
+#    timeStamps = []
+#    timeStamps.append(time())
+#    #Setting the minimal interval between images?
+#    print "Interval between images : ", intervalMs,"ms"
+#    #Initialize frame list that will contain all images snapped
+#    frames=[]
+#    mmc.prepareSequenceAcquisition(deviceLabel)
+#    mmc.startSequenceAcquisition(nbImages, intervalMs, False)   #numImages	Number of images requested from the camera
+#                                                        #intervalMs	The interval between images, currently only supported by Andor cameras
+#                                                        #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
+#    
+#    failureCount=0
+#    imageCount =0
+#    #mmc.startContinuousSequenceAcquisition(10)
+#    while(imageCount<(nbImages)): # failure count avoid looping infinitely
+#        #sleep(0.001*(intervalMs-10)) #Delay in seconds, can be closed to intervalMs to limit loops for nothing
+#        #CALL TO SAVING FCT (img, expName, num)
+#        if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
+#            #g = mmc.getLastImage()
+#            g = mmc.popNextImage() #Gets and removes the next image from the circular buffer
+#            frames.append(g)
+#            timeStamps.append(time())
+#            imageCount +=1
+#        else:
+#            #print('No frame')
+#            failureCount+=1
+#    print "Failure count = ", failureCount
+#    #Print the reql interval between images ## Can be done in post-processing with timeStamps
+#    for i in range(0,len(timeStamps)-2):
+#        print  "delta time between t",i+1," and t",i," : ",(timeStamps[i+1] -timeStamps[i])
+#            
+#    mmc.stopSequenceAcquisition()
+#    mmc.clearCircularBuffer() 
+#    
+#    return timeStamps, frames
 
-def sequenceAcq2(mmc, nbImages, intervalMs, deviceLabel, ledList, tiffWriter):
+def sequenceAcq(mmc, nbImages, intervalMs, deviceLabel, ledList, tiffWriter):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition."
     
     #Get the time ##TO FIX : is it the right place to put it on ?
