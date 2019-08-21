@@ -11,7 +11,7 @@ IDEA : create a sequence class, in this way, sequence param can be saved when in
 import cv2
 from time import sleep, time
 from saveFcts import saveFrame, tiffWriterClose
-from Labjack import greenOn, greenOff
+from Labjack import greenOn, greenOff, redOn, redOff
 
 def grayLive(mmc):
     cv2.namedWindow('Video - press any key to close') #open a new window
@@ -33,7 +33,6 @@ def sequenceInit(duration, ledRatio, exp):
 
 
     ## Initialize timeStamps
-    ## Open a Tiff file ?
     ## send all of this to sequence acq
     intervalMs = (exp+10)           ## Calculation of interval between frames (images)
     nbFrames = int((duration)/intervalMs)+1  ## Determine number of frames. (+1) ensure to have a list long enough
@@ -47,7 +46,7 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
     
     #Get the time ##TO FIX : is it the right place to put it on ?
     timeStamps = []
-    timeStamps.append(time())
+    #timeStamps.append(time()) #Useless to have a timestamp here
     
     print "Interval between images : ", intervalMs,"ms"
     print "Nb of frames : ", nbImages
@@ -67,19 +66,18 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
         if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
                     #Lighting good LED
             if ledList[imageCount] == 'r':
-                #print "Blue off" ## Only one LED to turn off because we know the fire order
-                print "Red on"
+                #print "Blue off"
+                greenOff(labjack)
+                redOn(labjack)
             elif ledList[imageCount] == 'g':
-                print "GREEN"
+                redOff(labjack)
                 greenOn(labjack)
             else:
+                redOff(labjack)
                 greenOff(labjack)
-                print "Blue on"
             sleep(0.005) #Wait 5ms to ensure LEDS are on
-            #g = mmc.getLastImage()
             img = mmc.popNextImage() #Gets and removes the next image from the circular buffer
-            t=time()
-            timeStamps.append(t)
+            timeStamps.append(time())
             saveFrame(img, tiffWriterList, imageCount, ledList[imageCount], maxFrames)
             imageCount +=1
         else:
@@ -87,10 +85,10 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
 
     #Turning off all LEDS
     greenOff(labjack)
+    redOff(labjack)
     
-    print "Failure count = ", failureCount
-    #Print the reql interval between images ## Can be done in post-processing with timeStamps
-    for i in range(0,len(timeStamps)-2):
+    #Print the real interval between images ## Can be done in post-processing with timeStamps
+    for i in range(0,len(timeStamps)-1):
         print  "delta time between t",i+1," and t",i," : ",(timeStamps[i+1] -timeStamps[i])
             
     
