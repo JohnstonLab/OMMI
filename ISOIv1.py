@@ -173,6 +173,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         name = window.name.text()  ## get Name from text area
         duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
         ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
+        maxFrames = int(self.framesPerFileLabel.text())
         
         #Initialize tiffWriter object
         print 'tiffwriter init'
@@ -182,8 +183,10 @@ class MyMainWindow(QtWidgets.QMainWindow):
         #Initialise sequence acqu
         (ledList, nbFrames, intervalMs) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))))
         
+        ##Initialize tiffWriter(s) here in function of maxFrames and nbImages
+        
         #Launch seq acq
-        sequenceAcq(mmc, nbFrames, intervalMs, DEVICE[0], ledList, tiffWriter,labjack) #Carries the images acquisition AND saving
+        sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriter,labjack) #Carries the images acquisition AND saving
         
         #Close tif file where tiffWriter object wrote
         tiffWriterClose(tiffWriter)
