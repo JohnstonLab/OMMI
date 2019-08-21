@@ -100,6 +100,11 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.rRatio.setMaximum(ratioMax)
         self.bRatio.setMaximum(ratioMax)
         
+        #File size
+        self.fileSize.setValue(4.)
+        self.fileSize.setSingleStep(0.5)
+        self.fileSize.valueChanged.connect(self.fileSizeSetting)
+        
         #####
         
         #Name text area
@@ -156,11 +161,12 @@ class MyMainWindow(QtWidgets.QMainWindow):
 
         
     def fileSizeSetting(self):
-        sizeMax = 4     #To get from GUI
+        sizeMax = self.fileSize.value()
         ROI = mmc.getROI()
         bitDepth = 16 #To get from GUI
         
         framesMax = fileSizeCalculation(sizeMax, ROI, bitDepth)
+        self.framesPerFileLabel.setText(str(framesMax))
     
 
     def saveImageSeq(self):

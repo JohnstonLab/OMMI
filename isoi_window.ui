@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -190,8 +190,8 @@
        <rect>
         <x>31</x>
         <y>101</y>
-        <width>352</width>
-        <height>26</height>
+        <width>481</width>
+        <height>41</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout">
@@ -208,7 +208,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="binBox"/>
+        <widget class="QComboBox" name="bitBox"/>
        </item>
        <item>
         <widget class="QLabel" name="label_3">
@@ -223,7 +223,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="bitBox"/>
+        <widget class="QComboBox" name="binBox"/>
        </item>
       </layout>
      </widget>
@@ -416,7 +416,7 @@
        <item row="1" column="1">
         <widget class="QLabel" name="framesPerFileLabel">
          <property name="text">
-          <string>default</string>
+          <string>5787</string>
          </property>
         </widget>
        </item>
