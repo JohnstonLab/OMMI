@@ -42,7 +42,7 @@ def sequenceInit(duration, ledRatio, exp):
     ledList = ledSeq*(int(nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
     return ledList, nbFrames, intervalMs
 
-def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriter, labjack):
+def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition."
     
     #Get the time ##TO FIX : is it the right place to put it on ?
@@ -80,7 +80,7 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
             img = mmc.popNextImage() #Gets and removes the next image from the circular buffer
             t=time()
             timeStamps.append(t)
-            saveFrame(img, tiffWriter, imageCount, ledList[imageCount], maxFrames)
+            saveFrame(img, tiffWriterList, imageCount, ledList[imageCount], maxFrames)
             imageCount +=1
         else:
             failureCount+=1
@@ -95,7 +95,7 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
             
     
     #Close tiff file open
-    tiffWriterClose(tiffWriter)
+    tiffWriterClose(tiffWriterList)
     #Stop camera acquisition
     mmc.stopSequenceAcquisition()
     mmc.clearCircularBuffer() 

@@ -175,21 +175,18 @@ class MyMainWindow(QtWidgets.QMainWindow):
         ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
         maxFrames = int(self.framesPerFileLabel.text())
         
-        #Initialize tiffWriter object
-        print 'tiffwriter init'
-        tiffWriter = tiffWriterInit(name)
-        print 'tiffwriter initialized'
-        
         #Initialise sequence acqu
         (ledList, nbFrames, intervalMs) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))))
         
-        ##Initialize tiffWriter(s) here in function of maxFrames and nbImages
-        
+        #Initialize tiffWriter object
+        print 'tiffwriter init'
+        tiffWriterList = tiffWriterInit(name, nbFrames, maxFrames)
+        print 'tiffwriter initialized'
         #Launch seq acq
-        sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriter,labjack) #Carries the images acquisition AND saving
+        sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack) #Carries the images acquisition AND saving
         
         #Close tif file where tiffWriter object wrote
-        tiffWriterClose(tiffWriter)
+        tiffWriterClose(tiffWriterList)
         
         print 'Acquisition done'
             
