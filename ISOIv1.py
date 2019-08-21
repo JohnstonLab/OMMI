@@ -30,7 +30,7 @@ from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
 from continousAcq import grayLive, sequenceAcq, sequenceInit
 from camInit import camInit
-from saveFcts import tiffWriterInit, tiffWriterClose
+from saveFcts import tiffWriterInit, tiffWriterClose, fileSizeCalculation
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff
 
 
@@ -108,6 +108,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         #LEDs toggle buttons
         self.Green.stateChanged.connect(self.green)
         self.Red.stateChanged.connect(self.red)
+        #self.BLUE.stateChanged.connect(self.fileSizeSetting)
         
     def liveFunc(self):
         grayLive(mmc)
@@ -154,13 +155,23 @@ class MyMainWindow(QtWidgets.QMainWindow):
             redOff(labjack)
 
         
+    def fileSizeSetting(self):
+        sizeMax = 4     #To get from GUI
+        ROI = mmc.getROI()
+        bitDepth = 16 #To get from GUI
+        
+        framesMax = fileSizeCalculation(sizeMax, ROI, bitDepth)
+    
+
     def saveImageSeq(self):
         name = window.name.text()  ## get Name from text area
         duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
         ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
         
         #Initialize tiffWriter object
+        print 'tiffwriter init'
         tiffWriter = tiffWriterInit(name)
+        print 'tiffwriter initialized'
         
         #Initialise sequence acqu
         (ledList, nbFrames, intervalMs) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))))

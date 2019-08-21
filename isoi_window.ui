@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>799</width>
-    <height>326</height>
+    <width>806</width>
+    <height>343</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -235,8 +235,8 @@
      <widget class="QPushButton" name="SaveEBtn">
       <property name="geometry">
        <rect>
-        <x>570</x>
-        <y>20</y>
+        <x>590</x>
+        <y>150</y>
         <width>154</width>
         <height>23</height>
        </rect>
@@ -248,8 +248,8 @@
      <widget class="QProgressBar" name="progressBar">
       <property name="geometry">
        <rect>
-        <x>550</x>
-        <y>70</y>
+        <x>560</x>
+        <y>210</y>
         <width>225</width>
         <height>21</height>
        </rect>
@@ -363,6 +363,65 @@
        </item>
       </layout>
      </widget>
+     <widget class="QPushButton" name="abortBtn">
+      <property name="geometry">
+       <rect>
+        <x>590</x>
+        <y>180</y>
+        <width>154</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>ABORT</string>
+      </property>
+     </widget>
+     <widget class="QWidget" name="">
+      <property name="geometry">
+       <rect>
+        <x>560</x>
+        <y>30</y>
+        <width>211</width>
+        <height>46</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_12">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Max file size (GB) :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QDoubleSpinBox" name="fileSize"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_10">
+         <property name="font">
+          <font>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Frames per file :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLabel" name="framesPerFileLabel">
+         <property name="text">
+          <string>default</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -371,7 +430,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>799</width>
+     <width>806</width>
      <height>21</height>
     </rect>
    </property>

@@ -85,6 +85,8 @@ def sequenceAcq(mmc, nbImages, intervalMs, deviceLabel, ledList, tiffWriter, lab
         else:
             failureCount+=1
 
+    #Turning off all LEDS
+    greenOff(labjack)
     
     print "Failure count = ", failureCount
     #Print the reql interval between images ## Can be done in post-processing with timeStamps
