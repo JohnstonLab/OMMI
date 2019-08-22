@@ -59,6 +59,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.cropBtn.clicked.connect(self.crop)
         self.histoBtn.clicked.connect(self.histo)
         self.SaveEBtn.clicked.connect(self.saveImageSeq)
+        self.unloadBtn.clicked.connect(self.unloadDevices)
         
         #ComboBoxes
         self.binBox.addItem("1x1","1x1")
@@ -68,8 +69,8 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.bitBox.addItem("12-bit (high well capacity)","12-bit (high well capacity)")
         self.bitBox.addItem("12-bit (low noise)","12-bit (low noise)")
         self.bitBox.addItem("16-bit (low noise & high well capacity)","16-bit (low noise & high well capacity)")
-        #self.binBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Binning'))
-        #self.bitBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Sensitivity/DynamicRange'))
+        self.binBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Binning'))
+        self.bitBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Sensitivity/DynamicRange'))
         self.binBox.currentIndexChanged.connect(self.binCh)
         self.bitBox.currentIndexChanged.connect(self.bitCh)
         
@@ -217,7 +218,11 @@ class MyMainWindow(QtWidgets.QMainWindow):
 
         cv2.destroyAllWindows()
         mmc.stopSequenceAcquisition()
-
+        
+    
+    def unloadDevices(self):
+        mmc.unloadAllDevices()
+        
         
 ##Launching everything
 if __name__ == '__main__':
@@ -232,16 +237,10 @@ if __name__ == '__main__':
     
     """Labjack init"""
     global labjack
-    #labjack = labjackInit()
+    labjack = labjackInit()
     #Launch GUI
     app = QtWidgets.QApplication(sys.argv)
     window = MyMainWindow() 
     window.show()
-    if not (app.exec_()): #Exit in normal way
-        mmc.unloadAllDevices()
-        print 'all devices unloaded'
-        sys.exit(0) #Exit normal way
-    else:
-        mmc.unloadAllDevices()       
-        sys.exit(1)
+    sys.exit(app.exec_())
 

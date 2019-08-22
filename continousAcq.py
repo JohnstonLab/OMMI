@@ -34,7 +34,7 @@ def sequenceInit(duration, ledRatio, exp):
 
     ## Initialize timeStamps
     ## send all of this to sequence acq
-    intervalMs = (5)           ## Calculation of interval between frames (images)
+    intervalMs = (1)           ## Calculation of interval between frames (images)
     nbFrames = int((duration)/(intervalMs+exp))+1  ## Determine number of frames. (+1) ensure to have a list long enough
     ledSeq = ['r']*ledRatio[0]+['g']*ledRatio[1]+['b']*ledRatio[2] #Sequence of LED lighting in function of the ratio
     print 'LED sequence : ', ledSeq
