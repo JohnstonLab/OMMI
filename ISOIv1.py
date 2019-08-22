@@ -232,10 +232,15 @@ if __name__ == '__main__':
     
     """Labjack init"""
     global labjack
-    labjack = labjackInit()
+    #labjack = labjackInit()
     #Launch GUI
     app = QtWidgets.QApplication(sys.argv)
     window = MyMainWindow() 
     window.show()
-    sys.exit(app.exec_())
+    if not app.exec_(): #Exit in normal way
+        mmc.unloadAllDevices()
+        sys.exit(0) #Exit normal way
+    else:
+         mmc.unloadAllDevices()       
+        sys.exit(1)
 

@@ -39,9 +39,9 @@ def camInit(mmc):
     mmc.setProperty(DEVICE[0], 'Binning', binn)
     print "Binning set at", mmc.getProperty(DEVICE[0],'Binning')  
     mmc.setProperty(DEVICE[0], 'Exposure', exp)
-    mmc.setProperty(DEVICE[0], 'AcquisitionWindow', AcqWindow) #NOT AVAILABLE IN DEMO
-    mmc.setProperty(DEVICE[0], 'PixelReadoutRate', PixRR) #NOT AVAILABLE IN DEMO
-    mmc.setProperty(DEVICE[0], 'Sensitivity/DynamicRange', bit) #NOT AVAILABLE IN DEMO
-    mmc.setProperty(DEVICE[0],'ElectronicShutteringMode','Global') #Rolling Global #NOT AVAILABLE IN DEMO
-    mmc.setProperty(DEVICE[0],'Overlap','Off') #NOT AVAILABLE IN DEMO
+    #mmc.setProperty(DEVICE[0], 'AcquisitionWindow', AcqWindow) #NOT AVAILABLE IN DEMO
+    #mmc.setProperty(DEVICE[0], 'PixelReadoutRate', PixRR) #NOT AVAILABLE IN DEMO
+    #mmc.setProperty(DEVICE[0], 'Sensitivity/DynamicRange', bit) #NOT AVAILABLE IN DEMO
+    #mmc.setProperty(DEVICE[0],'ElectronicShutteringMode','Global') #Rolling Global #NOT AVAILABLE IN DEMO
+    #mmc.setProperty(DEVICE[0],'Overlap','Off') #NOT AVAILABLE IN DEMO
     return DEVICE
