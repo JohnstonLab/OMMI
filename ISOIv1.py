@@ -238,4 +238,6 @@ if __name__ == '__main__':
     window = MyMainWindow() 
     window.show()
     sys.exit(app.exec_())
+    mmc.unloadAllDevices() #unload all devices from the core and resets all configuration data
+    print 'all devices unloaded'
 

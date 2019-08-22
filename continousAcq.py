@@ -34,8 +34,8 @@ def sequenceInit(duration, ledRatio, exp):
 
     ## Initialize timeStamps
     ## send all of this to sequence acq
-    intervalMs = (exp+5)           ## Calculation of interval between frames (images)
-    nbFrames = int((duration)/intervalMs)+1  ## Determine number of frames. (+1) ensure to have a list long enough
+    intervalMs = (5)           ## Calculation of interval between frames (images)
+    nbFrames = int((duration)/(intervalMs+exp))+1  ## Determine number of frames. (+1) ensure to have a list long enough
     ledSeq = ['r']*ledRatio[0]+['g']*ledRatio[1]+['b']*ledRatio[2] #Sequence of LED lighting in function of the ratio
     print 'LED sequence : ', ledSeq
     ledList = ledSeq*(int(nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
@@ -50,13 +50,13 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
     
     print "Interval between images : ", intervalMs,"ms"
     print "Nb of frames : ", nbImages
-    #mmc.prepareSequenceAcquisition(deviceLabel)
-    #mmc.startSequenceAcquisition(nbImages, intervalMs, False)   #numImages	Number of images requested from the camera
+    mmc.prepareSequenceAcquisition(deviceLabel)
+    mmc.startSequenceAcquisition(nbImages, intervalMs, False)   #numImages	Number of images requested from the camera
                                                         #intervalMs	The interval between images, currently only supported by Andor cameras
                                                         #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
     
     ## Turn red LED on because frame will always begin by that ?
-    mmc.startContinuousSequenceAcquisition(1)
+    #mmc.startContinuousSequenceAcquisition(1)
     failureCount=0 
     imageCount =0
     while(imageCount<(nbImages)): # failure count avoid looping infinitely
