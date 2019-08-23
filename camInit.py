@@ -33,7 +33,7 @@ def camInit(mmc):
     mmc.setCameraDevice(DEVICE[0])
     
     """trigger mode"""
-    #mmc.
+    print 'Trigger mode :', mmc.getProperty(DEVICE[0], 'TriggerMode')
     
     """initial camera properties"""
     mmc.setProperty(DEVICE[0], 'Binning', binn)

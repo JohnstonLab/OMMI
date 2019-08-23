@@ -28,18 +28,17 @@ def grayLive(mmc):
     mmc.stopSequenceAcquisition()
     
 
-def sequenceInit(duration, ledRatio, exp):
+def sequenceInit(duration, ledRatio, exp, intervalMs):
     "Prepare (and DISPLAY??) infos about the sequence acq coming"
 
 
     ## Initialize timeStamps
     ## send all of this to sequence acq
-    intervalMs = (1)           ## Calculation of interval between frames (images)
     nbFrames = int((duration)/(intervalMs+exp))+1  ## Determine number of frames. (+1) ensure to have a list long enough
     ledSeq = ['r']*ledRatio[0]+['g']*ledRatio[1]+['b']*ledRatio[2] #Sequence of LED lighting in function of the ratio
     print 'LED sequence : ', ledSeq
     ledList = ledSeq*(int(nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
-    return ledList, nbFrames, intervalMs
+    return ledList, nbFrames
 
 def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition."
@@ -47,7 +46,7 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
     #Get the time ##TO FIX : is it the right place to put it on ?
     timeStamps = []
     #timeStamps.append(time()) #Useless to have a timestamp here
-    
+    #exp = mmc.getProperty(deviceLabel,'Exposure')
     print "Interval between images : ", intervalMs,"ms"
     print "Nb of frames : ", nbImages
     mmc.prepareSequenceAcquisition(deviceLabel)
@@ -55,16 +54,29 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
                                                         #intervalMs	The interval between images, currently only supported by Andor cameras
                                                         #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
     
-    ## Turn red LED on because frame will always begin by that ?
+    
     #mmc.startContinuousSequenceAcquisition(1)
     failureCount=0 
     imageCount =0
+    
+    #Initialize the good LED for first image
+    if ledList[imageCount] == 'r':
+        #print "Blue off"
+        greenOff(labjack)
+        redOn(labjack)
+    elif ledList[imageCount] == 'g':
+        redOff(labjack)
+        greenOn(labjack)
+    else:
+        redOff(labjack)
+        greenOff(labjack)
+
     while(imageCount<(nbImages)): # failure count avoid looping infinitely
         #sleep(0.001*(intervalMs-10)) #Delay in seconds, can be closed to intervalMs to limit loops for nothing
         
         #Launching acquisition
         if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
-                    #Lighting good LED
+            #Lighting good LED
             if ledList[imageCount] == 'r':
                 #print "Blue off"
                 greenOff(labjack)

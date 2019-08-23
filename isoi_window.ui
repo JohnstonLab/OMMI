@@ -211,35 +211,7 @@
        <string>Uncrop</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_14">
-      <property name="geometry">
-       <rect>
-        <x>519</x>
-        <y>130</y>
-        <width>115</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Trigger mode :</string>
-      </property>
-     </widget>
-     <widget class="QComboBox" name="triggerBox">
-      <property name="geometry">
-       <rect>
-        <x>640</x>
-        <y>130</y>
-        <width>115</width>
-        <height>20</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="unloadBtn_2">
+     <widget class="QPushButton" name="loadBtn">
       <property name="geometry">
        <rect>
         <x>540</x>
@@ -306,6 +278,33 @@
        </item>
        <item>
         <widget class="QComboBox" name="shutBox"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="">
+      <property name="geometry">
+       <rect>
+        <x>270</x>
+        <y>130</y>
+        <width>481</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QLabel" name="label_14">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Trigger mode :</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="triggerBox"/>
        </item>
       </layout>
      </widget>

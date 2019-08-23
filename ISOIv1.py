@@ -60,6 +60,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.histoBtn.clicked.connect(self.histo)
         self.SaveEBtn.clicked.connect(self.saveImageSeq)
         self.unloadBtn.clicked.connect(self.unloadDevices)
+        self.loadBtn.clicked.connect(self.loadZyla)
         
         #ComboBoxes
         self.binBox.addItem("1x1","1x1")
@@ -71,8 +72,19 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.bitBox.addItem("16-bit (low noise & high well capacity)","16-bit (low noise & high well capacity)")
         self.binBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Binning'))
         self.bitBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Sensitivity/DynamicRange'))
-        self.binBox.currentIndexChanged.connect(self.binCh)
-        self.bitBox.currentIndexChanged.connect(self.bitCh)
+        self.binBox.currentIndexChanged.connect(self.binChange)
+        self.bitBox.currentIndexChanged.connect(self.bitChange)
+        self.shutBox.addItem("Rolling")
+        self.shutBox.addItem("Global")
+        self.shutBox.setCurrentText(mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode'))
+        self.shutBox.currentIndexChanged.connect(self.shutChange)
+        self.triggerBox.addItem('Internal (Recommended for fast acquisitions)')
+        self.triggerBox.addItem('Software (Recommended for Live Mode)')
+        self.triggerBox.addItem('External Start')
+        self.triggerBox.addItem('External Exposure')
+        self.triggerBox.addItem('External')
+        self.triggerBox.setCurrentText(mmc.getProperty(DEVICE[0], 'TriggerMode'))
+        self.triggerBox.currentIndexChanged.connect(self.triggerChange)
         
         
         # Sliders
@@ -102,9 +114,15 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.bRatio.setMaximum(ratioMax)
         
         #File size
-        self.fileSize.setValue(4.)
+        self.fileSize.setValue(1.)
         self.fileSize.setSingleStep(0.5)
+        self.fileSize.setMaximum(4.)
+        self.fileSize.setMinimum(0)
         self.fileSize.valueChanged.connect(self.fileSizeSetting)
+        
+        #Interval Ms
+        self.intervalMs.setValue(1.)
+        self.intervalMs.setMinimum(1)
         
         #####
         
@@ -138,15 +156,25 @@ class MyMainWindow(QtWidgets.QMainWindow):
         except:
             print "CMM err, no possibility to set exposure"
             
-    def binCh(self):
+    def binChange(self):
         binn = self.binBox.currentText()
         mmc.setProperty(DEVICE[0], 'Binning', str(binn))
         print "Binning set at", mmc.getProperty(DEVICE[0],'Binning') 
 
-    def bitCh(self):
+    def bitChange(self):
         bit = self.bitBox.currentText()
         mmc.setProperty(DEVICE[0], 'Sensitivity/DynamicRange', str(bit))
         print "Bit depth set at", mmc.getProperty(DEVICE[0],'Sensitivity/DynamicRange')
+        
+    def shutChange(self):
+        shut = self.shutBox.currentText()
+        mmc.setProperty(DEVICE[0],'ElectronicShutteringMode',str(shut))
+        print 'Shutter mode set at ', mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode')
+    def triggerChange(self):
+        trig = self.triggerBox.currentText()
+        mmc.setProperty(DEVICE[0],'TriggerMode',str(trig))
+        print 'Trigger mode set at ', mmc.getProperty(DEVICE[0], 'TriggerMode')
+        
     
     def green(self,toggle_g):
         if toggle_g:
@@ -175,9 +203,10 @@ class MyMainWindow(QtWidgets.QMainWindow):
         duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
         ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
         maxFrames = int(self.framesPerFileLabel.text())
+        intervalMs = self.intervalMs.value()
         
         #Initialise sequence acqu
-        (ledList, nbFrames, intervalMs) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))))
+        (ledList, nbFrames) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))), intervalMs)
         
         #Initialize tiffWriter object
         print 'tiffwriter init'
@@ -222,6 +251,10 @@ class MyMainWindow(QtWidgets.QMainWindow):
     
     def unloadDevices(self):
         mmc.unloadAllDevices()
+        
+    def loadZyla(self):
+        DEVICE = camInit(mmc)
+        print 'Device ',DEVICE[0],' loaded'
         
         
 ##Launching everything

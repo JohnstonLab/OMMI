@@ -6,13 +6,13 @@ Created on Tue Aug 20 16:48:18 2019
 """
 
 import u3
+from time import sleep
 
 
-#red/green leds
-toggle_r=False
-toggle_g=False
-red_lj=5
-green_lj=4
+#Labjack information
+red_lj=5    #FIO5
+green_lj=4  #FIO4
+trig = 7    #FIO7
 
 ####USELESS###
 ## Boolean variable that will represent 
@@ -26,7 +26,7 @@ def labjackInit():
         device = u3.U3() #Open first found U3
     except:
         #Handle all exceptions here
-        print "open error" # TO FIX : adapt error msg
+        print "Error : labjack device non available"
     return device
 
 def greenOn(device):
@@ -44,3 +44,16 @@ def redOn(device):
 def redOff(device):
     #print "red OFF"
     device.setFIOState(red_lj, 0)
+
+def trigExposure(device, exp):
+    device.setFIOState(trig, 1)
+    sleep(exp*0.001) #milliseconds conversion
+    device.setFIOState(trig, 0)
+
+#print 'trig Exposure test'
+#device = labjackInit()
+#exp = 50
+#for i in range(0,1000):
+#    trigExposure(device,exp)
+#    sleep(0.025)
+    ###GIVES A GOOD SQUARE WAVE (30ms between wave instead of 25.. maybe the loop)
