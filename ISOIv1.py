@@ -32,7 +32,7 @@ from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
 from continousAcq import grayLive, sequenceAcq, sequenceInit, sequenceAcqTriggered
 from camInit import camInit
-from saveFcts import tiffWriterInit, tiffWriterClose, fileSizeCalculation
+from saveFcts import tiffWriterInit, fileSizeCalculation, tiffWriterDel
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage
 
 
@@ -276,13 +276,16 @@ class MyMainWindow(QtWidgets.QMainWindow):
         
         #Initialize tiffWriter object
         print 'tiffwriter init'
-        tiffWriterList = tiffWriterInit(name, nbFrames, maxFrames)
+        (tiffWriterList,savePath) = tiffWriterInit(name, nbFrames, maxFrames)
         print 'tiffwriter initialized'
         #Launch seq acq
-        sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit) #Carries the images acquisition AND saving
+        imageCount = sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit) #Carries the images acquisition AND saving
         
-        #Close tif file where tiffWriter object wrote
-        tiffWriterClose(tiffWriterList)
+        
+        ##### IF ABORT --> CHECK WICH .tif are empty and suppress it #####  
+        if exit.is_set():
+            print 'Empty .tif suppression'
+            tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList)
         
         print 'Acquisition done'
         window.progressBar.setValue(0)

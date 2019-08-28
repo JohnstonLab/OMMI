@@ -101,15 +101,15 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
     
     #Print the real interval between images ## Can be done in post-processing with timeStamps
     for i in range(0,len(timeStamps)-1):
-        print  "delta time between t",i+1," and t",i," : ",(timeStamps[i+1] -timeStamps[i])
-    
-    ##### IF ABORT --> CHECK WICH .tif are empty and suppress it #####        
+        print  "delta time between t",i+1," and t",i," : ",(timeStamps[i+1] -timeStamps[i])      
     
     #Close tiff file open
     tiffWriterClose(tiffWriterList)
+    
     #Stop camera acquisition
     mmc.stopSequenceAcquisition()
     mmc.clearCircularBuffer() 
+    return imageCount
 
 def sequenceAcqTriggered(mmc,nbImages, deviceLabel, intervalMs, labjack):
     print "Interval between images : ", intervalMs,"ms"
