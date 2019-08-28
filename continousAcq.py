@@ -11,7 +11,7 @@ IDEA : create a sequence class, in this way, sequence param can be saved when in
 import cv2
 from time import sleep, time
 from saveFcts import saveFrame, tiffWriterClose
-from Labjack import greenOn, greenOff, redOn, redOff
+from Labjack import greenOn, greenOff, redOn, redOff, trigImage
 
 def grayLive(mmc):
     cv2.namedWindow('Video - press any key to close') #open a new window
@@ -40,7 +40,7 @@ def sequenceInit(duration, ledRatio, exp, intervalMs):
     ledList = ledSeq*(int(nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
     return ledList, nbFrames
 
-def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack):
+def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition."
     
     #Get the time ##TO FIX : is it the right place to put it on ?
@@ -49,11 +49,6 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
     #exp = mmc.getProperty(deviceLabel,'Exposure')
     print "Interval between images : ", intervalMs,"ms"
     print "Nb of frames : ", nbImages
-    mmc.prepareSequenceAcquisition(deviceLabel)
-    mmc.startSequenceAcquisition(nbImages, intervalMs, False)   #numImages	Number of images requested from the camera
-                                                        #intervalMs	The interval between images, currently only supported by Andor cameras
-                                                        #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
-    
     
     #mmc.startContinuousSequenceAcquisition(1)
     failureCount=0 
@@ -70,13 +65,20 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
     else:
         redOff(labjack)
         greenOff(labjack)
+        
+    mmc.prepareSequenceAcquisition(deviceLabel)
+    mmc.startSequenceAcquisition(nbImages, intervalMs, False)   #numImages	Number of images requested from the camera
+                                                        #intervalMs	The interval between images, currently only supported by Andor cameras
+                                                        #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
+    timeStamps.append(time())
 
     while(imageCount<(nbImages)): # failure count avoid looping infinitely
         #sleep(0.001*(intervalMs-10)) #Delay in seconds, can be closed to intervalMs to limit loops for nothing
         
         #Launching acquisition
-        if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
-            #Lighting good LED
+        if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished #Enter this loop BETWEEN acquisition
+            imageCount +=1
+            #Lighting good LED for next acquisition
             if ledList[imageCount] == 'r':
                 #print "Blue off"
                 greenOff(labjack)
@@ -90,8 +92,8 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
             #sleep(0.005) #Wait 5ms to ensure LEDS are on
             img = mmc.popNextImage() #Gets and removes the next image from the circular buffer
             timeStamps.append(time())
-            saveFrame(img, tiffWriterList, imageCount, ledList[imageCount], maxFrames)
-            imageCount +=1
+            saveFrame(img, tiffWriterList, (imageCount-1), ledList[(imageCount-1)], maxFrames) # saving frame of previous acquisition
+            window.progressBar.setValue(imageCount) #Update the gui of evolution of the acquisition
         else:
             failureCount+=1
 
@@ -109,3 +111,28 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
     #Stop camera acquisition
     mmc.stopSequenceAcquisition()
     mmc.clearCircularBuffer() 
+
+def sequenceAcqTriggered(mmc,nbImages, deviceLabel, intervalMs, labjack):
+    print "Interval between images : ", intervalMs,"ms"
+    print "Nb of frames : ", nbImages
+    mmc.prepareSequenceAcquisition(deviceLabel)
+    mmc.startSequenceAcquisition(nbImages, intervalMs, False)
+    print 'images ready to be taken'
+    cv2.namedWindow('Video - wait trigger')
+    for i in range(0,10):
+        sleep(1)
+        print(10-i)
+    trigImage(labjack)
+    exp = float(mmc.getProperty(deviceLabel, 'Exposure'))
+    failureCount=0
+    while(failureCount<100):
+        sleep(exp*0.001)
+        if (mmc.getRemainingImageCount() > 0):
+            img = mmc.popNextImage()
+            cv2.imshow('Video - wait trigger', img)
+        else:
+            print 'no frame'
+            failureCount+=1
+    cv2.destroyAllWindows()
+    mmc.stopSequenceAcquisition()
+    

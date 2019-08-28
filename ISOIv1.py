@@ -23,15 +23,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 from PyQt5 import QtCore, QtWidgets, QtGui, uic
+from time import sleep
 
 #Function import
 
 from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
-from continousAcq import grayLive, sequenceAcq, sequenceInit
+from continousAcq import grayLive, sequenceAcq, sequenceInit, sequenceAcqTriggered
 from camInit import camInit
 from saveFcts import tiffWriterInit, tiffWriterClose, fileSizeCalculation
-from Labjack import labjackInit, greenOn, greenOff, redOn, redOff
+from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage
 
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -48,6 +49,12 @@ expMax=500
 ratioMax=10
 ratioMin=0
 
+#Bit depth (cam properties)
+bit= ['12-bit (high well capacity)','12-bit (low noise)',"16-bit (low noise & high well capacity)"]
+
+#Binning (cam properties)
+binn=['1x1','2x2','4x4','8x8']
+
 class MyMainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parent=None):
@@ -61,15 +68,16 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.SaveEBtn.clicked.connect(self.saveImageSeq)
         self.unloadBtn.clicked.connect(self.unloadDevices)
         self.loadBtn.clicked.connect(self.loadZyla)
+        self.triggerBtn.clicked.connect(self.triggerExt)
         
         #ComboBoxes
-        self.binBox.addItem("1x1","1x1")
-        self.binBox.addItem("2x2","2x2")
-        self.binBox.addItem("4x4","4x4")
-        self.binBox.addItem("8x8","8x8")
-        self.bitBox.addItem("12-bit (high well capacity)","12-bit (high well capacity)")
-        self.bitBox.addItem("12-bit (low noise)","12-bit (low noise)")
-        self.bitBox.addItem("16-bit (low noise & high well capacity)","16-bit (low noise & high well capacity)")
+        self.binBox.addItem(binn[0])
+        self.binBox.addItem(binn[1])
+        self.binBox.addItem(binn[2])
+        self.binBox.addItem(binn[3])
+        self.bitBox.addItem(bit[0])
+        self.bitBox.addItem(bit[1])
+        self.bitBox.addItem(bit[2])
         self.binBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Binning'))
         self.bitBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Sensitivity/DynamicRange'))
         self.binBox.currentIndexChanged.connect(self.binChange)
@@ -129,10 +137,17 @@ class MyMainWindow(QtWidgets.QMainWindow):
         #Name text area
         self.name.insert("DefaultName")
         
+        #Initialize frames per files text label
+        self.framesPerFileLabel.setText('1146') #nb frames per file (1GB) for uncropped frame with 16 bits per pixels
+        
+        #ProgressBar
+        self.progressBar.setMinimum(0)
+        self.progressBar.setValue(0)
+        
         #LEDs toggle buttons
         self.Green.stateChanged.connect(self.green)
         self.Red.stateChanged.connect(self.red)
-        #self.BLUE.stateChanged.connect(self.fileSizeSetting)
+        #self.BLUE.stateChanged.connect(self.blue)
         
     def liveFunc(self):
         grayLive(mmc)
@@ -141,7 +156,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         mmc.clearROI()
         mmc.snapImage()
         img = mmc.getImage()
-        (x,y,w,h) = crop_w_mouse(img)
+        (x,y,w,h) = crop_w_mouse(img, mmc.getROI())
         mmc.setROI(x,y,w,h)
         print "image width: "+str(mmc.getImageWidth())
         print "image height: "+str(mmc.getImageHeight())
@@ -192,12 +207,51 @@ class MyMainWindow(QtWidgets.QMainWindow):
     def fileSizeSetting(self):
         sizeMax = self.fileSize.value()
         ROI = mmc.getROI()
-        bitDepth = 16 #To get from GUI
+        bitDepth = self.bitBox.currentText()
+        if bitDepth == bit[2]:
+            bitPPix = 16 #Nb of bits per pixel
+        else:
+            bitPPix = 12
         
-        framesMax = fileSizeCalculation(sizeMax, ROI, bitDepth)
+        framesMax = fileSizeCalculation(sizeMax, ROI, bitPPix)
         self.framesPerFileLabel.setText(str(framesMax))
     
 
+    def triggerExt(self):
+        duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
+        ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
+        intervalMs = self.intervalMs.value()
+        
+        #Initialise sequence acqu
+        #(ledList, nbFrames) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))), intervalMs)
+        
+        #sequenceAcqTriggered(mmc,nbFrames, DEVICE[0], intervalMs, labjack)
+        print 'External trigger to snap image'
+        mmc.snapImage()
+        print 'image ready to snap'
+        for i in range(0,10):
+            sleep(1)
+            print(10-i)
+        trigImage(labjack)
+        img = mmc.getImage()
+        plt.imshow(img, cmap='gray')
+        plt.show()
+#        mmc.clearCircularBuffer()
+#        trigImage(labjack)
+#        failureCount=0
+#        exp = float(mmc.getProperty(DEVICE[0], 'Exposure'))
+#        while(failureCount<10):
+#            sleep(exp*0.001)
+#            if (mmc.getRemainingImageCount() > 0):
+#                img = mmc.popNextImage()
+#                plt.imshow(img, cmap='gray')
+#                plt.show()
+#            else:
+#                print 'no frame'
+#                failureCount+=1
+        print 'trig done'
+            
+    
     def saveImageSeq(self):
         name = window.name.text()  ## get Name from text area
         duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
@@ -208,12 +262,15 @@ class MyMainWindow(QtWidgets.QMainWindow):
         #Initialise sequence acqu
         (ledList, nbFrames) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))), intervalMs)
         
+        #Initialize progressBar
+        window.progressBar.setMaximum(nbFrames)        
+        
         #Initialize tiffWriter object
         print 'tiffwriter init'
         tiffWriterList = tiffWriterInit(name, nbFrames, maxFrames)
         print 'tiffwriter initialized'
         #Launch seq acq
-        sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack) #Carries the images acquisition AND saving
+        sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window) #Carries the images acquisition AND saving
         
         #Close tif file where tiffWriter object wrote
         tiffWriterClose(tiffWriterList)

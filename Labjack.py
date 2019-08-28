@@ -49,11 +49,19 @@ def trigExposure(device, exp):
     device.setFIOState(trig, 1)
     sleep(exp*0.001) #milliseconds conversion
     device.setFIOState(trig, 0)
+    
+def trigImage(device):
+    device.setFIOState(trig, 1)
+    sleep(0.001) #minimum required trig is 8 ns
+    device.setFIOState(trig, 0)
+
+##CHECK ARM output of the cam is high
+
 
 #print 'trig Exposure test'
 #device = labjackInit()
 #exp = 50
-#for i in range(0,1000):
+#for i in range(0,100):
 #    trigExposure(device,exp)
 #    sleep(0.025)
     ###GIVES A GOOD SQUARE WAVE (30ms between wave instead of 25.. maybe the loop)

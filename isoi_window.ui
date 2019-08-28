@@ -224,7 +224,7 @@
        <string>load devices</string>
       </property>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>32</x>
@@ -284,10 +284,10 @@
      <widget class="QWidget" name="">
       <property name="geometry">
        <rect>
-        <x>270</x>
+        <x>271</x>
         <y>130</y>
-        <width>481</width>
-        <height>22</height>
+        <width>421</width>
+        <height>25</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -305,6 +305,13 @@
        </item>
        <item>
         <widget class="QComboBox" name="triggerBox"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="triggerBtn">
+         <property name="text">
+          <string>Snap (ext trig)</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
