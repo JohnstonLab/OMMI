@@ -40,7 +40,7 @@ def sequenceInit(duration, ledRatio, exp, intervalMs):
     ledList = ledSeq*(int(nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
     return ledList, nbFrames
 
-def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window):
+def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window, app):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition."
     
     #Get the time ##TO FIX : is it the right place to put it on ?
@@ -94,6 +94,7 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
             timeStamps.append(time())
             saveFrame(img, tiffWriterList, (imageCount-1), ledList[(imageCount-1)], maxFrames) # saving frame of previous acquisition
             window.progressBar.setValue(imageCount) #Update the gui of evolution of the acquisition
+            app.processEvents() #Allows the GUI to be responsive even while this fct is executing /!\ check time affection of this skills
         else:
             failureCount+=1
 

@@ -270,12 +270,13 @@ class MyMainWindow(QtWidgets.QMainWindow):
         tiffWriterList = tiffWriterInit(name, nbFrames, maxFrames)
         print 'tiffwriter initialized'
         #Launch seq acq
-        sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window) #Carries the images acquisition AND saving
+        sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app) #Carries the images acquisition AND saving
         
         #Close tif file where tiffWriter object wrote
         tiffWriterClose(tiffWriterList)
         
         print 'Acquisition done'
+        window.progressBar.setValue(0)
             
     def histo(self):
         (mask, h_h, h_w, pixMaxVal, bin_width, nbins) = histoInit(mmc)
