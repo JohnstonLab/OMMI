@@ -40,7 +40,7 @@ def sequenceInit(duration, ledRatio, exp, intervalMs):
     ledList = ledSeq*(int(nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
     return ledList, nbFrames
 
-def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window, app):
+def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window, app, exit):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition."
     
     #Get the time ##TO FIX : is it the right place to put it on ?
@@ -51,7 +51,6 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
     print "Nb of frames : ", nbImages
     
     #mmc.startContinuousSequenceAcquisition(1)
-    failureCount=0 
     imageCount =0
     
     #Initialize the good LED for first image
@@ -72,7 +71,7 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
                                                         #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
     timeStamps.append(time())
 
-    while(imageCount<(nbImages)): # failure count avoid looping infinitely
+    while(imageCount<(nbImages) and not exit.is_set()): #Loop stops if we have the number of frames wanted OR if abort button is press (see abortFunc)
         #sleep(0.001*(intervalMs-10)) #Delay in seconds, can be closed to intervalMs to limit loops for nothing
         
         #Launching acquisition
@@ -95,8 +94,6 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
             saveFrame(img, tiffWriterList, (imageCount-1), ledList[(imageCount-1)], maxFrames) # saving frame of previous acquisition
             window.progressBar.setValue(imageCount) #Update the gui of evolution of the acquisition
             app.processEvents() #Allows the GUI to be responsive even while this fct is executing /!\ check time affection of this skills
-        else:
-            failureCount+=1
 
     #Turning off all LEDS
     greenOff(labjack)
@@ -105,7 +102,8 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
     #Print the real interval between images ## Can be done in post-processing with timeStamps
     for i in range(0,len(timeStamps)-1):
         print  "delta time between t",i+1," and t",i," : ",(timeStamps[i+1] -timeStamps[i])
-            
+    
+    ##### IF ABORT --> CHECK WICH .tif are empty and suppress it #####        
     
     #Close tiff file open
     tiffWriterClose(tiffWriterList)

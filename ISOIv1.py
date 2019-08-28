@@ -24,6 +24,7 @@ import numpy as np
 import cv2
 from PyQt5 import QtCore, QtWidgets, QtGui, uic
 from time import sleep
+from threading import Event
 
 #Function import
 
@@ -36,6 +37,10 @@ from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage
 
 
 ########## GLOBAL VAR - needed for displays information ######
+
+#Allows to abort an acquisition
+global exit
+exit = Event()
 
 #trackbar
 div=100
@@ -69,6 +74,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.unloadBtn.clicked.connect(self.unloadDevices)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.triggerBtn.clicked.connect(self.triggerExt)
+        self.abortBtn.clicked.connect(self.abortFunc)
         
         #ComboBoxes
         self.binBox.addItem(binn[0])
@@ -259,6 +265,9 @@ class MyMainWindow(QtWidgets.QMainWindow):
         maxFrames = int(self.framesPerFileLabel.text())
         intervalMs = self.intervalMs.value()
         
+        #If abort button was hit, enable execution again, and exit.is_set() will return False (cf sequAcq fct)
+        exit.clear()
+        
         #Initialise sequence acqu
         (ledList, nbFrames) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))), intervalMs)
         
@@ -270,7 +279,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         tiffWriterList = tiffWriterInit(name, nbFrames, maxFrames)
         print 'tiffwriter initialized'
         #Launch seq acq
-        sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app) #Carries the images acquisition AND saving
+        sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit) #Carries the images acquisition AND saving
         
         #Close tif file where tiffWriter object wrote
         tiffWriterClose(tiffWriterList)
@@ -305,6 +314,11 @@ class MyMainWindow(QtWidgets.QMainWindow):
 
         cv2.destroyAllWindows()
         mmc.stopSequenceAcquisition()
+        
+    def abortFunc(self):
+        "Abort a running acquisition - source : https://stackoverflow.com/questions/25029537/interrupt-function-execution-from-another-function-in-python"
+        exit.set() #Interrupt the loop of acquisition
+        print 'Acquisition abort properly'
         
     
     def unloadDevices(self):
