@@ -71,8 +71,6 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.cropBtn.clicked.connect(self.crop)
         self.histoBtn.clicked.connect(self.histo)
         self.SaveEBtn.clicked.connect(self.saveImageSeq)
-        self.unloadBtn.clicked.connect(self.unloadDevices)
-        self.loadBtn.clicked.connect(self.loadZyla)
         self.triggerBtn.clicked.connect(self.triggerExt)
         self.abortBtn.clicked.connect(self.abortFunc)
         
@@ -310,9 +308,11 @@ class MyMainWindow(QtWidgets.QMainWindow):
                 h = histoCalc(nbins, pixMaxVal, bin_width, h_h, h_w, g)
                 cv2.imshow('Histogram',h)
                 
-                key = cv2.waitKey(1) & 0xFF
-                # if the `q` key is pressed, break from the loop
-                if key == ord("q"):
+                if cv2.waitKey(33) == 27:
+                    break
+                if cv2.getWindowProperty('Video', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                    break
+                elif cv2.getWindowProperty('Histogram', 1) == -1: #Condition verified when 'X' (close) button is pressed
                     break
 
         cv2.destroyAllWindows()
@@ -326,6 +326,15 @@ class MyMainWindow(QtWidgets.QMainWindow):
     
     def unloadDevices(self):
         mmc.unloadAllDevices()
+        print 'all devices UNLOADED'
+        return True
+    
+    def closeEvent(self, event):
+        # do stuff
+        if self.unloadDevices(): # UNLOAD DEVICES befor closing the program
+            event.accept() # let the window close
+        else:
+            event.ignore()
         
     def loadZyla(self):
         DEVICE = camInit(mmc)
@@ -348,7 +357,7 @@ if __name__ == '__main__':
     labjack = labjackInit()
     #Launch GUI
     app = QtWidgets.QApplication(sys.argv)
-    window = MyMainWindow() 
+    window = MyMainWindow()
     window.show()
     sys.exit(app.exec_())
 

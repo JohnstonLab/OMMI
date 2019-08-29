@@ -14,15 +14,17 @@ from saveFcts import saveFrame, tiffWriterClose
 from Labjack import greenOn, greenOff, redOn, redOff, trigImage
 
 def grayLive(mmc):
-    cv2.namedWindow('Video - press any key to close') #open a new window
+    cv2.namedWindow('Video - press esc to close') #open a new window
     mmc.startContinuousSequenceAcquisition(1) #acquisition each 1 ms, images put in circular buffer
     while True:
         if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer
             g = mmc.getLastImage()
-            cv2.imshow('Video - press any key to close', g)
+            cv2.imshow('Video - press esc to close', g)
         else:
             print('No frame')
-        if cv2.waitKey(32) >= 0:
+        if cv2.waitKey(33) == 27:
+            break
+        if cv2.getWindowProperty('Video - press esc to close', 1) == -1: #Condition verified when 'X' (close) button is pressed
             break
     cv2.destroyAllWindows()
     mmc.stopSequenceAcquisition()

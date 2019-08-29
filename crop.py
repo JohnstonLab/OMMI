@@ -25,11 +25,13 @@ def crop_w_mouse(img, ROI):
     print "Default ROI x "+str(x)+" y "+str(y)+" w "+str(w)+" h "+str(h)
     cv2.namedWindow('Click to crop - Esc to close')
     cv2.imshow('Click to crop - Esc to close', img)
-    while(1):
+    while(True):
         cv2.setMouseCallback('Click to crop - Esc to close',onMouse, 0)
         if cv2.waitKey(33) == 27:
-            cv2.destroyAllWindows()
             break
+        if cv2.getWindowProperty('Click to crop - Esc to close', 1) == -1: #Condition verified when 'X' (close) button is pressed
+            break
+    cv2.destroyAllWindows()
 
     if refPt:           #Check if refPt is not empty. If he is, ROI keep the default value
         x= refPt[0][0]
