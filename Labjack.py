@@ -52,7 +52,7 @@ def trigExposure(device, exp):
     
 def trigImage(device):
     device.setFIOState(trig, 1)
-    sleep(0.001) #minimum required trig is 8 ns
+    sleep(0.00001) #minimum required trig is 8 ns
     device.setFIOState(trig, 0)
 
 ##CHECK ARM output of the cam is high

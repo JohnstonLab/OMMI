@@ -70,9 +70,11 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.liveBtn.clicked.connect(self.liveFunc)
         self.cropBtn.clicked.connect(self.crop)
         self.histoBtn.clicked.connect(self.histo)
-        self.SaveEBtn.clicked.connect(self.saveImageSeq)
+        self.SaveEBtn.clicked.connect(self.shutterModeCheck)
         self.triggerBtn.clicked.connect(self.triggerExt)
         self.abortBtn.clicked.connect(self.abortFunc)
+        self.loadBtn.clicked.connect(self.loadZyla)
+        self.unloadBtn.clicked.connect(self.unloadDevices)
         
         #ComboBoxes
         self.binBox.addItem(binn[0])
@@ -256,6 +258,21 @@ class MyMainWindow(QtWidgets.QMainWindow):
         print 'trig done'
             
     
+    def shutterModeCheck(self):
+        if mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode')== 'Rolling':
+            print 'QTGUI launch'
+            choice = QtWidgets.QMessageBox.question(self, 'Shutter Mode',
+                                                "Running acquisition in Rolling mode ?",
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            print 'QtGui hqs as an answer'
+            if choice == QtWidgets.QMessageBox.Yes:
+                print("Running in Rolling mode")
+                self.saveImageSeq() 
+            else:
+                print('Change mode in the other panel')
+        else:
+            self.saveImageSeq()
+    
     def saveImageSeq(self):
         name = window.name.text()  ## get Name from text area
         duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
@@ -280,9 +297,9 @@ class MyMainWindow(QtWidgets.QMainWindow):
         imageCount = sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit) #Carries the images acquisition AND saving
         
         
-        ##### IF ABORT --> CHECK WICH .tif are empty and suppress it #####  
-        if exit.is_set():
-            print 'Empty .tif suppression'
+        ##### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####  
+        if exit.is_set() and ((nbFrames/maxFrames)>=1): #check if abort fct was called and that ;ultiples .tif were initialized
+            print 'Empty .tif suppression ?'
             tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList)
         
         print 'Acquisition done'

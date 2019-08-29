@@ -78,6 +78,7 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
         
         #Launching acquisition
         if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished #Enter this loop BETWEEN acquisition
+            trigImage(labjack)
             imageCount +=1
             #Lighting good LED for next acquisition
             if ledList[imageCount] == 'r':
