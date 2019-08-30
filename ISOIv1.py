@@ -48,7 +48,7 @@ step=1/float(div)
 
 #Exposure (just here to keep it as global var)
 expMin=0.0277
-expMax=500
+expMax=99
 
 #LEDs Ratio
 ratioMax=10
