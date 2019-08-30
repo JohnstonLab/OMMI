@@ -46,9 +46,11 @@ def redOff(device):
     device.setFIOState(red_lj, 0)
 
 def trigExposure(device, exp):
+    print 'pulse generation'
     device.setFIOState(trig, 1)
     sleep(exp*0.001) #milliseconds conversion
     device.setFIOState(trig, 0)
+    print 'pulse generated'
     
 def trigImage(device):
     device.setFIOState(trig, 1)

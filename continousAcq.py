@@ -67,10 +67,11 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
         redOff(labjack)
         greenOff(labjack)
         
-    mmc.prepareSequenceAcquisition(deviceLabel)
-    mmc.startSequenceAcquisition(nbImages, intervalMs, False)   #numImages	Number of images requested from the camera
+    #mmc.prepareSequenceAcquisition(deviceLabel)
+    #mmc.startSequenceAcquisition(nbImages, intervalMs, False)   #numImages	Number of images requested from the camera
                                                         #intervalMs	The interval between images, currently only supported by Andor cameras
                                                         #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
+    mmc.startContinuousSequenceAcquisition(intervalMs)
     timeStamps.append(time())
 
     while(imageCount<(nbImages) and not exit.is_set()): #Loop stops if we have the number of frames wanted OR if abort button is press (see abortFunc)

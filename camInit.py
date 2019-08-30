@@ -25,7 +25,7 @@ binn=['1x1','2x2','4x4','8x8']
 bit= ['12-bit (high well capacity)','12-bit (low noise)',"16-bit (low noise & high well capacity)"]
 
 #Exposure
-exp=2
+exp=10
 
 def camInit(mmc):
     mmc.loadDevice(*DEVICE)
@@ -38,7 +38,7 @@ def camInit(mmc):
     """initial camera properties"""
     mmc.setProperty(DEVICE[0], 'Binning', binn[2])
     print "Binning set at", mmc.getProperty(DEVICE[0],'Binning')  
-    #mmc.setProperty(DEVICE[0], 'Exposure', exp)
+    mmc.setProperty(DEVICE[0], 'Exposure', exp)
     mmc.setProperty(DEVICE[0], 'AcquisitionWindow', AcqWindow) #NOT AVAILABLE IN DEMO
     mmc.setProperty(DEVICE[0], 'PixelReadoutRate', PixRR) #NOT AVAILABLE IN DEMO
     mmc.setProperty(DEVICE[0], 'Sensitivity/DynamicRange', bit[2]) #NOT AVAILABLE IN DEMO
