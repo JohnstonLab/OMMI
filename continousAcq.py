@@ -79,11 +79,7 @@ def sequenceAcqSoftTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledLi
         
         #Launching acquisition
         if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished #Enter this loop BETWEEN acquisition
-<<<<<<< HEAD
-            trigImage(labjack) #Generate a pulse, which allows to flag the entry in this code statement with the oscilloscope
-=======
-            #trigImage(labjack)
->>>>>>> 01f1e93ce346066e49f0df3f566888dc72194f3c
+            #trigImage(labjack) #Generate a pulse, which allows to flag the entry in this code statement with the oscilloscope
             imageCount +=1
             #Lighting good LED for next acquisition
             if ledList[imageCount] == 'r':
