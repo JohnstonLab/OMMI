@@ -43,5 +43,5 @@ def camInit(mmc):
     mmc.setProperty(DEVICE[0], 'PixelReadoutRate', PixRR) #NOT AVAILABLE IN DEMO
     mmc.setProperty(DEVICE[0], 'Sensitivity/DynamicRange', bit[2]) #NOT AVAILABLE IN DEMO
     mmc.setProperty(DEVICE[0],'ElectronicShutteringMode','Global') #Rolling Global #NOT AVAILABLE IN DEMO
-    mmc.setProperty(DEVICE[0],'Overlap','Off') #NOT AVAILABLE IN DEMO
+    mmc.setProperty(DEVICE[0],'Overlap','On') #NOT AVAILABLE IN DEMO
     return DEVICE

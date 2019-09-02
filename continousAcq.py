@@ -32,11 +32,9 @@ def grayLive(mmc):
 
 def sequenceInit(duration, ledRatio, exp, intervalMs):
     "Prepare (and DISPLAY??) infos about the sequence acq coming"
-
-
-    ## Initialize timeStamps
+    readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
     ## send all of this to sequence acq
-    nbFrames = int((duration)/(intervalMs+exp))+1  ## Determine number of frames. (+1) ensure to have a list long enough
+    nbFrames = int((duration)/(intervalMs+readOutFrame+exp))+1  ## Determine number of frames. (+1) ensure to have a list long enough
     ledSeq = ['r']*ledRatio[0]+['g']*ledRatio[1]+['b']*ledRatio[2] #Sequence of LED lighting in function of the ratio
     print 'LED sequence : ', ledSeq
     ledList = ledSeq*(int(nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
@@ -45,11 +43,13 @@ def sequenceInit(duration, ledRatio, exp, intervalMs):
 def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window, app, exit):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition."
     
+    readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
+    
     #Get the time ##TO FIX : is it the right place to put it on ?
     timeStamps = []
     #timeStamps.append(time()) #Useless to have a timestamp here
     #exp = mmc.getProperty(deviceLabel,'Exposure')
-    print "Interval between images : ", intervalMs,"ms"
+    print "Interval between images : ", (intervalMs+readOutFrame),"ms"
     print "Nb of frames : ", nbImages
     
     #mmc.startContinuousSequenceAcquisition(1)
@@ -71,7 +71,7 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
     #mmc.startSequenceAcquisition(nbImages, intervalMs, False)   #numImages	Number of images requested from the camera
                                                         #intervalMs	The interval between images, currently only supported by Andor cameras
                                                         #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
-    mmc.startContinuousSequenceAcquisition(intervalMs)
+    mmc.startContinuousSequenceAcquisition(intervalMs+readOutFrame)
     timeStamps.append(time())
 
     while(imageCount<(nbImages) and not exit.is_set()): #Loop stops if we have the number of frames wanted OR if abort button is press (see abortFunc)
@@ -79,7 +79,7 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
         
         #Launching acquisition
         if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished #Enter this loop BETWEEN acquisition
-            trigImage(labjack)
+            #trigImage(labjack)
             imageCount +=1
             #Lighting good LED for next acquisition
             if ledList[imageCount] == 'r':
@@ -114,6 +114,18 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
     mmc.stopSequenceAcquisition()
     mmc.clearCircularBuffer() 
     return imageCount
+
+def multipleSnap(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window, app, exit):
+    print 'multipleSnap fct'
+    cv2.namedWindow('Video')
+    for i in range(0,500):    
+        mmc.snapImage()
+        trigImage(labjack)
+        sleep(intervalMs*0.001)
+        g = mmc.getImage()
+        cv2.imshow('Video', g)
+    sleep(5)
+    cv2.destroyAllWindows()
 
 def sequenceAcqTriggered(mmc,nbImages, deviceLabel, intervalMs, labjack):
     print "Interval between images : ", intervalMs,"ms"

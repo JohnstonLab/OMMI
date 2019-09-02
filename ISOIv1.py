@@ -30,9 +30,9 @@ from threading import Event
 
 from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
-from continousAcq import grayLive, sequenceAcq, sequenceInit, sequenceAcqTriggered
+from continousAcq import grayLive, sequenceAcq, sequenceInit, sequenceAcqTriggered, multipleSnap
 from camInit import camInit
-from saveFcts import tiffWriterInit, fileSizeCalculation, tiffWriterDel
+from saveFcts import tiffWriterInit, fileSizeCalculation, tiffWriterDel, tiffWriterClose
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage, trigExposure
 
 
@@ -100,6 +100,9 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.triggerBox.addItem('External')
         self.triggerBox.setCurrentText(mmc.getProperty(DEVICE[0], 'TriggerMode'))
         self.triggerBox.currentIndexChanged.connect(self.triggerChange)
+        self.ledTrigBox.addItem('Camera')
+        self.ledTrigBox.addItem('Software')
+        self.ledTrigBox.setCurrentText('Camera')
         
         
         # Sliders
@@ -305,17 +308,20 @@ class MyMainWindow(QtWidgets.QMainWindow):
         window.progressBar.setMaximum(nbFrames)        
         
         #Initialize tiffWriter object
-        print 'tiffwriter init'
         (tiffWriterList,savePath) = tiffWriterInit(name, nbFrames, maxFrames)
-        print 'tiffwriter initialized'
-        #Launch seq acq
-        imageCount = sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit) #Carries the images acquisition AND saving
         
-        
-        ##### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####  
-        if exit.is_set() and ((nbFrames/maxFrames)>=1): #check if abort fct was called and that ;ultiples .tif were initialized
-            print 'Empty .tif suppression ?'
-            tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList)
+        if self.ledTrigBox.currentText() == 'Software' :
+            #Launch seq acq
+            imageCount = sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit) #Carries the images acquisition AND saving
+            #multipleSnap(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit)
+            #imageCount=100
+            
+            ##### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####  
+            if exit.is_set() and ((nbFrames/maxFrames)>=1): #check if abort fct was called and that ;ultiples .tif were initialized
+                print 'Empty .tif suppression ?'
+                tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList)
+        else :
+            print 'LED camera trigger function'
         
         print 'Acquisition done'
         window.progressBar.setValue(0)
