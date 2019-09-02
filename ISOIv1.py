@@ -30,10 +30,10 @@ from threading import Event
 
 from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
-from continousAcq import grayLive, sequenceAcq, sequenceInit, sequenceAcqTriggered
+from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit, sequenceAcqTriggered, multipleSnap
 from camInit import camInit
-from saveFcts import tiffWriterInit, fileSizeCalculation, tiffWriterDel
-from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage
+from saveFcts import tiffWriterInit, fileSizeCalculation, tiffWriterDel, tiffWriterClose
+from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage, trigExposure
 
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -47,8 +47,9 @@ div=100
 step=1/float(div)
 
 #Exposure (just here to keep it as global var)
-expMin=0.0277
-expMax=500
+#expMin=0.0277
+expMin=10.07
+expMax=99.0
 
 #LEDs Ratio
 ratioMax=10
@@ -99,22 +100,26 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.triggerBox.addItem('External')
         self.triggerBox.setCurrentText(mmc.getProperty(DEVICE[0], 'TriggerMode'))
         self.triggerBox.currentIndexChanged.connect(self.triggerChange)
+        self.ledTrigBox.addItem('Camera')
+        self.ledTrigBox.addItem('Software')
+        self.ledTrigBox.setCurrentText('Software')
         
         
         # Sliders
         self.expSlider.setMinimum(expMin)
         self.expSlider.setMaximum(expMax)
-        self.expSlider.setValue(float(mmc.getProperty(DEVICE[0], 'Exposure')))  
+        self.expSlider.setValue(mmc.getExposure())  
         self.expSlider.valueChanged.connect(self.expFunc)
+        self.expSlider.setSingleStep(step)
         
         #### Spinboxes ###
         
-        #Exposure
+        #EXPOSURE
         self.C_expSb.setMaximum(expMax)
         self.C_expSb.setMinimum(expMin)
-        self.C_expSb.setValue(float(mmc.getProperty(DEVICE[0], 'Exposure')))
+        self.C_expSb.setValue(mmc.getExposure())
         self.C_expSb.valueChanged.connect(self.expFunc)
-        self.C_expSb.setSingleStep(float(step))
+        self.C_expSb.setSingleStep(step)
         
         #Experiment duration
         self.dur.setSingleStep(float(step))
@@ -146,6 +151,9 @@ class MyMainWindow(QtWidgets.QMainWindow):
         #Initialize frames per files text label
         self.framesPerFileLabel.setText('1146') #nb frames per file (1GB) for uncropped frame with 16 bits per pixels
         
+        #Initialize exposure label
+        self.realExp.setText(str(mmc.getExposure()))
+        
         #ProgressBar
         self.progressBar.setMinimum(0)
         self.progressBar.setValue(0)
@@ -172,8 +180,10 @@ class MyMainWindow(QtWidgets.QMainWindow):
         #exp=expVal/float(div)
         self.C_expSb.setValue(expVal) #update spinbox value
         self.expSlider.setValue(expVal) #update slider value
+        print 'exposure wanted : ', expVal
         try:
-            mmc.setProperty(DEVICE[0], 'Exposure', expVal)
+            mmc.setExposure(DEVICE[0], expVal)
+            self.realExp.setText(str(mmc.getExposure()))
         except:
             print "CMM err, no possibility to set exposure"
             
@@ -227,21 +237,31 @@ class MyMainWindow(QtWidgets.QMainWindow):
         duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
         ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
         intervalMs = self.intervalMs.value()
-        
+        exp = mmc.getExposure(DEVICE[0])
         #Initialise sequence acqu
         #(ledList, nbFrames) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))), intervalMs)
         
         #sequenceAcqTriggered(mmc,nbFrames, DEVICE[0], intervalMs, labjack)
         print 'External trigger to snap image'
-        mmc.snapImage()
+        #mmc.snapImage()
+        mmc.clearCircularBuffer()
         print 'image ready to snap'
         for i in range(0,10):
             sleep(1)
             print(10-i)
+        #trigExposure(labjack, exp)
         trigImage(labjack)
-        img = mmc.getImage()
-        plt.imshow(img, cmap='gray')
-        plt.show()
+        failureCount=0
+        while(failureCount<5000):
+            if mmc.getRemainingImageCount() > 0:
+                print 'Circular buffer is not empty'
+                img = mmc.popNextImage()
+                plt.imshow(img, cmap='gray')
+                plt.show()
+            else:
+                sleep(0.001)
+                failureCount+=1
+        print 'Failure count : ', failureCount
 #        mmc.clearCircularBuffer()
 #        trigImage(labjack)
 #        failureCount=0
@@ -260,11 +280,9 @@ class MyMainWindow(QtWidgets.QMainWindow):
     
     def shutterModeCheck(self):
         if mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode')== 'Rolling':
-            print 'QTGUI launch'
             choice = QtWidgets.QMessageBox.question(self, 'Shutter Mode',
                                                 "Running acquisition in Rolling mode ?",
                                                 QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-            print 'QtGui hqs as an answer'
             if choice == QtWidgets.QMessageBox.Yes:
                 print("Running in Rolling mode")
                 self.saveImageSeq() 
@@ -290,18 +308,24 @@ class MyMainWindow(QtWidgets.QMainWindow):
         window.progressBar.setMaximum(nbFrames)        
         
         #Initialize tiffWriter object
-        print 'tiffwriter init'
         (tiffWriterList,savePath) = tiffWriterInit(name, nbFrames, maxFrames)
-        print 'tiffwriter initialized'
-        #Launch seq acq
-        imageCount = sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit) #Carries the images acquisition AND saving
         
+        if self.ledTrigBox.currentText() == 'Software' :
+            #Launch seq acq : carries the images acquisition AND saving
+            imageCount = sequenceAcqSoftTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit) 
+            #multipleSnap(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit)
+            #imageCount=100
+            
+            ##### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####  
+            if exit.is_set() and ((nbFrames/maxFrames)>=1): #check if abort fct was called and that ;ultiples .tif were initialized
+                print 'Empty .tif suppression ?'
+                tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList)
+        else :
+            print 'LED camera trigger function'
+            imageCount = sequenceAcqCamTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit)
+            
         
-        ##### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####  
-        if exit.is_set() and ((nbFrames/maxFrames)>=1): #check if abort fct was called and that ;ultiples .tif were initialized
-            print 'Empty .tif suppression ?'
-            tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList)
-        
+        tiffWriterClose(tiffWriterList)
         print 'Acquisition done'
         window.progressBar.setValue(0)
             
