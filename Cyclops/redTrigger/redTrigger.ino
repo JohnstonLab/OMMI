@@ -2,7 +2,7 @@
 
 //dual LED triggering
 
-int timeDelay = 10 ; //ms
+int timeDelay = 5 ; //ms
 
 // Create a single cyclops object. CH0 corresponds to a physical board with
 // jumper pads soldered so that OC0, CS0, TRIG0, and A0 are used.
@@ -10,7 +10,8 @@ int timeDelay = 10 ; //ms
 Cyclops cyclops0(CH0, 1000);
                               
 bool rise = false; 
-bool fall = true; 
+bool fall = true;
+int frameCounter =0; 
 
 int voltage = 4095; //5V
 
@@ -19,7 +20,8 @@ void triggerEventRising()
 {
   rise=!rise;
   //if (rise && fall) //green
-  if (!rise && !fall) //red
+  //if (!rise && !fall) //red
+  if((frameCounter%5)==0)
   {
     cyclops0.dac_load_voltage(voltage); //Turn green LED ON
     delay(timeDelay);
@@ -27,6 +29,7 @@ void triggerEventRising()
   }
   //When cyclops detect a falling edge, call triggerEventFalling() method
   cyclops0.set_trigger( triggerEventFalling, FALLING);
+  frameCounter+=1;
 }
 
 void triggerEventFalling()
