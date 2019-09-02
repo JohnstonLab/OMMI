@@ -1,8 +1,10 @@
+#include <TimerOne.h>
+
 #include <Cyclops.h>
 
 //dual LED triggering
 
-int timeDelay = 10 ; //ms
+int timeDelay = 5 ; //ms
 
 // Create a single cyclops object. CH0 corresponds to a physical board with
 // jumper pads soldered so that OC0, CS0, TRIG0, and A0 are used.

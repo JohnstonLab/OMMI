@@ -40,7 +40,7 @@ def sequenceInit(duration, ledRatio, exp, intervalMs):
     ledList = ledSeq*(int(nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
     return ledList, nbFrames
 
-def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window, app, exit):
+def sequenceAcqSoftTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window, app, exit):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition."
     
     readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
@@ -114,6 +114,58 @@ def sequenceAcq(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiff
     mmc.stopSequenceAcquisition()
     mmc.clearCircularBuffer() 
     return imageCount
+
+
+
+def sequenceAcqCamTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window, app, exit):
+    "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition. LED triggered by camera output"
+    
+    readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
+    
+    #Get the time ##TO FIX : is it the right place to put it on ?
+    timeStamps = []
+    #timeStamps.append(time()) #Useless to have a timestamp here
+    #exp = mmc.getProperty(deviceLabel,'Exposure')
+    print "Interval between images : ", (intervalMs+readOutFrame),"ms"
+    print "Nb of frames : ", nbImages
+    
+    #mmc.startContinuousSequenceAcquisition(1)
+    imageCount =0
+        
+    #mmc.prepareSequenceAcquisition(deviceLabel)
+    #mmc.startSequenceAcquisition(nbImages, intervalMs, False)   #numImages	Number of images requested from the camera
+                                                        #intervalMs	The interval between images, currently only supported by Andor cameras
+                                                        #stopOnOverflow	whether or not the camera stops acquiring when the circular buffer is full 
+    mmc.startContinuousSequenceAcquisition(intervalMs+readOutFrame)
+    timeStamps.append(time())
+
+    while(imageCount<(nbImages) and not exit.is_set()): #Loop stops if we have the number of frames wanted OR if abort button is press (see abortFunc)
+        #sleep(0.001*(intervalMs-10)) #Delay in seconds, can be closed to intervalMs to limit loops for nothing
+        
+        #Launching acquisition
+        if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished #Enter this loop BETWEEN acquisition
+            #trigImage(labjack)
+            imageCount +=1
+            img = mmc.popNextImage() #Gets and removes the next image from the circular buffer
+            timeStamps.append(time())
+            saveFrame(img, tiffWriterList, (imageCount-1), ledList[(imageCount-1)], maxFrames) # saving frame of previous acquisition
+            window.progressBar.setValue(imageCount) #Update the gui of evolution of the acquisition
+            app.processEvents() #Allows the GUI to be responsive even while this fct is executing /!\ check time affection of this skills
+    
+    #Print the real interval between images ## Can be done in post-processing with timeStamps
+    for i in range(0,len(timeStamps)-1):
+        print  "delta time between t",i+1," and t",i," : ",(timeStamps[i+1] -timeStamps[i])      
+    
+    #Close tiff file open
+    tiffWriterClose(tiffWriterList)
+    
+    #Stop camera acquisition
+    mmc.stopSequenceAcquisition()
+    mmc.clearCircularBuffer() 
+    return imageCount
+
+
+######### EXTERNAL TRIGGER FCTS ##########
 
 def multipleSnap(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window, app, exit):
     print 'multipleSnap fct'

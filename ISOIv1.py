@@ -30,7 +30,7 @@ from threading import Event
 
 from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
-from continousAcq import grayLive, sequenceAcq, sequenceInit, sequenceAcqTriggered, multipleSnap
+from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit, sequenceAcqTriggered, multipleSnap
 from camInit import camInit
 from saveFcts import tiffWriterInit, fileSizeCalculation, tiffWriterDel, tiffWriterClose
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage, trigExposure
@@ -102,7 +102,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.triggerBox.currentIndexChanged.connect(self.triggerChange)
         self.ledTrigBox.addItem('Camera')
         self.ledTrigBox.addItem('Software')
-        self.ledTrigBox.setCurrentText('Camera')
+        self.ledTrigBox.setCurrentText('Software')
         
         
         # Sliders
@@ -311,8 +311,8 @@ class MyMainWindow(QtWidgets.QMainWindow):
         (tiffWriterList,savePath) = tiffWriterInit(name, nbFrames, maxFrames)
         
         if self.ledTrigBox.currentText() == 'Software' :
-            #Launch seq acq
-            imageCount = sequenceAcq(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit) #Carries the images acquisition AND saving
+            #Launch seq acq : carries the images acquisition AND saving
+            imageCount = sequenceAcqSoftTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit) 
             #multipleSnap(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit)
             #imageCount=100
             
@@ -322,7 +322,10 @@ class MyMainWindow(QtWidgets.QMainWindow):
                 tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList)
         else :
             print 'LED camera trigger function'
+            imageCount = sequenceAcqCamTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit)
+            
         
+        tiffWriterClose(tiffWriterList)
         print 'Acquisition done'
         window.progressBar.setValue(0)
             
