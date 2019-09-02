@@ -38,7 +38,7 @@ def camInit(mmc):
     """initial camera properties"""
     mmc.setProperty(DEVICE[0], 'Binning', binn[2])
     print "Binning set at", mmc.getProperty(DEVICE[0],'Binning')  
-    mmc.setProperty(DEVICE[0], 'Exposure', exp)
+    mmc.setExposure(DEVICE[0], exp)
     mmc.setProperty(DEVICE[0], 'AcquisitionWindow', AcqWindow) #NOT AVAILABLE IN DEMO
     mmc.setProperty(DEVICE[0], 'PixelReadoutRate', PixRR) #NOT AVAILABLE IN DEMO
     mmc.setProperty(DEVICE[0], 'Sensitivity/DynamicRange', bit[2]) #NOT AVAILABLE IN DEMO

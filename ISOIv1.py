@@ -48,8 +48,8 @@ step=1/float(div)
 
 #Exposure (just here to keep it as global var)
 #expMin=0.0277
-expMin=1
-expMax=99
+expMin=10.07
+expMax=99.0
 
 #LEDs Ratio
 ratioMax=10
@@ -105,17 +105,18 @@ class MyMainWindow(QtWidgets.QMainWindow):
         # Sliders
         self.expSlider.setMinimum(expMin)
         self.expSlider.setMaximum(expMax)
-        self.expSlider.setValue(int(float(mmc.getProperty(DEVICE[0], 'Exposure'))))  
+        self.expSlider.setValue(mmc.getExposure())  
         self.expSlider.valueChanged.connect(self.expFunc)
+        self.expSlider.setSingleStep(step)
         
         #### Spinboxes ###
         
-        #Exposure #TO ADD : label to display real exposure
+        #EXPOSURE
         self.C_expSb.setMaximum(expMax)
         self.C_expSb.setMinimum(expMin)
-        self.C_expSb.setValue(int(float(mmc.getProperty(DEVICE[0], 'Exposure'))))
+        self.C_expSb.setValue(mmc.getExposure())
         self.C_expSb.valueChanged.connect(self.expFunc)
-        #self.C_expSb.setSingleStep(float(step))
+        self.C_expSb.setSingleStep(step)
         
         #Experiment duration
         self.dur.setSingleStep(float(step))
@@ -147,6 +148,9 @@ class MyMainWindow(QtWidgets.QMainWindow):
         #Initialize frames per files text label
         self.framesPerFileLabel.setText('1146') #nb frames per file (1GB) for uncropped frame with 16 bits per pixels
         
+        #Initialize exposure label
+        self.realExp.setText(str(mmc.getExposure()))
+        
         #ProgressBar
         self.progressBar.setMinimum(0)
         self.progressBar.setValue(0)
@@ -172,11 +176,11 @@ class MyMainWindow(QtWidgets.QMainWindow):
     def expFunc(self, expVal):
         #exp=expVal/float(div)
         self.C_expSb.setValue(expVal) #update spinbox value
-        self.expSlider.setValue(int(expVal)) #update slider value
-        print 'exposure wanted : ', int(expVal)
+        self.expSlider.setValue(expVal) #update slider value
+        print 'exposure wanted : ', expVal
         try:
-            mmc.setProperty(DEVICE[0], 'Exposure', int(expVal))
-            print 'Real exposure : ', mmc.getProperty(DEVICE[0],'Exposure')
+            mmc.setExposure(DEVICE[0], expVal)
+            self.realExp.setText(str(mmc.getExposure()))
         except:
             print "CMM err, no possibility to set exposure"
             
@@ -230,22 +234,31 @@ class MyMainWindow(QtWidgets.QMainWindow):
         duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
         ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
         intervalMs = self.intervalMs.value()
-        exp = mmc.getProperty(DEVICE[0],'Exposure')
+        exp = mmc.getExposure(DEVICE[0])
         #Initialise sequence acqu
         #(ledList, nbFrames) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))), intervalMs)
         
         #sequenceAcqTriggered(mmc,nbFrames, DEVICE[0], intervalMs, labjack)
         print 'External trigger to snap image'
         #mmc.snapImage()
+        mmc.clearCircularBuffer()
         print 'image ready to snap'
         for i in range(0,10):
             sleep(1)
             print(10-i)
-        #trigImage(labjack)
-        trigExposure(labjack, exp)
-        img = mmc.getImage()
-        plt.imshow(img, cmap='gray')
-        plt.show()
+        #trigExposure(labjack, exp)
+        trigImage(labjack)
+        failureCount=0
+        while(failureCount<5000):
+            if mmc.getRemainingImageCount() > 0:
+                print 'Circular buffer is not empty'
+                img = mmc.popNextImage()
+                plt.imshow(img, cmap='gray')
+                plt.show()
+            else:
+                sleep(0.001)
+                failureCount+=1
+        print 'Failure count : ', failureCount
 #        mmc.clearCircularBuffer()
 #        trigImage(labjack)
 #        failureCount=0
@@ -264,11 +277,9 @@ class MyMainWindow(QtWidgets.QMainWindow):
     
     def shutterModeCheck(self):
         if mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode')== 'Rolling':
-            print 'QTGUI launch'
             choice = QtWidgets.QMessageBox.question(self, 'Shutter Mode',
                                                 "Running acquisition in Rolling mode ?",
                                                 QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-            print 'QtGui hqs as an answer'
             if choice == QtWidgets.QMessageBox.Yes:
                 print("Running in Rolling mode")
                 self.saveImageSeq() 
