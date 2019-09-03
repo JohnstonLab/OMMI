@@ -34,7 +34,7 @@ from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequ
 from camInit import camInit
 from saveFcts import tiffWriterInit, fileSizeCalculation, tiffWriterDel, tiffWriterClose
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage, trigExposure
-
+from ArduinoComm import connect, sendExposure, close
 
 ########## GLOBAL VAR - needed for displays information ######
 
@@ -48,7 +48,7 @@ step=1/float(div)
 
 #Exposure (just here to keep it as global var)
 #expMin=0.0277
-expMin=10.07
+expMin=5.0
 expMax=99.0
 
 #LEDs Ratio
@@ -77,22 +77,30 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
         
-        #ComboBoxes
+        ###### ComboBoxes ######
+        
+        #Binning selection
         self.binBox.addItem(binn[0])
         self.binBox.addItem(binn[1])
         self.binBox.addItem(binn[2])
         self.binBox.addItem(binn[3])
+        self.binBox.currentIndexChanged.connect(self.binChange)
+        
+        #Bit depth selection
         self.bitBox.addItem(bit[0])
         self.bitBox.addItem(bit[1])
         self.bitBox.addItem(bit[2])
         self.binBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Binning'))
         self.bitBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Sensitivity/DynamicRange'))
-        self.binBox.currentIndexChanged.connect(self.binChange)
         self.bitBox.currentIndexChanged.connect(self.bitChange)
+        
+        #Shutter mode selection
         self.shutBox.addItem("Rolling")
         self.shutBox.addItem("Global")
         self.shutBox.setCurrentText(mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode'))
         self.shutBox.currentIndexChanged.connect(self.shutChange)
+        
+        #Trigger mode selection
         self.triggerBox.addItem('Internal (Recommended for fast acquisitions)')
         self.triggerBox.addItem('Software (Recommended for Live Mode)')
         self.triggerBox.addItem('External Start')
@@ -100,12 +108,15 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.triggerBox.addItem('External')
         self.triggerBox.setCurrentText(mmc.getProperty(DEVICE[0], 'TriggerMode'))
         self.triggerBox.currentIndexChanged.connect(self.triggerChange)
+        
+        #LEDs trigger mode selection
         self.ledTrigBox.addItem('Camera')
         self.ledTrigBox.addItem('Software')
         self.ledTrigBox.setCurrentText('Software')
+        self.ledTrigBox.currentIndexChanged.connect(self.ledTrigChange)
         
         
-        # Sliders
+        ####### Slider #####
         self.expSlider.setMinimum(expMin)
         self.expSlider.setMaximum(expMax)
         self.expSlider.setValue(mmc.getExposure())  
@@ -205,7 +216,22 @@ class MyMainWindow(QtWidgets.QMainWindow):
         trig = self.triggerBox.currentText()
         mmc.setProperty(DEVICE[0],'TriggerMode',str(trig))
         print 'Trigger mode set at ', mmc.getProperty(DEVICE[0], 'TriggerMode')
-        
+    def ledTrigChange(self):
+        if (self.ledTrigBox.currentText() == 'Camera'):
+            choice = QtWidgets.QMessageBox.question(self, 'Cyclops driver initialisation',
+                                                "Do you want to update red LED script ?",
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if choice == QtWidgets.QMessageBox.Yes:
+                print("sending exposur to arduino")
+                ser = connect()
+                if ser:
+                    sendExposure(ser, int(float(mmc.getExposure())))
+                    print 'Exposure set at : ',ser.readline()
+                    close(ser)
+                else:
+                    print('Check wire connections')
+            else:
+                print('are you sure you have update it ???')
     
     def green(self,toggle_g):
         if toggle_g:
@@ -371,7 +397,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         return True
     
     def closeEvent(self, event):
-        # do stuff
+        # Close all before closing the main window
         if self.unloadDevices(): # UNLOAD DEVICES befor closing the program
             event.accept() # let the window close
         else:
