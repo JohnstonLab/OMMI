@@ -535,11 +535,11 @@
        </rect>
       </property>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
-        <x>540</x>
-        <y>120</y>
+        <x>550</x>
+        <y>90</y>
         <width>231</width>
         <height>109</height>
        </rect>
@@ -586,6 +586,19 @@
         </widget>
        </item>
       </layout>
+     </widget>
+     <widget class="QPushButton" name="arduinoBtn">
+      <property name="geometry">
+       <rect>
+        <x>390</x>
+        <y>120</y>
+        <width>101</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>ARDUINO SYNC</string>
+      </property>
      </widget>
     </widget>
    </widget>

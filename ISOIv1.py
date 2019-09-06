@@ -67,15 +67,16 @@ class MyMainWindow(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self, parent)
         uic.loadUi('isoi_window.ui', self)
         
-        # Connect buttons 
+        # Connect push buttons 
         self.liveBtn.clicked.connect(self.liveFunc)
         self.cropBtn.clicked.connect(self.crop)
         self.histoBtn.clicked.connect(self.histo)
-        self.SaveEBtn.clicked.connect(self.shutterModeCheck)
+        self.SaveEBtn.clicked.connect(self.paramCheck)
         self.triggerBtn.clicked.connect(self.triggerExt)
         self.abortBtn.clicked.connect(self.abortFunc)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
+        self.arduinoBtn.clicked.connect(self.arduinoSync)
         
         ###### ComboBoxes ######
         
@@ -113,7 +114,6 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.ledTrigBox.addItem('Camera')
         self.ledTrigBox.addItem('Software')
         self.ledTrigBox.setCurrentText('Software')
-        self.ledTrigBox.currentIndexChanged.connect(self.ledTrigChange)
         
         
         ####### Slider #####
@@ -212,26 +212,12 @@ class MyMainWindow(QtWidgets.QMainWindow):
         shut = self.shutBox.currentText()
         mmc.setProperty(DEVICE[0],'ElectronicShutteringMode',str(shut))
         print 'Shutter mode set at ', mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode')
-    def triggerChange(self):
+
+   def triggerChange(self):
         trig = self.triggerBox.currentText()
         mmc.setProperty(DEVICE[0],'TriggerMode',str(trig))
         print 'Trigger mode set at ', mmc.getProperty(DEVICE[0], 'TriggerMode')
-    def ledTrigChange(self):
-        if (self.ledTrigBox.currentText() == 'Camera'):
-            choice = QtWidgets.QMessageBox.question(self, 'Cyclops driver initialisation',
-                                                "Do you want to update red LED script ?",
-                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-            if choice == QtWidgets.QMessageBox.Yes:
-                print("sending exposur to arduino")
-                ser = connect()
-                if ser:
-                    sendExposure(ser, int(float(mmc.getExposure())))
-                    print 'Exposure set at : ',ser.readline()
-                    close(ser)
-                else:
-                    print('Check wire connections')
-            else:
-                print('are you sure you have update it ???')
+
     
     def green(self,toggle_g):
         if toggle_g:
@@ -259,6 +245,18 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.framesPerFileLabel.setText(str(framesMax))
     
 
+    def arduinoSync(self):
+        ser = connect()
+        sync=False 
+        if ser:
+            sendExposure(ser, int(float(mmc.getExposure())))
+            print 'Exposure set at : ',ser.readline()
+            close(ser)
+            sync = True
+        else:
+            QtWidgets.QMessageBox.information(self, 'No arduino detected', 'Please check that the cyclops are turned on and the wire connection')
+        return sync
+    
     def triggerExt(self):
         duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
         ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
@@ -304,7 +302,10 @@ class MyMainWindow(QtWidgets.QMainWindow):
         print 'trig done'
             
     
-    def shutterModeCheck(self):
+    def paramCheck(self):
+        run = True
+        
+        #Shutter mode check
         if mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode')== 'Rolling':
             choice = QtWidgets.QMessageBox.question(self, 'Shutter Mode',
                                                 "Running acquisition in Rolling mode ?",
@@ -312,9 +313,24 @@ class MyMainWindow(QtWidgets.QMainWindow):
             if choice == QtWidgets.QMessageBox.Yes:
                 print("Running in Rolling mode")
                 self.saveImageSeq() 
+                run = True
             else:
                 print('Change mode in the other panel')
-        else:
+                run = False
+                
+        #Arduino synchronization check        
+        if (self.ledTrigBox.currentText() == 'Camera' and run):
+            choice = QtWidgets.QMessageBox.question(self, 'Cyclops driver initialisation',
+                                                "Are the cyclops Arduino synchronized ?",
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if choice == QtWidgets.QMessageBox.No:
+                print("sending exposur to arduino")
+                run = self.arduinoSync()
+            else:
+                print('are you sure you have update it ???')
+                run = True
+                
+        if run:
             self.saveImageSeq()
     
     def saveImageSeq(self):
