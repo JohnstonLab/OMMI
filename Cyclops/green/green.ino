@@ -70,7 +70,7 @@ void triggerEventRising()
   Serial.println(frameCounter%listSize);
   Serial.print("Stored number =");
   Serial.println(ledList[frameCounter%listSize]);
-  if((ledList[frameCounter%listSize])== 'r')
+  if((ledList[frameCounter%listSize])== 'g')        //ONLY DIFF WITH red.ino (and blue.ino), READING TH GOOD CHAR IN LIST
   {
     cyclops0.dac_load_voltage(voltage); //Turn green LED ON
     delay(exposure);
