@@ -37,13 +37,16 @@ void loop()
       // if it's a capital E, it recepts the exposure
       if (incomingByte == 'E') {
         exposure = Serial.parseInt();
-        Serial.println(exposure);
+        //delay(100); //Python must to have time to read the info
+        //Serial.println(exposure);
+        //delay(100);
       }
       
       // if it's an L (ASCII 76), it recepts the LED list
       if (incomingByte == 'L') {
-        //Clear the old LED list
-        ledList.clear();
+        //Clear the old LED list and reset frame counter
+        ledList.clear(); frameCounter=0;
+        
         //Append the ledList
         listSize = Serial.parseInt();
         Serial.println(listSize);
@@ -70,7 +73,7 @@ void triggerEventRising()
   Serial.println(frameCounter%listSize);
   Serial.print("Stored number =");
   Serial.println(ledList[frameCounter%listSize]);
-  if((ledList[frameCounter%listSize])== 'g')        //ONLY DIFF WITH red.ino (and blue.ino), READING TH GOOD CHAR IN LIST
+  if((ledList[frameCounter%listSize])== 'g')        //ONLY DIFF WITH red.ino (and blue.ino), READING THE GOOD CHAR IN LIST
   {
     cyclops0.dac_load_voltage(voltage); //Turn green LED ON
     delay(exposure);

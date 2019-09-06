@@ -76,7 +76,7 @@ def sendExposure(ser, exp):
     ser.write('E') #Send the byte string 'E', wich inform the arduino, the exposure will be sent
     print 'exposure to send : ', exp
     ser.write(str(exp))
-    print 'Exposure set at : ',ser.readline() # Checking that arduino has received the info
+    #print 'Exposure set at : ',ser.readline() # Checking that arduino has received the info
 
 def sendLedList(ser, ledRatio):
     print 'launching sendList fct'
