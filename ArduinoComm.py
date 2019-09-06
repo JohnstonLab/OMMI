@@ -76,3 +76,25 @@ def sendExposure(ser, exp):
     ser.write('E') #Send the byte string 'E', wich inform the arduino, the exposure will be sent
     print 'exposure to send : ', exp
     ser.write(str(exp))
+    print 'Exposure set at : ',ser.readline() # Checking that arduino has received the info
+
+def sendLedList(ser, ledRatio):
+    print 'launching sendList fct'
+    ledSeq = ['r']*ledRatio[0]+['g']*ledRatio[1]+['b']*ledRatio[2]
+    ser.write('L') #Send the byte string 'E', wich inform the arduino, the LED list will be sent
+    print 'List to send : ', ledSeq
+    ser.write(str(len(ledSeq))) #Send the length of the list
+    print 'len sent :', ser.readline()
+    for char in ledSeq:
+        ser.write(char) #send each char of the list to the Arduino
+    print 'List sent : ', ser.readline() # Checking that arduino has received the info
+    
+##### TESTING SECTION ####
+print 'LAUNCHING TEST'
+ser = connect()
+if ser :
+    ledRatio = [1,3,2]
+    sendLedList(ser,ledRatio)
+    close(ser)
+else :
+    print 'shit happens'

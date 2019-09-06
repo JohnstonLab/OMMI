@@ -34,7 +34,7 @@ from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequ
 from camInit import camInit
 from saveFcts import tiffWriterInit, fileSizeCalculation, tiffWriterDel, tiffWriterClose
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage, trigExposure
-from ArduinoComm import connect, sendExposure, close
+from ArduinoComm import connect, sendExposure, sendLedList, close
 
 ########## GLOBAL VAR - needed for displays information ######
 
@@ -246,11 +246,12 @@ class MyMainWindow(QtWidgets.QMainWindow):
     
 
     def arduinoSync(self):
-        ser = connect()
+        ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()]
+        ser = connect() # Initialize the connection with serial
         sync=False 
         if ser:
             sendExposure(ser, int(float(mmc.getExposure())))
-            print 'Exposure set at : ',ser.readline()
+            sendLedList(ser, ledRatio)
             close(ser)
             sync = True
         else:

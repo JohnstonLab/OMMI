@@ -37,27 +37,18 @@ void loop()
       if (incomingByte == 'E') {
         exposure = Serial.parseInt();
         Serial.println(exposure);
-        if (exposure){
-          cyclops0.dac_load_voltage(voltage); //Turn green LED ON
-          delay(exposure*1000);
-          cyclops0.dac_load_voltage(0); //Turn green LED OF
-        }
-        else{
-          cyclops0.dac_load_voltage(voltage); //Turn green LED ON
-          delay(1000);
-          cyclops0.dac_load_voltage(0); //Turn green LED OF   
-        }
       }
       
       // if it's an L (ASCII 76), it recepts the LED list
       if (incomingByte == 'L') {
         //Append the ledList until 'N' char (end of communication) is recepted
         int listSize = Serial.parseInt();
+        Serial.println(listSize);
         char tempLedList[listSize];
         for(int i = 0; i < listSize; ++i){
+            delay(100); //ensure that python software has send the inforomation
             incomingByte = Serial.read();
             tempLedList[i] = static_cast<char>(incomingByte);
-            Serial.println(incomingByte);
         }
         ledList = tempLedList;
         Serial.println(ledList);
