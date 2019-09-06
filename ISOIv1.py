@@ -213,7 +213,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         mmc.setProperty(DEVICE[0],'ElectronicShutteringMode',str(shut))
         print 'Shutter mode set at ', mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode')
 
-   def triggerChange(self):
+    def triggerChange(self):
         trig = self.triggerBox.currentText()
         mmc.setProperty(DEVICE[0],'TriggerMode',str(trig))
         print 'Trigger mode set at ', mmc.getProperty(DEVICE[0], 'TriggerMode')
