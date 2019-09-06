@@ -1,11 +1,12 @@
 #include <Cyclops.h>
-
+#include <vector>
 //dual LED triggering
 
 int exposure=5;      //exposure of the camera sensor
 int incomingByte;    // a variable to read incoming serial data into
 int frameCounter =0; // Count the frame acuired, use to read thru LED list
-char* ledList; // initialize a char list of non-determinated size 
+std::vector<int> ledList; // initialize a in vector of non-determinated size
+int listSize =0; 
 
 int voltage = 4095; //5V set at Cyclops DAC output
 
@@ -28,7 +29,7 @@ void setup()
 
 void loop()
 {
-    // Nothing to do, all action in the interrupt handler
+    // All action in the interrupt handler, just serial listening for set up
     if (Serial.available() > 0) {
       // read the oldest byte in the serial buffer:
       incomingByte = Serial.read();
@@ -41,30 +42,39 @@ void loop()
       
       // if it's an L (ASCII 76), it recepts the LED list
       if (incomingByte == 'L') {
-        //Append the ledList until 'N' char (end of communication) is recepted
-        int listSize = Serial.parseInt();
+        //Append the ledList
+        listSize = Serial.parseInt();
         Serial.println(listSize);
-        char tempLedList[listSize];
         for(int i = 0; i < listSize; ++i){
             delay(100); //ensure that python software has send the inforomation
             incomingByte = Serial.read();
-            tempLedList[i] = static_cast<char>(incomingByte);
+            ledList.push_back(incomingByte);
+            Serial.println(ledList[i]);
         }
-        ledList = tempLedList;
-        Serial.println(ledList);
+        /*ledList = tempLedList;
+        for(int i = 0; i < listSize; ++i){
+            Serial.print("Element nb ");Serial.print(i);Serial.print(" : ");
+            Serial.println(ledList[i]);
+        }*/
       }
     }
 }
 
 void triggerEventRising()
 {
-  if((frameCounter%5)==0)
+  Serial.print("frameCounter =");
+  Serial.println(frameCounter);
+  Serial.print("modulus =");
+  Serial.println(frameCounter%listSize);
+  Serial.print("Stored number =");
+  Serial.println(ledList[frameCounter%listSize]);
+  if((ledList[frameCounter%listSize])== 'r')
   {
     cyclops0.dac_load_voltage(voltage); //Turn green LED ON
     delay(exposure);
     cyclops0.dac_load_voltage(0); //Turn green LED OF
   }
-  frameCounter+=1;
+  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
 }
 
 

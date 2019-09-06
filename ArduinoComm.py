@@ -87,14 +87,14 @@ def sendLedList(ser, ledRatio):
     print 'len sent :', ser.readline()
     for char in ledSeq:
         ser.write(char) #send each char of the list to the Arduino
-    print 'List sent : ', ser.readline() # Checking that arduino has received the info
+        print 'ASCII char sent : ', ser.readline()
     
 ##### TESTING SECTION ####
-print 'LAUNCHING TEST'
-ser = connect()
-if ser :
-    ledRatio = [1,3,2]
-    sendLedList(ser,ledRatio)
-    close(ser)
-else :
-    print 'shit happens'
+#print 'LAUNCHING TEST'
+#ser = connect()
+#if ser :
+#    ledRatio = [1,3,2]
+#    sendLedList(ser,ledRatio)
+#    close(ser)
+#else :
+#    print 'shit happens'
