@@ -34,7 +34,7 @@ from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequ
 from camInit import camInit
 from saveFcts import tiffWriterInit, fileSizeCalculation, tiffWriterDel, tiffWriterClose
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage, trigExposure
-
+from ArduinoComm import connect, sendExposure, sendLedList, close
 
 ########## GLOBAL VAR - needed for displays information ######
 
@@ -48,7 +48,7 @@ step=1/float(div)
 
 #Exposure (just here to keep it as global var)
 #expMin=0.0277
-expMin=10.07
+expMin=5.0
 expMax=99.0
 
 #LEDs Ratio
@@ -67,32 +67,41 @@ class MyMainWindow(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self, parent)
         uic.loadUi('isoi_window.ui', self)
         
-        # Connect buttons 
+        # Connect push buttons 
         self.liveBtn.clicked.connect(self.liveFunc)
         self.cropBtn.clicked.connect(self.crop)
         self.histoBtn.clicked.connect(self.histo)
-        self.SaveEBtn.clicked.connect(self.shutterModeCheck)
+        self.SaveEBtn.clicked.connect(self.paramCheck)
         self.triggerBtn.clicked.connect(self.triggerExt)
         self.abortBtn.clicked.connect(self.abortFunc)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
+        self.arduinoBtn.clicked.connect(self.arduinoSync)
         
-        #ComboBoxes
+        ###### ComboBoxes ######
+        
+        #Binning selection
         self.binBox.addItem(binn[0])
         self.binBox.addItem(binn[1])
         self.binBox.addItem(binn[2])
         self.binBox.addItem(binn[3])
+        self.binBox.currentIndexChanged.connect(self.binChange)
+        
+        #Bit depth selection
         self.bitBox.addItem(bit[0])
         self.bitBox.addItem(bit[1])
         self.bitBox.addItem(bit[2])
         self.binBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Binning'))
         self.bitBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Sensitivity/DynamicRange'))
-        self.binBox.currentIndexChanged.connect(self.binChange)
         self.bitBox.currentIndexChanged.connect(self.bitChange)
+        
+        #Shutter mode selection
         self.shutBox.addItem("Rolling")
         self.shutBox.addItem("Global")
         self.shutBox.setCurrentText(mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode'))
         self.shutBox.currentIndexChanged.connect(self.shutChange)
+        
+        #Trigger mode selection
         self.triggerBox.addItem('Internal (Recommended for fast acquisitions)')
         self.triggerBox.addItem('Software (Recommended for Live Mode)')
         self.triggerBox.addItem('External Start')
@@ -100,12 +109,14 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.triggerBox.addItem('External')
         self.triggerBox.setCurrentText(mmc.getProperty(DEVICE[0], 'TriggerMode'))
         self.triggerBox.currentIndexChanged.connect(self.triggerChange)
+        
+        #LEDs trigger mode selection
         self.ledTrigBox.addItem('Camera')
         self.ledTrigBox.addItem('Software')
         self.ledTrigBox.setCurrentText('Software')
         
         
-        # Sliders
+        ####### Slider #####
         self.expSlider.setMinimum(expMin)
         self.expSlider.setMaximum(expMax)
         self.expSlider.setValue(mmc.getExposure())  
@@ -201,11 +212,12 @@ class MyMainWindow(QtWidgets.QMainWindow):
         shut = self.shutBox.currentText()
         mmc.setProperty(DEVICE[0],'ElectronicShutteringMode',str(shut))
         print 'Shutter mode set at ', mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode')
+
     def triggerChange(self):
         trig = self.triggerBox.currentText()
         mmc.setProperty(DEVICE[0],'TriggerMode',str(trig))
         print 'Trigger mode set at ', mmc.getProperty(DEVICE[0], 'TriggerMode')
-        
+
     
     def green(self,toggle_g):
         if toggle_g:
@@ -233,6 +245,19 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.framesPerFileLabel.setText(str(framesMax))
     
 
+    def arduinoSync(self):
+        ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()]
+        ser = connect() # Initialize the connection with serial
+        sync=False 
+        if ser:
+            sendExposure(ser, int(float(mmc.getExposure())))
+            sendLedList(ser, ledRatio)
+            close(ser)
+            sync = True
+        else:
+            QtWidgets.QMessageBox.information(self, 'No arduino detected', 'Please check that the cyclops are turned on and the wire connection')
+        return sync
+    
     def triggerExt(self):
         duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
         ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
@@ -278,7 +303,10 @@ class MyMainWindow(QtWidgets.QMainWindow):
         print 'trig done'
             
     
-    def shutterModeCheck(self):
+    def paramCheck(self):
+        run = True
+        
+        #Shutter mode check
         if mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode')== 'Rolling':
             choice = QtWidgets.QMessageBox.question(self, 'Shutter Mode',
                                                 "Running acquisition in Rolling mode ?",
@@ -286,9 +314,24 @@ class MyMainWindow(QtWidgets.QMainWindow):
             if choice == QtWidgets.QMessageBox.Yes:
                 print("Running in Rolling mode")
                 self.saveImageSeq() 
+                run = True
             else:
                 print('Change mode in the other panel')
-        else:
+                run = False
+                
+        #Arduino synchronization check        
+        if (self.ledTrigBox.currentText() == 'Camera' and run):
+            choice = QtWidgets.QMessageBox.question(self, 'Cyclops driver initialisation',
+                                                "Are the cyclops Arduino synchronized ?",
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if choice == QtWidgets.QMessageBox.No:
+                print("sending exposur to arduino")
+                run = self.arduinoSync()
+            else:
+                print('are you sure you have update it ???')
+                run = True
+                
+        if run:
             self.saveImageSeq()
     
     def saveImageSeq(self):
@@ -371,7 +414,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         return True
     
     def closeEvent(self, event):
-        # do stuff
+        # Close all before closing the main window
         if self.unloadDevices(): # UNLOAD DEVICES befor closing the program
             event.accept() # let the window close
         else:
