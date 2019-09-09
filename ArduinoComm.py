@@ -10,7 +10,6 @@ Script containing all fct in relation with arduino communication.
 
 import serial
 import time
-import struct
 import serial.tools.list_ports as lsports
 
 def connectAndBlink():    

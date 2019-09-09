@@ -2,8 +2,7 @@
 
 //dual LED triggering
 
-int timeDelay = 5 ;  //ms
-int exposure=5;      //exposure of the camera sensor
+int exposure=0;      //exposure of the camera sensor
 int incomingByte;    // a variable to read incoming serial data into
 
 // Create a single cyclops object. CH0 corresponds to a physical board with
@@ -60,7 +59,7 @@ void loop()
 
 void triggerEventRising()
 {
-  rise=!rise;
+  //rise=!rise;
   //if (rise && fall) //green
   //if (!rise && !fall) //red
   if((frameCounter%5)==0)

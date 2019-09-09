@@ -32,7 +32,7 @@ from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
 from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit, sequenceAcqTriggered, multipleSnap
 from camInit import camInit
-from saveFcts import tiffWriterInit, fileSizeCalculation, tiffWriterDel, tiffWriterClose
+from saveFcts import tiffWriterInit, fileSizeCalculation, tiffWriterDel, tiffWritersClose
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage, trigExposure
 from ArduinoComm import connect, sendExposure, sendLedList, close
 
@@ -368,7 +368,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
             imageCount = sequenceAcqCamTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit)
             
         
-        tiffWriterClose(tiffWriterList)
+        tiffWritersClose(tiffWriterList)
         print 'Acquisition done'
         window.progressBar.setValue(0)
             
