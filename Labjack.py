@@ -24,6 +24,7 @@ trig = 7    #FIO7
 def labjackInit():
     try:
         device = u3.U3() #Open first found U3
+        device
     except:
         #Handle all exceptions here
         print "Error : labjack device non available"
@@ -56,6 +57,9 @@ def trigImage(device):
     device.setFIOState(trig, 1)
     sleep(0.00001) #minimum required trig is 8 ns
     device.setFIOState(trig, 0)
+
+def analogRead(device):
+    device.eAIN()
 
 ##CHECK ARM output of the cam is high
 

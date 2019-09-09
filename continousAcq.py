@@ -10,7 +10,7 @@ IDEA : create a sequence class, in this way, sequence param can be saved when in
 # Used packages
 import cv2
 from time import sleep, time
-from saveFcts import saveFrame, tiffWritersClose
+from saveFcts import saveFrame, tiffWritersClose, saveMetadata
 from Labjack import greenOn, greenOff, redOn, redOff, trigImage
 
 def grayLive(mmc):
@@ -40,7 +40,7 @@ def sequenceInit(duration, ledRatio, exp, intervalMs):
     ledList = ledSeq*(int(nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
     return ledList, nbFrames
 
-def sequenceAcqSoftTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window, app, exit):
+def sequenceAcqSoftTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, textFile, labjack, window, app, exit):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition."
     
     readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
@@ -52,7 +52,6 @@ def sequenceAcqSoftTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledLi
     print "Interval between images : ", (intervalMs+readOutFrame),"ms"
     print "Nb of frames : ", nbImages
     
-    #mmc.startContinuousSequenceAcquisition(1)
     imageCount =0
     
     #Initialize the good LED for first image
@@ -75,7 +74,6 @@ def sequenceAcqSoftTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledLi
     timeStamps.append(time())
 
     while(imageCount<(nbImages) and not exit.is_set()): #Loop stops if we have the number of frames wanted OR if abort button is press (see abortFunc)
-        #sleep(0.001*(intervalMs-10)) #Delay in seconds, can be closed to intervalMs to limit loops for nothing
         
         #Launching acquisition
         if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished #Enter this loop BETWEEN acquisition
@@ -94,10 +92,13 @@ def sequenceAcqSoftTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledLi
                 greenOff(labjack)
             #sleep(0.005) #Wait 5ms to ensure LEDS are on
             img = mmc.popNextImage() #Gets and removes the next image from the circular buffer
-            timeStamps.append(time())
-            saveFrame(img, tiffWriterList, (imageCount-1), ledList[(imageCount-1)], maxFrames) # saving frame of previous acquisition
+            t= time()
+            timeStamps.append(t)
+            ##read input from labjack
+            saveMetadata(textFile, str(t),ledList[(imageCount-1)], str(imageCount-1))
+            saveFrame(img, tiffWriterList, (imageCount-1), maxFrames) # saving frame of previous acquisition
             window.progressBar.setValue(imageCount) #Update the gui of evolution of the acquisition
-            app.processEvents() #Allows the GUI to be responsive even while this fct is executing /!\ check time affection of this skills
+            app.processEvents() #Keep the GUI responsive even while this fct is executing
 
     #Turning off all LEDS
     greenOff(labjack)
@@ -117,7 +118,7 @@ def sequenceAcqSoftTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledLi
 
 
 
-def sequenceAcqCamTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, labjack, window, app, exit):
+def sequenceAcqCamTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, textFile, labjack, window, app, exit):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition. LED triggered by camera output"
     
     readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
@@ -129,7 +130,6 @@ def sequenceAcqCamTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledLis
     print "Interval between images : ", (intervalMs+readOutFrame),"ms"
     print "Nb of frames : ", nbImages
     
-    #mmc.startContinuousSequenceAcquisition(1)
     imageCount =0
         
     #mmc.prepareSequenceAcquisition(deviceLabel)
@@ -148,7 +148,7 @@ def sequenceAcqCamTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledLis
             imageCount +=1
             img = mmc.popNextImage() #Gets and removes the next image from the circular buffer
             timeStamps.append(time())
-            saveFrame(img, tiffWriterList, (imageCount-1), ledList[(imageCount-1)], maxFrames) # saving frame of previous acquisition
+            saveFrame(img, tiffWriterList, (imageCount-1), maxFrames) # saving frame of previous acquisition
             window.progressBar.setValue(imageCount) #Update the gui of evolution of the acquisition
             app.processEvents() #Allows the GUI to be responsive even while this fct is executing /!\ check time affection of this skills
     

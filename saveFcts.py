@@ -34,7 +34,7 @@ def saveImage(mmc):
       img = mmc.getImage()
       imsave('test.tif', img)
 
-def saveFrame(img, tiffWriterList, imageCount, led, maxFrames):
+def saveFrame(img, tiffWriterList, imageCount, maxFrames):
     ## SOURCE : https://stackoverflow.com/questions/20529187/what-is-the-best-way-to-save-image-metadata-alongside-a-tif-with-python
     ## TAGS list : https://github.com/blink1073/tifffile/blob/master/tifffile/tifffile.py#L5000
     ## Tags plugins : https://imagej.nih.gov/ij/plugins/tiff-tags.html
@@ -42,10 +42,10 @@ def saveFrame(img, tiffWriterList, imageCount, led, maxFrames):
     ## Metadata plugin : https://imagej.nih.gov/ij/plugins/metadata/MetaData.pdf
     #metadata = dict(microscope='george', shape=img.shape, dtype=img.dtype.str)
     #metadata = json.dumps(metadata)
-    extra_tags = [(306, 's', 0, str(datetime.now()), False)] #[(code, dtype, count, value, writeonce)] #306 = DateTime
+    #extra_tags = [(270, 's', 0, str(datetime.now()), False)] #[(code, dtype, count, value, writeonce)] #306 = DateTime
                
     
-    tiffWriterList[imageCount/maxFrames].save(img, extratags=extra_tags) #Remember : / is an integer division, return an integer
+    tiffWriterList[imageCount/maxFrames].save(img) #Remember : / is an integer division, return an integer
     if((imageCount+1)%maxFrames == 0): #If the file is complete, nb frames = max frames (!imageCount start at 0!)  
         print 'There is a .tif file to close - time :', datetime.now()
         tifToClose =tiffWriterList[((imageCount+1)/maxFrames)-1] # goal : to close the completed tif, ensure that frames are saved in case of crash
@@ -55,9 +55,12 @@ def saveFrame(img, tiffWriterList, imageCount, led, maxFrames):
         thread1.start()
     #Write LED and timestamp in metadata"
 
-def tiffWriterInit(name, nbFrames, maxFrames):
+def saveMetadata(textFile, time, led, imageCount): ## Should save : time // respiration // odor // LED /!\ parser = space
+    textFile.write(time+' '+led+' '+ imageCount+'\n')
+
+def filesInit(name, nbFrames, maxFrames):
     today = str(date.today())
-    savePath="C:/data_OIIS/"+today[2:4]+today[5:7]+today[8:10]
+    savePath="C:/data_OIIS/"+today[2:4]+today[5:7]+today[8:10]+"/"+name
     # savePath="C:/Users/Louis Vande Perre/Documents/Polytech/Stage/Johnston Lab/ISOI Project 2/"+date[2:4]+date[5:7]+date[8:10]
     
     #Checking if a folder already exist for the experiments of the day
@@ -77,7 +80,17 @@ def tiffWriterInit(name, nbFrames, maxFrames):
             tif = tifffile.TiffWriter(filename) #See tifffile.py for others param 
             tifList.append(tif)
     print len(tifList),' Tif(s) initiated'
-    return (tifList,savePath)
+    
+    #Inititate a .txt file where the configuration of the camera is saved
+    textFileCfg = open(savePath+"/"+name+"CFG.txt", 'w')
+    textFileCfg.write(str(datetime.now()))
+    textFileCfg.close()
+    ## Others cfg parameters to write
+    
+    #Inititate a .txt file where the metadata will be written
+    textFile = open(savePath+"/"+name+".txt", 'w')
+    
+    return (tifList, textFile,savePath)
 
 def tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList):
     for i in range((imageCount/maxFrames)+1,len(tiffWriterList)):   #All files that are empty (imageCount/maxFrames)+1, will be suppressed

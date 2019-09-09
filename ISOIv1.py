@@ -32,7 +32,7 @@ from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
 from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit, sequenceAcqTriggered, multipleSnap
 from camInit import camInit
-from saveFcts import tiffWriterInit, fileSizeCalculation, tiffWriterDel, tiffWritersClose
+from saveFcts import filesInit, fileSizeCalculation, tiffWriterDel, tiffWritersClose
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage, trigExposure
 from ArduinoComm import connect, sendExposure, sendLedList, close
 
@@ -72,7 +72,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.cropBtn.clicked.connect(self.crop)
         self.histoBtn.clicked.connect(self.histo)
         self.SaveEBtn.clicked.connect(self.paramCheck)
-        self.triggerBtn.clicked.connect(self.triggerExt)
+        #self.triggerBtn.clicked.connect(self.triggerExt)
         self.abortBtn.clicked.connect(self.abortFunc)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
@@ -259,6 +259,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         return sync        
     
     def paramCheck(self):
+        """ Check that the user is well informed about certains acquisition settings before launching the acquisition"""
         run = True
         
         #Shutter mode check
@@ -306,23 +307,21 @@ class MyMainWindow(QtWidgets.QMainWindow):
         window.progressBar.setMaximum(nbFrames)        
         
         #Initialize tiffWriter object
-        (tiffWriterList,savePath) = tiffWriterInit(name, nbFrames, maxFrames)
+        (tiffWriterList, textFile,savePath) = filesInit(name, nbFrames, maxFrames)
         
         if self.ledTrigBox.currentText() == 'Software' :
             #Launch seq acq : carries the images acquisition AND saving
-            imageCount = sequenceAcqSoftTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit) 
-            #multipleSnap(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit)
-            #imageCount=100
+            imageCount = sequenceAcqSoftTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList, textFile,labjack,window, app, exit)
             
             ##### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####  
-            if exit.is_set() and ((nbFrames/maxFrames)>=1): #check if abort fct was called and that ;ultiples .tif were initialized
-                print 'Empty .tif suppression ?'
+            if exit.is_set() and ((nbFrames/maxFrames)>=1): #check if abort fct was called and that multiples .tif were initialized
                 tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList)
         else :
             print 'LED camera trigger function'
-            imageCount = sequenceAcqCamTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList,labjack,window, app, exit)
+            imageCount = sequenceAcqCamTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList, textFile,labjack,window, app, exit)
             
-        
+        #Closing all files opened
+        textFile.close()
         tiffWritersClose(tiffWriterList)
         print 'Acquisition done'
         window.progressBar.setValue(0)
