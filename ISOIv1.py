@@ -256,52 +256,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
             sync = True
         else:
             QtWidgets.QMessageBox.information(self, 'No arduino detected', 'Please check that the cyclops are turned on and the wire connection')
-        return sync
-    
-    def triggerExt(self):
-        duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
-        ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
-        intervalMs = self.intervalMs.value()
-        exp = mmc.getExposure(DEVICE[0])
-        #Initialise sequence acqu
-        #(ledList, nbFrames) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))), intervalMs)
-        
-        #sequenceAcqTriggered(mmc,nbFrames, DEVICE[0], intervalMs, labjack)
-        print 'External trigger to snap image'
-        #mmc.snapImage()
-        mmc.clearCircularBuffer()
-        print 'image ready to snap'
-        for i in range(0,10):
-            sleep(1)
-            print(10-i)
-        #trigExposure(labjack, exp)
-        trigImage(labjack)
-        failureCount=0
-        while(failureCount<5000):
-            if mmc.getRemainingImageCount() > 0:
-                print 'Circular buffer is not empty'
-                img = mmc.popNextImage()
-                plt.imshow(img, cmap='gray')
-                plt.show()
-            else:
-                sleep(0.001)
-                failureCount+=1
-        print 'Failure count : ', failureCount
-#        mmc.clearCircularBuffer()
-#        trigImage(labjack)
-#        failureCount=0
-#        exp = float(mmc.getProperty(DEVICE[0], 'Exposure'))
-#        while(failureCount<10):
-#            sleep(exp*0.001)
-#            if (mmc.getRemainingImageCount() > 0):
-#                img = mmc.popNextImage()
-#                plt.imshow(img, cmap='gray')
-#                plt.show()
-#            else:
-#                print 'no frame'
-#                failureCount+=1
-        print 'trig done'
-            
+        return sync        
     
     def paramCheck(self):
         run = True
