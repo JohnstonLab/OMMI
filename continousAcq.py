@@ -10,7 +10,7 @@ IDEA : create a sequence class, in this way, sequence param can be saved when in
 # Used packages
 import cv2
 from time import sleep, time
-from saveFcts import saveFrame, tiffWriterClose
+from saveFcts import saveFrame, tiffWritersClose
 from Labjack import greenOn, greenOff, redOn, redOff, trigImage
 
 def grayLive(mmc):
@@ -108,7 +108,7 @@ def sequenceAcqSoftTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledLi
         print  "delta time between t",i+1," and t",i," : ",(timeStamps[i+1] -timeStamps[i])      
     
     #Close tiff file open
-    tiffWriterClose(tiffWriterList)
+    tiffWritersClose(tiffWriterList)
     
     #Stop camera acquisition
     mmc.stopSequenceAcquisition()
@@ -157,7 +157,7 @@ def sequenceAcqCamTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledLis
         print  "delta time between t",i+1," and t",i," : ",(timeStamps[i+1] -timeStamps[i])      
     
     #Close tiff file open
-    tiffWriterClose(tiffWriterList)
+    tiffWritersClose(tiffWriterList)
     
     #Stop camera acquisition
     mmc.stopSequenceAcquisition()
