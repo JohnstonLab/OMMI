@@ -60,12 +60,43 @@ def trigImage(device):
 
 def analogRead(device):
     device.eAIN()
+    
+def waitForSignal(device, signalType="TTL", channelType="FIO", channel=0):
+    """
+    Wait for a signal into the LabJack
+    
+    signalType: string, default = "TTL"
+        Sets the signal to expect. Currently supported is a +5.0V TTL
+        signal.
+        
+    channelType: string, default = "FIO"
+        Sets the type of input channel to listen on. Can be "FIO" 
+        (LabJack's digital I/O) or "AIN" (LabJack's analog input).
+    
+    channel: int, default = 3
+        Sets the channel of `channelType` to listen on.
+    """
+    if channelType == "FIO":
+        while device.getDIState(channel) == 0:
+            continue
+        
+    elif channelType == "AIN":
+        print "WARNING: This might not work as expected, AIN mode still experimental."
+        if signalType == "TTL":
+            targetVoltage = 5
+        while (device.getAIN(channel) - targetVoltage) < 0:
+            print device.getAIN(channel)
+            continue
+    else:
+        raise "Error: channelType: {wrongType} not recognised".format(wrongType=channelType)
 
 ##CHECK ARM output of the cam is high
 
 
-#print 'trig Exposure test'
-#device = labjackInit()
+print 'trig Exposure test'
+device = labjackInit()
+waitForSignal(device, 'TTL', 'AIN', 0)
+print 'Signal received'
 #exp = 50
 #for i in range(0,100):
 #    trigExposure(device,exp)
