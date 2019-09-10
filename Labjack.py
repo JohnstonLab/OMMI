@@ -12,7 +12,8 @@ from time import sleep
 #Labjack information
 red_lj=5    #FIO5
 green_lj=4  #FIO4
-trig = 7    #FIO7
+cameraTrig_lj = 0    #AIN0
+
 
 ####USELESS###
 ## Boolean variable that will represent 
@@ -46,20 +47,18 @@ def redOff(device):
     #print "red OFF"
     device.setFIOState(red_lj, 0)
 
-def trigExposure(device, exp):
-    print 'pulse generation'
-    device.setFIOState(trig, 1)
-    sleep(exp*0.001) #milliseconds conversion
-    device.setFIOState(trig, 0)
-    print 'pulse generated'
-    
-def trigImage(device):
-    device.setFIOState(trig, 1)
-    sleep(0.00001) #minimum required trig is 8 ns
-    device.setFIOState(trig, 0)
+#def trigExposure(device, exp):
+#    print 'pulse generation'
+#    device.setFIOState(trig, 1)
+#    sleep(exp*0.001) #milliseconds conversion
+#    device.setFIOState(trig, 0)
+#    print 'pulse generated'
+#    
+#def trigImage(device):
+#    device.setFIOState(trig, 1)
+#    sleep(0.00001) #minimum required trig is 8 ns
+#    device.setFIOState(trig, 0)
 
-def analogRead(device):
-    device.eAIN()
     
 def waitForSignal(device, signalType="TTL", channelType="FIO", channel=0):
     """
@@ -76,27 +75,77 @@ def waitForSignal(device, signalType="TTL", channelType="FIO", channel=0):
     channel: int, default = 3
         Sets the channel of `channelType` to listen on.
     """
-    if channelType == "FIO":
+    trigger = False
+    if channelType == "FIO": ##Use a DIGITAL input
         while device.getDIState(channel) == 0:
             continue
+        trigger = True
         
-    elif channelType == "AIN":
-        print "WARNING: This might not work as expected, AIN mode still experimental."
+    elif channelType == "AIN": ####Use a ANALOG input
+        #print "WARNING: This might not work as expected, AIN mode still experimental." #NoWay
         if signalType == "TTL":
-            targetVoltage = 5
+            targetVoltage = 3
         while (device.getAIN(channel) - targetVoltage) < 0:
-            print device.getAIN(channel)
             continue
+        trigger = True
     else:
         raise "Error: channelType: {wrongType} not recognised".format(wrongType=channelType)
+        
+    return trigger
+
+def risingEdge(device):
+    """
+    Wait for a rising edge (minimum %trigLevel V) into the LabJack AIN0 port (cameraTrig_lj variable)
+    
+    return True when the risingedge is detected.
+    """
+    trigLevel = 3
+    rEdge = False
+    
+    if (device.getAIN(cameraTrig_lj) > trigLevel):
+        print 'High state, cant wait for rising'
+    else:
+        while (device.getAIN(cameraTrig_lj) < trigLevel):
+            continue
+        print 'rising Edge detected'
+        rEdge = True
+    
+    return rEdge
+    
+def fallingEdge(device):
+    """
+    Wait for a falling edge (maximum %trigLevel V) into the LabJack AIN0 port (cameraTrig_lj variable)
+    
+    return True when the risingedge is detected.
+    """
+    trigLevel = 0.2
+    fEdge = False
+    
+    if (device.getAIN(cameraTrig_lj) < trigLevel):
+        print 'Low state, cant wait for falling'
+    else:
+        while (device.getAIN(cameraTrig_lj) < trigLevel):
+            continue
+        print 'falling Edge detected'
+        fEdge = True
+    
+    return fEdge
 
 ##CHECK ARM output of the cam is high
 
-
-print 'trig Exposure test'
-device = labjackInit()
-waitForSignal(device, 'TTL', 'AIN', 0)
-print 'Signal received'
+#
+#print 'trig Exposure test'
+#device = labjackInit()
+#waitForSignal(device, 'TTL', 'AIN', 0)
+#nbFrames = 10
+#imageCount=0
+#while (imageCount<nbFrames):
+#    #sleep(0.1)
+#    if waitForSignal(device, 'TTL', 'AIN', 0):
+#        print 'Trigger received'
+#        imageCount+=1
+#        
+#print 'acquisition done'
 #exp = 50
 #for i in range(0,100):
 #    trigExposure(device,exp)

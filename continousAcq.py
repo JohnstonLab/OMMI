@@ -10,8 +10,10 @@ IDEA : create a sequence class, in this way, sequence param can be saved when in
 # Used packages
 import cv2
 from time import sleep, time
+from multiprocessing.pool import ThreadPool
+
 from saveFcts import saveFrame, tiffWritersClose, saveMetadata
-from Labjack import greenOn, greenOff, redOn, redOff, trigImage
+from Labjack import greenOn, greenOff, redOn, redOff, waitForSignal, risingEdge
 
 def grayLive(mmc):
     cv2.namedWindow('Video - press esc to close') #open a new window
@@ -117,6 +119,97 @@ def sequenceAcqSoftTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledLi
     return imageCount
 
 
+def sequenceAcqLabjackTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, textFile, labjack, window, app, exit):
+    """
+    Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition. This function use the labjack to detect a camera trigger.
+    
+    Source for multithreading : https://stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-python
+    Doc for multithreading : https://docs.python.org/2/library/multiprocessing.html
+    """
+    
+    #readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
+    
+    #timeStamps.append(time()) #Useless to have a timestamp here
+    exp = float(mmc.getProperty(deviceLabel,'Exposure'))*0.001 #converted in ms
+    print exp,exp.is_integer()
+    #print "Interval between images : ", (intervalMs+readOutFrame),"ms"
+    print "Nb of frames : ", nbImages
+    imageCount = 0
+    #Initialize the good LED for first image
+    if ledList[imageCount] == 'r':
+        #print "Blue off"
+        greenOff(labjack)
+        redOn(labjack)
+    elif ledList[imageCount] == 'g':
+        redOff(labjack)
+        greenOn(labjack)
+    else:
+        redOff(labjack)
+        greenOff(labjack)
+    
+    pool = ThreadPool(processes=2)
+    print 'Pool initialized'
+    frameSavingThread = pool.apply_async(frameSaving,(mmc, tiffWriterList, nbImages, maxFrames, window, app, exit,))
+    ledSwitchingThread = pool.apply_async(ledSwitching,(exp, nbImages, ledList, textFile, labjack, exit))
+    print 'Saving process counter : ', frameSavingThread.get()
+    imageCount = ledSwitchingThread.get()
+    print 'LED process counter : ', imageCount
+    #close the pool and wait for the work to finish
+    pool.close()
+    pool.join()
+    
+    return imageCount
+    
+
+def ledSwitching(exposure, nbImages, ledList, textFile, labjack, exit):
+    "In charge of switching LED and saving metadata in a .txt file"
+    imageCount=0
+    while(imageCount<(nbImages) and not exit.is_set()):
+        if risingEdge(labjack):
+            #Lighting good LED for next acquisition
+            if ledList[imageCount] == 'r':
+                redOn(labjack)
+                sleep(exposure*(1/2.)) ## REMINDER / is the integer division operator
+                redOff(labjack)
+            elif ledList[imageCount] == 'g':
+                greenOn(labjack)
+                sleep(exposure*(1/2.)) ## REMINDER / is the integer division operator
+                greenOff(labjack)
+            #else:
+                #blueOff  
+            #timeStamps.append(t)
+            ##read input from labjack
+            saveMetadata(textFile, str(time()),ledList[(imageCount)], str(imageCount))
+            imageCount+=1
+    #Turning off all LEDS
+    greenOff(labjack)
+    redOff(labjack)
+    #close the metadata .txt file
+    textFile.close()
+    return imageCount
+            
+def frameSaving(mmc, tiffWriterList, nbImages, maxFrames, window, app, exit):
+    "In charge of saving frames and actualize the GUI"
+    imageCount=0
+    mmc.startContinuousSequenceAcquisition(1)
+    while(imageCount<(nbImages) and not exit.is_set()):
+        if mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished #Enter this loop BETWEEN acquisition
+            #trigImage(labjack) #Generate a pulse, which allows to flag the entry in this code statement with the oscilloscope
+            img = mmc.popNextImage() #Gets and removes the next image from the circular buffer
+            ##read input from labjack
+            saveFrame(img, tiffWriterList, (imageCount), maxFrames) # saving frame of previous acquisition
+            imageCount +=1
+            window.progressBar.setValue(imageCount) #Update the gui of evolution of the acquisition
+            app.processEvents() #Keep the GUI responsive even while this fct is executing
+    
+    #Close tiff file open
+    tiffWritersClose(tiffWriterList)
+    
+    #Stop camera acquisition
+    mmc.stopSequenceAcquisition()
+    mmc.clearCircularBuffer() 
+    
+    return imageCount
 
 def sequenceAcqCamTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, textFile, labjack, window, app, exit):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition. LED triggered by camera output"

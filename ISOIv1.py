@@ -30,10 +30,10 @@ from threading import Event
 
 from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
-from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit, sequenceAcqTriggered, multipleSnap
+from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit, sequenceAcqTriggered, multipleSnap, sequenceAcqLabjackTrig
 from camInit import camInit
 from saveFcts import filesInit, fileSizeCalculation, tiffWriterDel, tiffWritersClose
-from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, trigImage, trigExposure
+from Labjack import labjackInit, greenOn, greenOff, redOn, redOff
 from ArduinoComm import connect, sendExposure, sendLedList, close
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -113,6 +113,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         #LEDs trigger mode selection
         self.ledTrigBox.addItem('Camera')
         self.ledTrigBox.addItem('Software')
+        self.ledTrigBox.addItem('Labjack')
         self.ledTrigBox.setCurrentText('Software')
         
         
@@ -316,9 +317,12 @@ class MyMainWindow(QtWidgets.QMainWindow):
             ##### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####  
             if exit.is_set() and ((nbFrames/maxFrames)>=1): #check if abort fct was called and that multiples .tif were initialized
                 tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList)
-        else :
+        elif self.ledTrigBox.currentText() == 'Camera' :
             print 'LED camera trigger function'
             imageCount = sequenceAcqCamTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList, textFile,labjack,window, app, exit)
+        else:
+            print 'Labjack trig cam fct'
+            imageCount = sequenceAcqLabjackTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList, textFile, labjack, window, app, exit)
             
         #Closing all files opened
         textFile.close()
