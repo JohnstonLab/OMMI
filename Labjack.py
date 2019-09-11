@@ -102,12 +102,12 @@ def risingEdge(device):
     trigLevel = 3
     rEdge = False
     
-    if (device.getAIN(cameraTrig_lj) > trigLevel):
-        print 'High state, cant wait for rising'
-    else:
-        while (device.getAIN(cameraTrig_lj) < trigLevel):
+    #if (device.getAIN(cameraTrig_lj) > trigLevel):
+        #print 'High state, cant wait for rising'
+    if(device.getAIN(cameraTrig_lj) < trigLevel): # Check that the signal is in low state    
+        while (device.getAIN(cameraTrig_lj) < trigLevel): #get out of this loop only when a high state is detected
             continue
-        print 'rising Edge detected'
+        #print 'falling Edge detected'
         rEdge = True
     
     return rEdge
@@ -118,15 +118,15 @@ def fallingEdge(device):
     
     return True when the risingedge is detected.
     """
-    trigLevel = 0.2
+    trigLevel = 0.5
     fEdge = False
     
-    if (device.getAIN(cameraTrig_lj) < trigLevel):
-        print 'Low state, cant wait for falling'
-    else:
-        while (device.getAIN(cameraTrig_lj) < trigLevel):
+#    if (device.getAIN(cameraTrig_lj) < trigLevel):
+#        print 'Low state, cant wait for falling'
+    if(device.getAIN(cameraTrig_lj) > trigLevel): # Check that the signal is in high state    
+        while (device.getAIN(cameraTrig_lj) > trigLevel): #get out of this loop only when a low state is detected
             continue
-        print 'falling Edge detected'
+        #print 'falling Edge detected'
         fEdge = True
     
     return fEdge

@@ -30,7 +30,7 @@ from threading import Event
 
 from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
-from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit, sequenceAcqTriggered, multipleSnap, sequenceAcqLabjackTrig
+from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit , sequenceAcqLabjackTrig, sequenceAcqLabjackTrig2
 from camInit import camInit
 from saveFcts import filesInit, fileSizeCalculation, tiffWriterDel, tiffWritersClose
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff
@@ -113,7 +113,8 @@ class MyMainWindow(QtWidgets.QMainWindow):
         #LEDs trigger mode selection
         self.ledTrigBox.addItem('Camera')
         self.ledTrigBox.addItem('Software')
-        self.ledTrigBox.addItem('Labjack')
+        self.ledTrigBox.addItem('Labjack - Cyclops mode')
+        self.ledTrigBox.addItem('Labjack - Custom mode')
         self.ledTrigBox.setCurrentText('Software')
         
         
@@ -152,8 +153,10 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.fileSize.valueChanged.connect(self.fileSizeSetting)
         
         #Interval Ms
-        self.intervalMs.setValue(1.)
-        self.intervalMs.setMinimum(1)
+        self.expRatio.setValue(0.5)
+        self.expRatio.setMaximum(1)
+        self.expRatio.setSingleStep(0.05)
+        self.expRatio.setMinimum(0.10)
         
         #####
         
@@ -296,13 +299,14 @@ class MyMainWindow(QtWidgets.QMainWindow):
         duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
         ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
         maxFrames = int(self.framesPerFileLabel.text())
-        intervalMs = self.intervalMs.value()
+        expRatio =self.expRatio.value()
+        intervalMs = 0 ## TO remove from every code file
         
         #If abort button was hit, enable execution again, and exit.is_set() will return False (cf sequAcq fct)
         exit.clear()
         
         #Initialise sequence acqu
-        (ledList, nbFrames) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))), intervalMs)
+        (ledList, nbFrames) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))))
         
         #Initialize progressBar
         window.progressBar.setMaximum(nbFrames)        
@@ -314,16 +318,19 @@ class MyMainWindow(QtWidgets.QMainWindow):
             #Launch seq acq : carries the images acquisition AND saving
             imageCount = sequenceAcqSoftTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList, textFile,labjack,window, app, exit)
             
-            ##### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####  
-            if exit.is_set() and ((nbFrames/maxFrames)>=1): #check if abort fct was called and that multiples .tif were initialized
-                tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList)
         elif self.ledTrigBox.currentText() == 'Camera' :
             print 'LED camera trigger function'
             imageCount = sequenceAcqCamTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList, textFile,labjack,window, app, exit)
-        else:
+        elif self.ledTrigBox.currentText() == 'Labjack - Cyclops mode':
             print 'Labjack trig cam fct'
-            imageCount = sequenceAcqLabjackTrig(mmc, nbFrames, maxFrames, intervalMs, DEVICE[0], ledList, tiffWriterList, textFile, labjack, window, app, exit)
-            
+            imageCount = sequenceAcqLabjackTrig(mmc, nbFrames, maxFrames, expRatio, DEVICE[0], ledList, tiffWriterList, textFile, labjack, window, app, exit)
+        else:
+            print 'Labjack trig custom fct'
+            imageCount = sequenceAcqLabjackTrig2(mmc, nbFrames, maxFrames, expRatio, DEVICE[0], ledList, tiffWriterList, textFile, labjack, window, app, exit)
+    
+        ##### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####  
+        if exit.is_set() and ((nbFrames/maxFrames)>=1): #check if abort fct was called and that multiples .tif were initialized
+            tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList)
         #Closing all files opened
         textFile.close()
         tiffWritersClose(tiffWriterList)

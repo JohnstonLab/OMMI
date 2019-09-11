@@ -76,7 +76,7 @@ void triggerEventRising()
   if((ledList[frameCounter%listSize])== 'r')    //ONLY DIFF WITH green.ino (and blue.ino), READING THE GOOD CHAR IN LIST
   {
     cyclops0.dac_load_voltage(voltage); //Turn green LED ON
-    delay(exposure);
+    delay(exposure/2);
     cyclops0.dac_load_voltage(0); //Turn green LED OF
   }
   frameCounter+=1; //Eaching rising edge correspond to a frame acquisition

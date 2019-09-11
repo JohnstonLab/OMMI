@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -284,9 +284,9 @@
      <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
-        <x>271</x>
+        <x>520</x>
         <y>130</y>
-        <width>421</width>
+        <width>231</width>
         <height>25</height>
        </rect>
       </property>
@@ -305,13 +305,6 @@
        </item>
        <item>
         <widget class="QComboBox" name="triggerBox"/>
-       </item>
-       <item>
-        <widget class="QPushButton" name="triggerBtn">
-         <property name="text">
-          <string>Snap (ext trig)</string>
-         </property>
-        </widget>
        </item>
       </layout>
      </widget>
@@ -512,7 +505,7 @@
        <rect>
         <x>338</x>
         <y>20</y>
-        <width>96</width>
+        <width>141</width>
         <height>20</height>
        </rect>
       </property>
@@ -522,15 +515,15 @@
        </font>
       </property>
       <property name="text">
-       <string>Interval (ms)</string>
+       <string>Interval LED ON (%exp)</string>
       </property>
      </widget>
-     <widget class="QSpinBox" name="intervalMs">
+     <widget class="QDoubleSpinBox" name="expRatio">
       <property name="geometry">
        <rect>
-        <x>440</x>
+        <x>484</x>
         <y>20</y>
-        <width>95</width>
+        <width>51</width>
         <height>20</height>
        </rect>
       </property>
@@ -538,9 +531,9 @@
      <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
-        <x>550</x>
+        <x>530</x>
         <y>90</y>
-        <width>231</width>
+        <width>251</width>
         <height>109</height>
        </rect>
       </property>

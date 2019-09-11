@@ -13,7 +13,7 @@ from time import sleep, time
 from multiprocessing.pool import ThreadPool
 
 from saveFcts import saveFrame, tiffWritersClose, saveMetadata
-from Labjack import greenOn, greenOff, redOn, redOff, waitForSignal, risingEdge
+from Labjack import greenOn, greenOff, redOn, redOff, waitForSignal, risingEdge, fallingEdge
 
 def grayLive(mmc):
     cv2.namedWindow('Video - press esc to close') #open a new window
@@ -32,11 +32,11 @@ def grayLive(mmc):
     mmc.stopSequenceAcquisition()
     
 
-def sequenceInit(duration, ledRatio, exp, intervalMs):
+def sequenceInit(duration, ledRatio, exp):
     "Prepare (and DISPLAY??) infos about the sequence acq coming"
     readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
     ## send all of this to sequence acq
-    nbFrames = int((duration)/(intervalMs+readOutFrame+exp))+1  ## Determine number of frames. (+1) ensure to have a list long enough
+    nbFrames = int((duration)/(readOutFrame+exp))+1  ## Determine number of frames. (+1) ensure to have a list long enough
     ledSeq = ['r']*ledRatio[0]+['g']*ledRatio[1]+['b']*ledRatio[2] #Sequence of LED lighting in function of the ratio
     print 'LED sequence : ', ledSeq
     ledList = ledSeq*(int(nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
@@ -119,7 +119,7 @@ def sequenceAcqSoftTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledLi
     return imageCount
 
 
-def sequenceAcqLabjackTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, textFile, labjack, window, app, exit):
+def sequenceAcqLabjackTrig(mmc, nbImages, maxFrames, expRatio, deviceLabel, ledList, tiffWriterList, textFile, labjack, window, app, exit):
     """
     Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition. This function use the labjack to detect a camera trigger.
     
@@ -132,6 +132,41 @@ def sequenceAcqLabjackTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, le
     #timeStamps.append(time()) #Useless to have a timestamp here
     exp = float(mmc.getProperty(deviceLabel,'Exposure'))*0.001 #converted in ms
     print exp,exp.is_integer()
+    ledOnDuration = exp*expRatio
+    print 'time LED ON (s) : ', ledOnDuration
+    #print "Interval between images : ", (intervalMs+readOutFrame),"ms"
+    print "Nb of frames : ", nbImages
+    
+    pool = ThreadPool(processes=2)
+    print 'Pool initialized'
+    
+    ledSwitchingThread = pool.apply_async(ledSwitching,(ledOnDuration, nbImages, ledList, textFile, labjack, exit))
+    frameSavingThread = pool.apply_async(frameSaving,(mmc, tiffWriterList, nbImages, maxFrames, window, app, exit,))
+    print 'Saving process counter : ', frameSavingThread.get()
+    imageCount = ledSwitchingThread.get()
+    print 'LED process counter : ', imageCount
+    #close the pool and wait for the work to finish
+    pool.close()
+    pool.join()
+    
+    return imageCount
+    
+
+def sequenceAcqLabjackTrig2(mmc, nbImages, maxFrames, expRatio, deviceLabel, ledList, tiffWriterList, textFile, labjack, window, app, exit):
+    """
+    Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition. This function use the labjack to detect a camera trigger.
+    
+    Source for multithreading : https://stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-python
+    Doc for multithreading : https://docs.python.org/2/library/multiprocessing.html
+    """
+    
+    #readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
+    
+    #timeStamps.append(time()) #Useless to have a timestamp here
+    exp = float(mmc.getProperty(deviceLabel,'Exposure'))*0.001 #converted in ms
+    print exp,exp.is_integer()
+    ledOnDuration = exp*expRatio
+    print 'time LED ON (s) : ', ledOnDuration
     #print "Interval between images : ", (intervalMs+readOutFrame),"ms"
     print "Nb of frames : ", nbImages
     imageCount = 0
@@ -150,7 +185,7 @@ def sequenceAcqLabjackTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, le
     pool = ThreadPool(processes=2)
     print 'Pool initialized'
     frameSavingThread = pool.apply_async(frameSaving,(mmc, tiffWriterList, nbImages, maxFrames, window, app, exit,))
-    ledSwitchingThread = pool.apply_async(ledSwitching,(exp, nbImages, ledList, textFile, labjack, exit))
+    ledSwitchingThread = pool.apply_async(ledSwitchingCustom,(ledOnDuration, nbImages, ledList, textFile, labjack, exit))
     print 'Saving process counter : ', frameSavingThread.get()
     imageCount = ledSwitchingThread.get()
     print 'LED process counter : ', imageCount
@@ -159,9 +194,42 @@ def sequenceAcqLabjackTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, le
     pool.join()
     
     return imageCount
-    
 
-def ledSwitching(exposure, nbImages, ledList, textFile, labjack, exit):
+def ledSwitchingCustom(ledOnDuration, nbImages, ledList, textFile, labjack, exit):
+    "In charge of switching LED and saving metadata in a .txt file"
+    imageCount=0
+    while(imageCount<(nbImages) and not exit.is_set()):
+        if risingEdge(labjack):
+            #Lighting good LED for next acquisition
+            saveMetadata(textFile, str(time()),ledList[(imageCount)], str(imageCount))
+            sleep(ledOnDuration-0.001) ## REMINDER / is the integer division operator ## remove 1ms for saving .txt file
+            if ledList[imageCount] == 'r':
+                redOff(labjack)
+            elif ledList[imageCount] == 'g':
+                greenOff(labjack)
+            #else:
+                #blueOff
+                
+            ##read input from labjack
+            imageCount+=1
+        elif fallingEdge(labjack):
+            sleep(6*0.001)
+            if ledList[imageCount] == 'r':
+                redOn(labjack)
+            elif ledList[imageCount] == 'g':
+                greenOn(labjack)
+            #else:
+                #blueOff
+                
+    #Turning off all LEDS
+    greenOff(labjack)
+    redOff(labjack)
+    #close the metadata .txt file
+    textFile.close()
+    return imageCount
+
+
+def ledSwitching(ledOnDuration, nbImages, ledList, textFile, labjack, exit):
     "In charge of switching LED and saving metadata in a .txt file"
     imageCount=0
     while(imageCount<(nbImages) and not exit.is_set()):
@@ -169,11 +237,11 @@ def ledSwitching(exposure, nbImages, ledList, textFile, labjack, exit):
             #Lighting good LED for next acquisition
             if ledList[imageCount] == 'r':
                 redOn(labjack)
-                sleep(exposure*(1/2.)) ## REMINDER / is the integer division operator
+                sleep(ledOnDuration) ## REMINDER / is the integer division operator
                 redOff(labjack)
             elif ledList[imageCount] == 'g':
                 greenOn(labjack)
-                sleep(exposure*(1/2.)) ## REMINDER / is the integer division operator
+                sleep(ledOnDuration) ## REMINDER / is the integer division operator
                 greenOff(labjack)
             #else:
                 #blueOff  
