@@ -14,6 +14,8 @@ from camInit import camInit
 import MMCorePy
 from multiprocessing.pool import ThreadPool
 import matplotlib.pyplot as plt
+import threading
+import time
 
 #Labjack information
 red_lj=5    #FIO5
@@ -62,7 +64,7 @@ def trigExposure(device, exp):
     
 def trigImage(device):
     device.setFIOState(trig, 1)
-    sleep(0.00001) #minimum required trig is 8 ns
+    #sleep(0.0001) #minimum required trig is 8 ns
     device.setFIOState(trig, 0)
 
     
@@ -145,10 +147,34 @@ def snapImage(mmc):
     cv2.imshow('Image', g)
     sleep(10)
     cv2.destroyAllWindows()
-    
-##CHECK ARM output of the cam is high
+
+def multiTrig(device, nbImages):
+    for i in range(0,nbImages):
+        waitForSignal(device, "TTL", "AIN", 0) ##CHECK ARM output of the cam is high
+        trigImage(device) ## trig image i
+        print 'image ',i,' triggered'
+
+def multiSnap(device, nbImages, mmc, imageList):
+    greenOn(device)
+    greenOff(device)
+    for i in range(0,nbImages):
+        print 'inside the for loop'
+        start = time.time()
+        while(mmc.getRemainingImageCount()<1 and (time.time() - start)<2):
+            continue
+        #mmc.snapImage()
+        print 'snapped'
+        #img = mmc.getImage()
+        #img = mmc.getLastImage()
+        img=mmc.popNextImage()
+        print 'got it'
+        imageList.append(img) 
+        #greenOn(device)
+        #greenOff(device)
+        print 'image ',i
 
 #### TESTING EXTERNAL TRIGGERING OF THE CAM ####
+###Acquisition of 3 frames with one LED on
 print 'trig Exposure test'
 mmc = MMCorePy.CMMCore()
 mmc.unloadAllDevices()
@@ -157,39 +183,137 @@ labjack = labjackInit()
 exp = 0.9
 
 mmc.clearCircularBuffer() ## doesn't change anything
-trigExposure(labjack,exp) ## trig image 1
-mmc.snapImage() ##WARNING, it takes the timing of exposure
-trigExposure(labjack,exp) ## flag the end of the snap
-g1 = mmc.getImage() ##Warning, it wait the end of transfer
+mmc.initializeCircularBuffer()
+#trigExposure(labjack,exp) ## trig image 1
+#mmc.snapImage() ##WARNING, it takes the timing of exposure
+#trigExposure(labjack,exp) ## flag the end of the snap
+#g1 = mmc.getImage() ##Warning, it wait the end of transfer
+#
+#greenOn(labjack)
+#trigExposure(labjack,exp) ## trig image 2
+#mmc.snapImage()
+#trigExposure(labjack,exp) ## flag the end of the snap
+#g2 = mmc.getImage()
+#trigExposure(labjack,exp) ## flag the end of the get (because of the long delay, it triggers another imaage acquisition)
+#greenOff(labjack)
+#
+### Show all
+#plt.figure()
+#plt.imshow(g1,cmap="gray")
+#plt.show()
+#plt.figure()
+#plt.imshow(g2,cmap="gray")
+#plt.show()
+#
+##snap 
+#sleep(1)
+#mmc.snapImage()
+#g3 =  mmc.getImage()
+#plt.figure()
+#plt.imshow(g3,cmap="gray")
+#plt.show()
 
-greenOn(labjack)
-trigExposure(labjack,exp) ## trig image 2
-mmc.snapImage()
-trigExposure(labjack,exp) ## flag the end of the snap
-g2 = mmc.getImage()
-trigExposure(labjack,exp) ## flag the end of the get (because of the long delay, it triggers another imaage acquisition)
-greenOff(labjack)
+###Acquisition as fast as possible and get&display image after
+#trigExposure(labjack,exp) ## trig image 1
+#waitForSignal(labjack, "TTL", "AIN", 0)
+#greenOn(labjack)
+#trigExposure(labjack,exp) ## trig image 2
+#waitForSignal(labjack, "TTL", "AIN", 0)
+#greenOff(labjack)
+#trigExposure(labjack,exp) ## trig image 3
+#
+###Acquire images
+#for i in range(0,2):
+#    mmc.snapImage()
+#    g1 = mmc.getImage()
+#    greenOn(labjack)
+#    greenOff(labjack)
+#    plt.figure(i)
+#    plt.imshow(g1, cmap='gray')
+#    plt.show()
+#    print 'image ',i
 
-## Show all
-plt.figure(0)
-plt.imshow(g1, cmap='gray')
-plt.show()
-plt.figure(1)
-plt.imshow(g2, cmap='gray')
-plt.show()
+### Same as above but using multi-threads
+nbImages =3
+imageList = []
+#thread1 = threading.Thread(target=multiTrig, args=(labjack, nbImages,))
+#thread2 = threading.Thread(target=multiSnap, args=(labjack, nbImages, mmc, imageList,))
+#pool = ThreadPool(processes=2)
+#
+##thread1.start()
+#async_result1 = pool.apply_async(multiTrig,(labjack, nbImages,))
+#sleep(0.0025)
+##thread2.start()
+#async_result2 = pool.apply_async(multiSnap,(labjack, nbImages, mmc, imageList,))
+#
+##imageList = async_result2.get()
+##thread1.join()
+##thread2.join()
+#pool.close()
+#pool.join()
+#greenOn(labjack) #flag the end of threads execution
+#sleep(0.002)
+#greenOff(labjack) 
+#print 'there are ',len(imageList), ' in the list'
+#for i in range(0,len(imageList)):
+#    plt.figure()
+#    print imageList[i].shape
+#    plt.imshow(imageList[i], cmap='gray')
+#    plt.show()
+#
+#print 'trig done'
+#mmc.unloadAllDevices()
 
-#snap 
-sleep(1)
-mmc.snapImage()
-g3 =  mmc.getImage()
-plt.figure(2)
-plt.imshow(g3, cmap='gray')
-plt.show()
+##### TRIGERRING DURING SEQ ACQUISITION
 
+#mmc.startContinuousSequenceAcquisition()
+#multiTrig(labjack, nbImages)
+#multiSnap(labjack, nbImages, mmc, imageList)
+#greenOn(labjack) #flag the end of threads execution
+#sleep(0.002)
+#greenOff(labjack) 
+#print 'there are ',len(imageList), ' in the list'
+#for i in range(0,len(imageList)):
+#    plt.figure()
+#    print imageList[i].shape
+#    plt.imshow(imageList[i], cmap='gray')
+#    plt.show()
+#sleep(0.5)
+#mmc.stopSequenceAcquisition()
+#mmc.unloadAllDevices()
+#print 'trig done'
 
+#### Sequ acqu with threads
+mmc.startContinuousSequenceAcquisition(1)
+thread1 = threading.Thread(target=multiTrig, args=(labjack, nbImages,))
+thread2 = threading.Thread(target=multiSnap, args=(labjack, nbImages, mmc, imageList,))
+pool = ThreadPool(processes=2)
+
+#thread1.start()
+async_result1 = pool.apply_async(multiTrig,(labjack, nbImages,))
+sleep(0.0025)
+#thread2.start()
+async_result2 = pool.apply_async(multiSnap,(labjack, nbImages, mmc, imageList,))
+
+#imageList = async_result2.get()
+#thread1.join()
+#thread2.join()
+pool.close()
+pool.join()
+greenOn(labjack) #flag the end of threads execution
+sleep(0.002)
+greenOff(labjack) 
+print 'there are ',len(imageList), ' in the list'
+for i in range(0,len(imageList)):
+    plt.figure()
+    print imageList[i].shape
+    plt.imshow(imageList[i], cmap='gray')
+    plt.show()
+sleep(0.5)
+mmc.stopSequenceAcquisition()
+mmc.unloadAllDevices()
 print 'trig done'
 
-mmc.unloadAllDevices()
 
 ### RANDOM CODE FOR EXTERNAL TRIGGERING ####
 
