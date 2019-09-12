@@ -7,12 +7,6 @@ Created on Thu Aug 15 10:46:56 2019
 Main file of ISOI software.
 v1 using the demo cam from MM
 
-TASK :
-    1. Connect buttons and parameters set up
-    2. Run short experiment with different LEDs on
-    3. Metadata writing and checking experiment + correct folders names
-    4. Saving each 512 frames
-    
 TO DO :
     - TO fix : minimize global vars number + modulability
 """
@@ -72,7 +66,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.cropBtn.clicked.connect(self.crop)
         self.histoBtn.clicked.connect(self.histo)
         self.SaveEBtn.clicked.connect(self.paramCheck)
-        #self.triggerBtn.clicked.connect(self.triggerExt)
+        #self.trigBtn.clicked.connect(self.triggerExt)
         self.abortBtn.clicked.connect(self.abortFunc)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
