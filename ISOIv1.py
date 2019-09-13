@@ -111,6 +111,11 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.ledTrigBox.addItem('Labjack - Custom mode')
         self.ledTrigBox.setCurrentText('Software')
         
+        #Overlap Mode
+        self.overLapBox.addItem('On')
+        self.overLapBox.addItem('Off')
+        self.overLapBox.setCurrentText(mmc.getProperty(DEVICE[0], 'Overlap'))
+        self.overLapBox.currentIndexChanged.connect(self.overlapChange)
         
         ####### Slider #####
         self.expSlider.setMinimum(expMin)
@@ -216,7 +221,13 @@ class MyMainWindow(QtWidgets.QMainWindow):
         mmc.setProperty(DEVICE[0],'TriggerMode',str(trig))
         print 'Trigger mode set at ', mmc.getProperty(DEVICE[0], 'TriggerMode')
 
-    
+    def overlapChange(self):
+        overlap = self.overLapBox.currentText()
+        try:
+            mmc.setProperty(DEVICE[0],'Overlap', str(overlap))
+            print 'Overlap set at ', mmc.getProperty(DEVICE[0], 'Overlap')
+        except:
+            print "CMM err, no possibility to set Overlap mode"
     def green(self,toggle_g):
         if toggle_g:
             greenOn(labjack)

@@ -99,7 +99,7 @@ def sequenceAcqSoftTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledLi
             ##read input from labjack
             saveMetadata(textFile, str(t),ledList[(imageCount-1)], str(imageCount-1))
             saveFrame(img, tiffWriterList, (imageCount-1), maxFrames) # saving frame of previous acquisition
-            window.progressBar.setValue(imageCount) #Update the gui of evolution of the acquisition
+            window.progressBar.setValue(imageCount) #Update the gui with evolution of the acquisition
             app.processEvents() #Keep the GUI responsive even while this fct is executing
 
     #Turning off all LEDS
@@ -136,12 +136,16 @@ def sequenceAcqLabjackTrig(mmc, nbImages, maxFrames, expRatio, deviceLabel, ledL
     print 'time LED ON (s) : ', ledOnDuration
     #print "Interval between images : ", (intervalMs+readOutFrame),"ms"
     print "Nb of frames : ", nbImages
+    duration = (nbImages*(exp+10))*0.001 #Acquisition duration in s
+    imageCount = 0
     
-    pool = ThreadPool(processes=2)
+    pool = ThreadPool(processes=3)
     print 'Pool initialized'
     
-    ledSwitchingThread = pool.apply_async(ledSwitching,(ledOnDuration, nbImages, ledList, textFile, labjack, exit))
+    ledSwitchingThread = pool.apply_async(ledSwitching,(ledOnDuration, nbImages, ledList, textFile, labjack, exit,))
+    sleep(0.005) ## WAIT FOR INITIALIZATION AND WAITFORSIGNAL FCT
     frameSavingThread = pool.apply_async(frameSaving,(mmc, tiffWriterList, nbImages, maxFrames, window, app, exit,))
+    guiUpdatingThread = pool.apply_async(guiUpdating,(duration, app, exit,))
     print 'Saving process counter : ', frameSavingThread.get()
     imageCount = ledSwitchingThread.get()
     print 'LED process counter : ', imageCount
@@ -184,8 +188,9 @@ def sequenceAcqLabjackTrig2(mmc, nbImages, maxFrames, expRatio, deviceLabel, led
     
     pool = ThreadPool(processes=2)
     print 'Pool initialized'
+    ledSwitchingThread = pool.apply_async(ledSwitchingCustom,(ledOnDuration, nbImages, ledList, textFile, labjack, exit,))
+    sleep(0.005) ## WAIT FOR INITIALIZATION AND WAITFORSIGNAL FCT
     frameSavingThread = pool.apply_async(frameSaving,(mmc, tiffWriterList, nbImages, maxFrames, window, app, exit,))
-    ledSwitchingThread = pool.apply_async(ledSwitchingCustom,(ledOnDuration, nbImages, ledList, textFile, labjack, exit))
     print 'Saving process counter : ', frameSavingThread.get()
     imageCount = ledSwitchingThread.get()
     print 'LED process counter : ', imageCount
@@ -267,8 +272,11 @@ def frameSaving(mmc, tiffWriterList, nbImages, maxFrames, window, app, exit):
             ##read input from labjack
             saveFrame(img, tiffWriterList, (imageCount), maxFrames) # saving frame of previous acquisition
             imageCount +=1
-            window.progressBar.setValue(imageCount) #Update the gui of evolution of the acquisition
-            app.processEvents() #Keep the GUI responsive even while this fct is executing
+        ##UPDATE of the GUI
+        window.progressBar.setValue(imageCount) #Update the gui of evolution of the acquisition
+#        if (imageCount % 10) == 0: ##Process events in the Queue each 10 frames
+#            app.processEvents() #Keep the GUI responsive even while this fct is executing
+#            print 'processEvents im num : ',imageCount
     
     #Close tiff file open
     tiffWritersClose(tiffWriterList)
@@ -278,6 +286,16 @@ def frameSaving(mmc, tiffWriterList, nbImages, maxFrames, window, app, exit):
     mmc.clearCircularBuffer() 
     
     return imageCount
+
+def guiUpdating(duration, app, exit):
+    start = time() ## Maybe it's better to initialize a timer ?
+    i=0
+    print 'duration (s) :', duration
+    while((time()-start) < duration and not exit.is_set()):
+        sleep(0.5)
+        app.processEvents()
+        print 'proccesEvents num : ',i
+        i+=1
 
 def sequenceAcqCamTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, textFile, labjack, window, app, exit):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition. LED triggered by camera output"
