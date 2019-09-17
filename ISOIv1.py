@@ -5,10 +5,8 @@ Created on Thu Aug 15 10:46:56 2019
 @author: Louis Vande Perre
 
 Main file of ISOI software.
-v1 using the demo cam from MM
+v1
 
-TO DO :
-    - TO fix : minimize global vars number + modulability
 """
 #Packages import
 import sys
@@ -17,14 +15,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 from PyQt5 import QtCore, QtWidgets, QtGui, uic
-from time import sleep
+from time import sleep, time
 from threading import Event
+from multiprocessing.pool import ThreadPool
+
 
 #Function import
 
 from crop import crop_w_mouse
 from histogram import histoInit, histoCalc
-from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit , sequenceAcqLabjackTrig, sequenceAcqLabjackTrig2
+from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit , sequenceAcqLabjackTrig, sequenceAcqLabjackTrig2, guiUpdating
 from camInit import camInit
 from saveFcts import filesInit, fileSizeCalculation, tiffWriterDel, tiffWritersClose
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff
@@ -152,7 +152,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.fileSize.valueChanged.connect(self.fileSizeSetting)
         
         #Interval Ms
-        self.expRatio.setValue(0.5)
+        self.expRatio.setValue(0.7)
         self.expRatio.setMaximum(1)
         self.expRatio.setSingleStep(0.05)
         self.expRatio.setMinimum(0.10)
@@ -279,6 +279,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
             if choice == QtWidgets.QMessageBox.Yes:
                 print("Running in Rolling mode")
                 self.saveImageSeq() 
+                #self.saveImageSeqThreads()
                 run = True
             else:
                 print('Change mode in the other panel')
@@ -298,9 +299,10 @@ class MyMainWindow(QtWidgets.QMainWindow):
                 
         if run:
             self.saveImageSeq()
+            #self.saveImageSeqThreads()
     
     def saveImageSeq(self):
-        name = window.name.text()  ## get Name from text area
+        name = self.name.text()  ## get Name from text area
         duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
         ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
         maxFrames = int(self.framesPerFileLabel.text())
@@ -341,7 +343,54 @@ class MyMainWindow(QtWidgets.QMainWindow):
         tiffWritersClose(tiffWriterList)
         print 'Acquisition done'
         window.progressBar.setValue(0)
-            
+         
+        
+        #####TEST MODIF FOR FREEZING WINDOW ISSUE
+    def saveImageSeqThreads(self):
+        name = window.name.text()  ## get Name from text area
+        duration = self.dur.value()*1000 ## get duration from spinbox and converted it in ms
+        ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] # [r,g,b]## get LED ratio
+        maxFrames = int(self.framesPerFileLabel.text())
+        expRatio =self.expRatio.value()
+        #intervalMs = 0 ## TO remove from every code file
+        
+        
+        #If abort button was hit, enable execution again, and exit.is_set() will return False (cf sequAcq fct)
+        exit.clear()
+        
+        #Initialise sequence acqu
+        (ledList, nbFrames) = sequenceInit(duration, ledRatio, int(float(mmc.getProperty(DEVICE[0], 'Exposure'))))
+        
+        #Initialize progressBar
+        window.progressBar.setMaximum(nbFrames)        
+        
+        #Initialize tiffWriter object
+        (tiffWriterList, textFile,savePath) = filesInit(name, nbFrames, maxFrames)
+        
+        pool = ThreadPool(processes=2)
+    
+        async_result1 = pool.apply_async(sequenceAcqLabjackTrig, (mmc, nbFrames, maxFrames, expRatio, DEVICE[0], ledList, tiffWriterList, textFile, labjack, window, app, exit,))
+        async_result2 = pool.apply_async(guiUpdating, (self.dur.value(), app, exit,))
+        # do some other stuff in the main process
+    
+        imageCount = async_result1.get()  # get the return value from your function.
+        print imageCount
+        
+        #close the pool and wait for the work to finish
+        pool.close()
+        pool.join()
+        print 'execution done'
+        #print 'Labjack trig cam fct'
+        #imageCount = sequenceAcqLabjackTrig(mmc, nbFrames, maxFrames, expRatio, DEVICE[0], ledList, tiffWriterList, textFile, labjack, window, app, exit)
+        ##### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####  
+        if exit.is_set() and ((nbFrames/maxFrames)>=1): #check if abort fct was called and that multiples .tif were initialized
+            tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList)
+        #Closing all files opened
+        textFile.close()
+        tiffWritersClose(tiffWriterList)
+        print 'Acquisition done'
+        window.progressBar.setValue(0) 
+    
     def histo(self):
         (mask, h_h, h_w, pixMaxVal, bin_width, nbins) = histoInit(mmc)
         cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)

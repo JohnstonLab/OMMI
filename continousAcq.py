@@ -136,7 +136,7 @@ def sequenceAcqLabjackTrig(mmc, nbImages, maxFrames, expRatio, deviceLabel, ledL
     print 'time LED ON (s) : ', ledOnDuration
     #print "Interval between images : ", (intervalMs+readOutFrame),"ms"
     print "Nb of frames : ", nbImages
-    duration = (nbImages*(exp+10))*0.001 #Acquisition duration in s
+    #duration = (nbImages*(exp+10))*0.001 #Acquisition duration in s
     imageCount = 0
     
     pool = ThreadPool(processes=3)
@@ -145,7 +145,7 @@ def sequenceAcqLabjackTrig(mmc, nbImages, maxFrames, expRatio, deviceLabel, ledL
     ledSwitchingThread = pool.apply_async(ledSwitching,(ledOnDuration, nbImages, ledList, textFile, labjack, exit,))
     sleep(0.005) ## WAIT FOR INITIALIZATION AND WAITFORSIGNAL FCT
     frameSavingThread = pool.apply_async(frameSaving,(mmc, tiffWriterList, nbImages, maxFrames, window, app, exit,))
-    guiUpdatingThread = pool.apply_async(guiUpdating,(duration, app, exit,))
+    #guiUpdatingThread = pool.apply_async(guiUpdating,(duration, app, exit,))
     print 'Saving process counter : ', frameSavingThread.get()
     imageCount = ledSwitchingThread.get()
     print 'LED process counter : ', imageCount
@@ -229,6 +229,7 @@ def ledSwitchingCustom(ledOnDuration, nbImages, ledList, textFile, labjack, exit
     #Turning off all LEDS
     greenOff(labjack)
     redOff(labjack)
+    print 'acquisition done'
     #close the metadata .txt file
     textFile.close()
     return imageCount
@@ -296,6 +297,7 @@ def guiUpdating(duration, app, exit):
         app.processEvents()
         print 'proccesEvents num : ',i
         i+=1
+    print 'end of the app task processing'
 
 def sequenceAcqCamTrig(mmc, nbImages, maxFrames, intervalMs, deviceLabel, ledList, tiffWriterList, textFile, labjack, window, app, exit):
     "Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition. LED triggered by camera output"

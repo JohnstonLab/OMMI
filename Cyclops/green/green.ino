@@ -2,11 +2,11 @@
 #include <vector>
 //dual LED triggering
 
-int exposure=5;      //exposure of the camera sensor
+int exposure=10;      //exposure of the camera sensor
 int incomingByte;    // a variable to read incoming serial data into
 int frameCounter =0; // Count the frame acuired, use to read thru LED list
-std::vector<int> ledList; // initialize a in vector of non-determinated size
-int listSize =0; 
+std::vector<int> ledList = {'g', 'b', 'b', 'b', 'b'}; // initialize a in vector of non-determinated size
+int listSize =5; 
 
 int voltage = 4095; //5V set at Cyclops DAC output
 
@@ -76,7 +76,7 @@ void triggerEventRising()
   if((ledList[frameCounter%listSize])== 'g')        //ONLY DIFF WITH red.ino (and blue.ino), READING THE GOOD CHAR IN LIST
   {
     cyclops0.dac_load_voltage(voltage); //Turn green LED ON
-    delay(exposure/2);
+    delay(exposure);
     cyclops0.dac_load_voltage(0); //Turn green LED OF
   }
   frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
