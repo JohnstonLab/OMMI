@@ -139,7 +139,7 @@ def sequenceAcqLabjackTrig(mmc, nbImages, maxFrames, expRatio, deviceLabel, ledL
     #duration = (nbImages*(exp+10))*0.001 #Acquisition duration in s
     imageCount = 0
     
-    pool = ThreadPool(processes=3)
+    pool = ThreadPool(processes=2)
     print 'Pool initialized'
     
     ledSwitchingThread = pool.apply_async(ledSwitching,(ledOnDuration, nbImages, ledList, textFile, labjack, exit,))

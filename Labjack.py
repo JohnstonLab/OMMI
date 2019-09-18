@@ -20,6 +20,7 @@ import time
 #Labjack information
 red_lj=5    #FIO5
 green_lj=4  #FIO4
+blue_lj = 7 #FIO7
 trig = 7 #FIO7
 cameraTrig_lj = 0    #AIN0
 
@@ -54,6 +55,14 @@ def redOn(device):
 def redOff(device):
     #print "red OFF"
     device.setFIOState(red_lj, 0)
+    
+def blueOn(device):
+    #print "red ON"
+    device.setFIOState(blue_lj, 1)
+    
+def blueOff(device):
+    #print "red OFF"
+    device.setFIOState(blue_lj, 0)
 
 def trigExposure(device, exp):
     print 'pulse generation'
