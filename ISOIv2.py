@@ -475,22 +475,22 @@ class SequenceAcquisition(QThread):
         while(imageCount<(self.nbFrames) and self.acqRunning):
             #if risingEdge(self.labjack):
             #Will return only if ARM output signal from the camera raise
-            waitForSignal(self.labjack, "TTL", "AIN", 0)
-            #Lighting good LED for next acquisition
-            if self.ledList[imageCount] == 'r':
-                redOn(self.labjack)
-                sleep(ledOnDuration) ## REMINDER / is the integer division operator
-                redOff(self.labjack)
-            elif self.ledList[imageCount] == 'g':
-                greenOn(self.labjack)
-                sleep(ledOnDuration) ## REMINDER / is the integer division operator
-                greenOff(self.labjack)
-            #else:
-                #blueOff  
-            #timeStamps.append(t)
-            ##read input from labjack
-            saveMetadata(self.textFile, str(time()),self.ledList[(imageCount)], str(imageCount))
-            imageCount+=1
+            if waitForSignal(self.labjack, "TTL", "AIN", 0):
+                #Lighting good LED for next acquisition
+                if self.ledList[imageCount] == 'r':
+                    redOn(self.labjack)
+                    sleep(ledOnDuration)
+                    redOff(self.labjack)
+                elif self.ledList[imageCount] == 'g':
+                    greenOn(self.labjack)
+                    sleep(ledOnDuration)
+                    greenOff(self.labjack)
+                #else:
+                    #blueOff  
+                #timeStamps.append(t)
+                ##read input from labjack
+                saveMetadata(self.textFile, str(time()),self.ledList[(imageCount)], str(imageCount))
+                imageCount+=1
         #Turning off all LEDS
         greenOff(self.labjack)
         redOff(self.labjack)
@@ -510,6 +510,7 @@ class SequenceAcquisition(QThread):
                 ##read input from labjack
                 saveFrame(img, self.tiffWriterList, (imageCount), self.maxFrames) # saving frame of previous acquisition
                 imageCount +=1
+                print imageCount
                 self.progressSig.emit(imageCount)
         
         #Close tiff file open
