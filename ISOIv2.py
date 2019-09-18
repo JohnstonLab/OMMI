@@ -323,15 +323,20 @@ class isoiWindow(QtWidgets.QMainWindow):
                 run = True
                 
         if run:
-            self.sequencAcq = SequenceAcquisition(self.name.text(), 
-                                             self.dur.value()*1000, 
-                                             [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()],
-                                             int(self.framesPerFileLabel.text()),
-                                             self.expRatio.value(),
-                                             self,
-                                             self.mmc)
+            nbFrames = 1000
+            #Initialize progressBar
+            self.progressBar.setMaximum(nbFrames) 
+            
+            self.sequencAcq = SequenceAcquisition(nbFrames)#self.name.text(), 
+                                             #self.dur.value()*1000, 
+                                             #[self.rRatio.value(),self.gRatio.value(),self.bRatio.value()],
+                                             #int(self.framesPerFileLabel.text()),
+                                             #self.expRatio.value(),
+                                             #self,
+                                             #self.mmc
             print 'object initialized'
             self.sequencAcq.finished.connect(self.done)
+            self.sequencAcq.progress.connect(self.updateProgress)
             # We have all the events we need connected we can start the thread
             #print 'object connected'
             self.sequencAcq.start()
@@ -346,6 +351,8 @@ class isoiWindow(QtWidgets.QMainWindow):
             # running so we disable the start button.
             self.SaveEBtn.setEnabled(False)
             
+    def updateProgress(self,i):
+        self.progressBar.setValue(i+1)
     def done(self):
         print 'acquisition done'
         self.abortBtn.setEnabled(False)
@@ -357,55 +364,62 @@ class SequenceAcquisition(QThread):
     Class for sequence acquisition object.
     Source (inspiration) : https://nikolak.com/pyqt-threading-tutorial/
     """
-        
-    def __init__(self, experimentName, duration, ledRatio, maxFrames, expRatio, window, mmc):
-        QThread.__init__(self)
+    progress = pyqtSignal(int)
+    
+
+    
+    def __init__(self, nbFrames, parent=None): #, experimentName, duration, ledRatio, maxFrames, expRatio, window, mmc
+        QThread.__init__(self,parent)
         #Set instance attributes
-        self.experimentName = experimentName
-        self.duration = duration
-        self.ledRatio = ledRatio
-        self.maxFrames = maxFrames
-        self.expRatio = expRatio
-        self.window = window
-        self.mmc = mmc
-        self.isThreadStopped = False
+        self.experimentName = 'Default'#experimentName
+        self.duration = 20000 #duration
+        self.ledRatio = [1, 2, 0] #ledRatio
+        self.maxFrames = 723 #maxFrames
+        self.expRatio = 0.7 #expRatio
+        self.nbFrames = nbFrames
+        #self.window = window
+        #self.mmc = mmc
+        self.running = True
         
 
     def __del__(self):
         self.wait()
 
-    def _sequenceAcq(self):
-        #for i in range(0,self.nbFrames):
-        i=0
-        self.isThreadStopped = False
-        while (not self.isThreadStopped and i<self.nbFrames):
-            sleep(0.01)
-            i+=1
-            self.window.progressBar.setValue(i+1)
-        print 'end of acquisition'
+#    def _sequenceAcq(self):
+#        #for i in range(0,self.nbFrames):
+#        i=0
+#        self.isThreadStopped = False
+#        try:
+#            while (not self.isThreadStopped and i<self.nbFrames):
+#                sleep(0.01)
+#                i+=1
+#                self.window.progressBar.setValue(i+1)
+#        except Exception as e:
+#            print("error :")
+#            print(e)
+#        print 'end of acquisition'
             
-    def _sequenceInit(self):
-        """Prepare infos about the sequence acq coming"""
-        readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
-        ## send all of this to sequence acq
-        self.nbFrames = int((self.duration)/(readOutFrame+self.mmc.getExposure()))+1  ## Determine number of frames. (+1) ensure to have a list long enough
-        ledSeq = ['r']*self.ledRatio[0]+['g']*self.ledRatio[1]+['b']*self.ledRatio[2] #Sequence of LED lighting in function of the ratio
-        print 'LED sequence : ', ledSeq
-        self.ledList = ledSeq*(int(self.nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
-        #return ledList, nbFrames
+#    def _sequenceInit(self):
+#        """Prepare infos about the sequence acq coming"""
+#        readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
+#        ## send all of this to sequence acq
+#        self.nbFrames = int((self.duration)/(readOutFrame+self.mmc.getExposure()))+1  ## Determine number of frames. (+1) ensure to have a list long enough
+#        ledSeq = ['r']*self.ledRatio[0]+['g']*self.ledRatio[1]+['b']*self.ledRatio[2] #Sequence of LED lighting in function of the ratio
+#        print 'LED sequence : ', ledSeq
+#        self.ledList = ledSeq*(int(self.nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
+#        #return ledList, nbFrames
 
     def run(self):
         #try:
         print 'run fct'
-        self._sequenceInit() #self.duration, self.ledRatio, self.mmc.getExposure()
-        #Initialize progressBar
-        self.window.progressBar.setMaximum(self.nbFrames) 
+        #self._sequenceInit() #self.duration, self.ledRatio, self.mmc.getExposure()
+        
         i=0
-        self.isThreadStopped = False
-        while (not self.isThreadStopped and i<self.nbFrames):
+        while (self.running and i<self.nbFrames):
             sleep(0.01)
             i+=1
-            self.window.progressBar.setValue(i+1)
+            self.progress.emit(i)
+            #self.window.progressBar.setValue(i+1)
         print 'end of acquisition'
         #except:
         #    traceback.print_exc()
@@ -414,7 +428,7 @@ class SequenceAcquisition(QThread):
     def abort(self):
         print 'things to do before abort'
         try:
-            self.isThreadStopped = True
+            self.running = False
             #self.terminate()
         except:
             print 'Cannot abort properly'
@@ -423,18 +437,19 @@ class SequenceAcquisition(QThread):
 if __name__ == '__main__':
     
     """MicroManager Init"""
-
+    global mmc
     mmc = MMCorePy.CMMCore()
     
     """Camera Init"""
-    #global DEVICE
+    global DEVICE
     DEVICE = camInit(mmc) # TO FIX, give DEVICE at some function only
     
     """Labjack init"""
-    #global labjack
+    global labjack
     labjack = labjackInit()
     #Launch GUI
     app = QtWidgets.QApplication(sys.argv)
+    global window
     window = isoiWindow(mmc, DEVICE, labjack)
     window.show()
     sys.exit(app.exec_())
