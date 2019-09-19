@@ -76,7 +76,7 @@ class isoiWindow(QtWidgets.QMainWindow):
     
     def __init__(self, mmc, DEVICE, labjack,parent=None):
         QtWidgets.QMainWindow.__init__(self, parent)
-        uic.loadUi('isoi_window.ui', self)
+        uic.loadUi('isoi_window_V2.ui', self)
         
         ### Instance attributes ##
         self.mmc = mmc
