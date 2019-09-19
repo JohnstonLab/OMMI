@@ -473,29 +473,41 @@ class SequenceAcquisition(QThread):
         "In charge of switching LED and saving metadata in a .txt file"
         imageCount=0
         print 'Transmitted ledOnDuration value : ',ledOnDuration
+        ledTimeOn = []
         while(imageCount<(self.nbFrames) and self.acqRunning):
-            #if risingEdge(self.labjack):
             #Will return only if ARM output signal from the camera raise
             if waitForSignal(self.labjack, "TTL", "AIN", 0): #WaitForSignal return TRUE when AIN0 input is HIGH (>3V)
                 #Lighting good LED for next acquisition
-                trigImage(self.labjack) # Trigger the image --> future improvements, use a basic MUX to get all the LED signal
+                trigImage(self.labjack) # Trigger the image --> future improvements, use a basic OR gate to get all the LED signal
                 if self.ledList[imageCount] == 'r':
                     redOn(self.labjack)
+                    start = time()
                     sleep(ledOnDuration)
+                    end = time()
                     redOff(self.labjack)
+                    ledTimeOn.append(end-start)
                 elif self.ledList[imageCount] == 'g':
                     greenOn(self.labjack)
+                    start = time()
                     sleep(ledOnDuration)
+                    end = time()
                     greenOff(self.labjack)
+                    ledTimeOn.append(end-start)
                 #else:
                     #blueOff  
                 #timeStamps.append(t)
                 ##read input from labjack
                 saveMetadata(self.textFile, str(time()),self.ledList[(imageCount)], str(imageCount))
                 imageCount+=1
-        #Turning off all LEDS
-        greenOff(self.labjack)
-        redOff(self.labjack)
+        ledFaultCounter = 0
+        ledFaultPosition =[]
+        for idx, deltaTime in enumerate(ledTimeOn):
+            if deltaTime > (ledOnDuration+0.0005) or deltaTime <(ledOnDuration-0.0005):
+                ledFaultCounter +=1
+                ledFaultPosition.append(idx)
+        print 'There are ', ledFaultCounter, ' with non correct illumination time. It concern the following frames :'
+        print ledFaultPosition
+        
         #close the metadata .txt file
         self.textFile.close()
         print 'end of the ledSwitchingThread'
@@ -513,7 +525,6 @@ class SequenceAcquisition(QThread):
                 ##read input from labjack
                 saveFrame(img, self.tiffWriterList, (imageCount), self.maxFrames) # saving frame of previous acquisition
                 imageCount +=1
-                print imageCount
                 self.progressSig.emit(imageCount)
         
         #Close tiff file open
