@@ -19,9 +19,9 @@ import time
 
 #Labjack information
 red_lj=5    #FIO5
-green_lj=4  #FIO4
-blue_lj = 7 #FIO7
-trig = 7 #FIO7
+green_lj=6  #FIO4
+blue_lj = 4 #FIO7
+trig = 7 #FIO7 #Is high when any LED goes high
 cameraTrig_lj = 0    #AIN0
 
 
@@ -43,26 +43,33 @@ def labjackInit():
 def greenOn(device):
     #print "green ON"
     device.setFIOState(green_lj, 1)
+    device.setFIOState(trig, 1)
     
 def greenOff(device):
     #print "green OFF"
     device.setFIOState(green_lj, 0)
+    device.setFIOState(trig, 0)
+    
 
 def redOn(device):
     #print "red ON"
     device.setFIOState(red_lj, 1)
+    device.setFIOState(trig, 1)
     
 def redOff(device):
     #print "red OFF"
     device.setFIOState(red_lj, 0)
+    device.setFIOState(trig, 0)
     
 def blueOn(device):
     #print "red ON"
     device.setFIOState(blue_lj, 1)
+    device.setFIOState(trig, 1)
     
 def blueOff(device):
     #print "red OFF"
     device.setFIOState(blue_lj, 0)
+    device.setFIOState(trig, 0)
 
 def trigExposure(device, exp):
     print 'pulse generation'
@@ -189,6 +196,7 @@ def multiSnap(device, nbImages, mmc, imageList):
 #mmc.unloadAllDevices()
 #DEVICE = camInit(mmc) 
 #labjack = labjackInit()
+
 #exp = 0.9
 #
 #mmc.clearCircularBuffer() ## doesn't change anything
