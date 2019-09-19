@@ -275,7 +275,7 @@ def multiSnap(device, nbImages, mmc, imageList):
 
 ##### TRIGERRING DURING SEQ ACQUISITION
 
-#mmc.startContinuousSequenceAcquisition()
+#mmc.startContinuousSequenceAcquisition(1)
 #multiTrig(labjack, nbImages)
 #multiSnap(labjack, nbImages, mmc, imageList)
 #greenOn(labjack) #flag the end of threads execution

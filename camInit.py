@@ -32,7 +32,7 @@ def camInit(mmc):
     mmc.initializeAllDevices()
     mmc.setCameraDevice(DEVICE[0])
     
-    mmc.setProperty(DEVICE[0], 'TriggerMode', 'Internal (Recommended for fast acquisitions)') #Internal (Recommended for fast acquisitions) #External
+    mmc.setProperty(DEVICE[0], 'TriggerMode', 'External') #Internal (Recommended for fast acquisitions) #External
     """trigger mode"""
     print 'Trigger mode :', mmc.getProperty(DEVICE[0], 'TriggerMode')
     

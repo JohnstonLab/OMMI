@@ -29,7 +29,7 @@ from histogram import histoInit, histoCalc
 from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit , sequenceAcqLabjackTrig, sequenceAcqLabjackTrig2, guiUpdating
 from camInit import camInit
 from saveFcts import filesInit, fileSizeCalculation, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata
-from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, blueOn, blueOff, risingEdge, waitForSignal
+from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, blueOn, blueOff, risingEdge, waitForSignal, trigImage
 from ArduinoComm import connect, sendExposure, sendLedList, close
 
 ########## GLOBAL VAR - needed for displays information ######
@@ -472,11 +472,13 @@ class SequenceAcquisition(QThread):
     def _ledSwitching(self, ledOnDuration):
         "In charge of switching LED and saving metadata in a .txt file"
         imageCount=0
+        print 'Transmitted ledOnDuration value : ',ledOnDuration
         while(imageCount<(self.nbFrames) and self.acqRunning):
             #if risingEdge(self.labjack):
             #Will return only if ARM output signal from the camera raise
-            if waitForSignal(self.labjack, "TTL", "AIN", 0):
+            if waitForSignal(self.labjack, "TTL", "AIN", 0): #WaitForSignal return TRUE when AIN0 input is HIGH (>3V)
                 #Lighting good LED for next acquisition
+                trigImage(self.labjack) # Trigger the image --> future improvements, use a basic MUX to get all the LED signal
                 if self.ledList[imageCount] == 'r':
                     redOn(self.labjack)
                     sleep(ledOnDuration)
@@ -501,6 +503,7 @@ class SequenceAcquisition(QThread):
         
     def _frameSaving(self):
         "In charge of saving frames and actualize the GUI"
+        self.mmc.clearCircularBuffer() 
         imageCount=0
         self.mmc.startContinuousSequenceAcquisition(1)
         while(imageCount<(self.nbFrames) and self.acqRunning):
@@ -518,7 +521,6 @@ class SequenceAcquisition(QThread):
         
         #Stop camera acquisition
         self.mmc.stopSequenceAcquisition()
-        self.mmc.clearCircularBuffer() 
         print 'end of the _frameSavingThread'
         return imageCount
     
@@ -529,7 +531,10 @@ class SequenceAcquisition(QThread):
         This function use the labjack to detect a camera trigger.
         --> Inputs and outputs :
             - Camera.ARM > Labjack.AIN0
-            - Camera.TRIGGER > Labjack.FIO4 (Green) & Labjack.FIO5 (Blue) & Labjack.FIO7 (Blue)
+            - Camera.TRIGGER > Labjack.FIO7
+            - Labjack.FIO4 > blue
+            - Labjack.FIO5 > red
+            - No connection to green
     
         Source for multithreading : https://stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-python
         Doc for multithreading : https://docs.python.org/2/library/multiprocessing.html
