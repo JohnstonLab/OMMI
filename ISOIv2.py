@@ -14,16 +14,14 @@ import sys
 import MMCorePy
 import cv2
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QThread, pyqtSignal
-from time import sleep, time
-from multiprocessing.pool import ThreadPool
+#from time import sleep, time
 
 #Class import
-from SequenceAcquisition import SequenceAcquisition
+import SequenceAcquisition
+import LiveHistogram
 
 #Function import
 from crop import crop_w_mouse
-from histogram import histoInit, histoCalc
 from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit , sequenceAcqLabjackTrig, sequenceAcqLabjackTrig2, guiUpdating
 from camInit import camInit
 from saveFcts import filesInit, fileSizeCalculation, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata
@@ -81,18 +79,15 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.DEVICE = DEVICE
         self.labjack = labjack
         
-        # Connect push buttons 
-        #self.liveBtn.clicked.connect(self.liveFunc)
+        # Connect push buttons
         self.cropBtn.clicked.connect(self.crop)
-        #self.histoBtn.clicked.connect(self.histo)
+        self.histoBtn.clicked.connect(self.launchHisto)
         self.SaveEBtn.clicked.connect(self.paramCheck)
         self.SaveEBtn.setEnabled(True)
         #self.trigBtn.clicked.connect(self.triggerExt)
-        #self.abortBtn.clicked.connect(self.abortFunc)
         self.abortBtn.setEnabled(False)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
-        #self.arduinoBtn.clicked.connect(self.arduinoSync)
         
         ###### ComboBoxes ######
         
@@ -363,6 +358,11 @@ class isoiWindow(QtWidgets.QMainWindow):
         # We don't want to enable user to start another thread while this one is
         # running so we disable the start button.
         self.SaveEBtn.setEnabled(False)
+        
+    def launchHisto(self):
+        print 'histo button pressed'
+        self.liveHistogram = LiveHistogram(self.mmc)
+        self.liveHistogram.start()
             
     
     ##### Methods in charge of communication with QThread ####
