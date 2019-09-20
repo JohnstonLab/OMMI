@@ -333,7 +333,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         expRatio = self.expRatio.value()
         
          
-        #Creation of a QThread instance
+        #Creation of a SequenceAcquisition class instance
         self.sequencAcq = SequenceAcquisition(name, 
                                          duration, 
                                          ledRatio,
@@ -342,7 +342,7 @@ class isoiWindow(QtWidgets.QMainWindow):
                                          self.mmc,
                                          self.labjack)
         print 'object initialized'
-        self.sequencAcq.finished.connect(self.done)
+        self.sequencAcq.finished.connect(self.acquisitionDone)
         self.sequencAcq.nbFramesSig.connect(self.initProgressBar)
         self.sequencAcq.progressSig.connect(self.updateProgressBar)
         # We have all the events we need connected we can start the thread
@@ -362,10 +362,11 @@ class isoiWindow(QtWidgets.QMainWindow):
     def launchHisto(self):
         print 'histo button pressed'
         self.liveHistogram = LiveHistogram(self.mmc)
+        # Connections between LED settings button and histogram
         self.liveHistogram.start()
             
     
-    ##### Methods in charge of communication with QThread ####
+    ##### Methods in charge of communication with SequenceAcquisition class instance ####
     def initProgressBar(self,nbFrames):
         #Initialize progressBar
         self.progressBar.setMaximum(nbFrames)
@@ -373,7 +374,7 @@ class isoiWindow(QtWidgets.QMainWindow):
     def updateProgressBar(self,imageCount):
         self.progressBar.setValue(imageCount+1)
     
-    def done(self):
+    def acquisitionDone(self):
         print 'acquisition done'
         #reset progressBar
         self.progressBar.reset()
