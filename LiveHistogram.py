@@ -22,9 +22,12 @@ class LiveHistogram(QThread):
                                 --> https://gist.github.com/WEBMAMOFFICE/fea8e52c8105453628c0c2c648fe618f (source code)
     """
     
+    #launched = pyqtSignal()
     
-    def __init__(self, mmc,parent=None):
+    
+    def __init__(self, mmc, parent=None):
         QThread.__init__(self,parent)
+        
         self.mmc = mmc
         #Set hist parameters
         self.hist_height = 512
@@ -32,58 +35,16 @@ class LiveHistogram(QThread):
         self.nbins = 512 # x axis
         self.bin_width = self.hist_width/self.nbins
         self.pixMaxVal=65536
-        print 'basic parameters ok'
+        
         #Create a red mask to display the saturated pixel on this mask
         mask_red = np.ones((self.mmc.getImageHeight(),self.mmc.getImageWidth()),dtype=np.uint8) * 255
         self.mask = np.zeros((self.mmc.getImageHeight(),self.mmc.getImageWidth(),3),dtype=np.uint8)
         self.mask[:,:,2] = mask_red[:,:] #red mask (0,0,256) (b,g,r)
         
-        print 'Histogram class initiated'
-        
         
     def __del__(self):
         self.wait()
-        
-    def run(self):
-        print 'Histogram class launched'
-        cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
-        cv2.namedWindow('Video')
-        self.mmc.snapImage()
-        img = self.mmc.getImage() #Initialize g
-        self.mmc.startContinuousSequenceAcquisition(1)
-        while True:
-                if self.mmc.getRemainingImageCount() > 0:
-                    img = self.mmc.getLastImage()
-                    rgb2 = cv2.cvtColor(img.astype("uint16"),cv2.COLOR_GRAY2RGB)
-                    rgb2[img>(self.pixMaxVal-2)]=self.mask[img>(self.pixMaxVal-2)]*256 #It cannot be compared to pixMaxVal because it will never reach this value
-                    cv2.imshow('Video', rgb2)
-                        
-                else:
-                    print('No frame')
-                    
-                h = self.histoCalc(img)
-                cv2.imshow('Histogram',h)
-                
-                if cv2.waitKey(33) == 27:
-                    break
-                if cv2.getWindowProperty('Video', 1) == -1: #Condition verified when 'X' (close) button is pressed
-                    break
-                elif cv2.getWindowProperty('Histogram', 1) == -1: #Condition verified when 'X' (close) button is pressed
-                    break
 
-        cv2.destroyAllWindows()
-        self.mmc.stopSequenceAcquisition()
-        print 'Histogram thread over'
-        
-#    def _histoInit(self):
-#        
-#    
-#        #Create an empty image for the histogram
-#        #h = np.zeros((hist_height,hist_width))
-#        mask_red = np.ones((self.mmc.getImageHeight(),self.mmc.getImageWidth()),dtype=np.uint8) * 255
-#        self.mask = np.zeros((self.mmc.getImageHeight(),self.mmc.getImageWidth(),3),dtype=np.uint8)
-#        self.mask[:,:,2] = mask_red[:,:] #red mask (0,0,256) (b,g,r)
-#        #return (mask, hist_height, hist_width, pixMaxVal, bin_width, nbins)
 
     def _histoCalc(self, img):
         #Calculate, normalize and display the histogram
@@ -102,20 +63,36 @@ class LiveHistogram(QThread):
         return h
         #Show the histogram
         #rgb = np.zeros((mmc.getImageHeight(),mmc.getImageWidth(),3),dtype=np.uint16)
+        
+    def run(self):
+        cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
+        cv2.namedWindow('Video')
+        self.mmc.snapImage()
+        img = self.mmc.getImage() #Initialize g
+        self.mmc.startContinuousSequenceAcquisition(1)
+        while True:
+            try:
+                if self.mmc.getRemainingImageCount() > 0:
+                    img = self.mmc.getLastImage()
+                    rgb2 = cv2.cvtColor(img.astype("uint16"),cv2.COLOR_GRAY2RGB)
+                    rgb2[img>(self.pixMaxVal-2)]=self.mask[img>(self.pixMaxVal-2)]*256 #It cannot be compared to pixMaxVal because it will never reach this value
+                    cv2.imshow('Video', rgb2)
+                else:
+                    print('No frame')
+            except:
+                print 'HISTO : MMC acquisition error'
+            try:    
+                h = self._histoCalc(img)
+                cv2.imshow('Histogram',h)
+            except:
+                print 'HISTO : Calculation of the histogram error'
+            if cv2.waitKey(33) == 27:
+                break
+            if cv2.getWindowProperty('Video', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                break
+            elif cv2.getWindowProperty('Histogram', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                break
 
+        cv2.destroyAllWindows()
+        self.mmc.stopSequenceAcquisition()
 
-### TEST SECTION
-import MMCorePy
-from camInit import camInit
-
-if __name__ == '__main__':
-    """MicroManager Init"""
-    mmc = MMCorePy.CMMCore()
-    print 'mmc init'
-    
-    """Camera Init"""
-    DEVICE = camInit(mmc)
-    
-    print 'camInit'
-    liveHisto = LiveHistogram(mmc)
-    liveHisto.start()

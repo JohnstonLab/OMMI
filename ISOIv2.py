@@ -17,10 +17,11 @@ from PyQt5 import QtWidgets, uic
 #from time import sleep, time
 
 #Class import
-import SequenceAcquisition
-import LiveHistogram
+from SequenceAcquisition import SequenceAcquisition
+from LiveHistogram import LiveHistogram
 
 #Function import
+from histogram import histoInit, histoCalc
 from crop import crop_w_mouse
 from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit , sequenceAcqLabjackTrig, sequenceAcqLabjackTrig2, guiUpdating
 from camInit import camInit
@@ -84,7 +85,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.histoBtn.clicked.connect(self.launchHisto)
         self.SaveEBtn.clicked.connect(self.paramCheck)
         self.SaveEBtn.setEnabled(True)
-        #self.trigBtn.clicked.connect(self.triggerExt)
+        self.trigBtn.clicked.connect(self.oldHisto)
         self.abortBtn.setEnabled(False)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
@@ -358,13 +359,6 @@ class isoiWindow(QtWidgets.QMainWindow):
         # We don't want to enable user to start another thread while this one is
         # running so we disable the start button.
         self.SaveEBtn.setEnabled(False)
-        
-    def launchHisto(self):
-        print 'histo button pressed'
-        self.liveHistogram = LiveHistogram(self.mmc)
-        # Connections between LED settings button and histogram
-        self.liveHistogram.start()
-            
     
     ##### Methods in charge of communication with SequenceAcquisition class instance ####
     def initProgressBar(self,nbFrames):
@@ -381,6 +375,48 @@ class isoiWindow(QtWidgets.QMainWindow):
         #Change button state
         self.abortBtn.setEnabled(False)
         self.SaveEBtn.setEnabled(True)
+        
+    def launchHisto(self):
+        try:
+            self.liveHistogram = LiveHistogram(self.mmc)
+            # Connections between LED settings button and histogram
+            self.liveHistogram.start()  
+        except:
+            print 'cannot instanciate the LiveHistogram class'
+            
+    def oldHisto(self):
+        (mask, h_h, h_w, pixMaxVal, bin_width, nbins) = histoInit(mmc)
+        cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
+        cv2.namedWindow('Video')
+        self.mmc.snapImage()
+        g = self.mmc.getImage() #Initialize g
+        self.mmc.startContinuousSequenceAcquisition(1)
+        while True:
+                if self.mmc.getRemainingImageCount() > 0:
+                    g = self.mmc.getLastImage()
+                    rgb2 = cv2.cvtColor(g.astype("uint16"),cv2.COLOR_GRAY2RGB)
+                    rgb2[g>(pixMaxVal-2)]=mask[g>(pixMaxVal-2)]*256 #It cannot be compared to pixMaxVal because it will never reach this value
+                    cv2.imshow('Video', rgb2)
+                        
+                else:
+                    print('No frame')
+                    
+                h = histoCalc(nbins, pixMaxVal, bin_width, h_h, h_w, g)
+                cv2.imshow('Histogram',h)
+                
+                if cv2.waitKey(33) == 27:
+                    break
+                if cv2.getWindowProperty('Video', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                    break
+                elif cv2.getWindowProperty('Histogram', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                    break
+
+        cv2.destroyAllWindows()
+        self.mmc.stopSequenceAcquisition()
+            
+    ### Methods in charge of communication with LiveHisto class instance
+    def initiated(self):
+        print 'instancied'
 
 
 
