@@ -153,6 +153,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         
         #Experiment duration
         self.dur.setSingleStep(float(isoiWindow.step))
+        self.dur.setMaximum(1000)
         
         #LEDs ratios
         self.gRatio.setMinimum(isoiWindow.ledFrameNbMin)
@@ -193,10 +194,10 @@ class isoiWindow(QtWidgets.QMainWindow):
         #LEDs toggle buttons
         self.Green.stateChanged.connect(self.green)
         self.Red.stateChanged.connect(self.red)
-        self.BLUE.stateChanged.connect(self.blue)
+        self.Blue.stateChanged.connect(self.blue)
         
     
-    def liveFunc(self):
+    def liveFunc(self): #Not connected
         grayLive(self.mmc)
         
     def crop(self):
@@ -376,10 +377,14 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.abortBtn.setEnabled(False)
         self.SaveEBtn.setEnabled(True)
         
+        
+    ##### HISTOGRAM FCT ####
     def launchHisto(self):
         try:
             self.liveHistogram = LiveHistogram(self.mmc)
             # Connections between LED settings button and histogram
+            self.liveHistogram.modeChoice.connect(self.askHistoMode)
+            
             self.liveHistogram.start()  
         except:
             print 'cannot instanciate the LiveHistogram class'
@@ -415,12 +420,49 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.mmc.stopSequenceAcquisition()
             
     ### Methods in charge of communication with LiveHisto class instance
-    def initiated(self):
-        print 'instancied'
-
-
-
-#### Seauence Acquisition class 
+    def askHistoMode(self):
+        print 'popup window to ask mode'
+        
+        #Selection between blinking or continous mode histogram
+        
+        #Change in toggle boxes connection
+        self.reconnect(self.Green.stateChanged, self.launchBlinkingMode) #Disconnect green led from green function
+        self.reconnect(self.Red.stateChanged, self.launchBlinkingMode) #Disconnect green led from green function
+        self.reconnect(self.Blue.stateChanged, self.launchBlinkingMode) #Disconnect green led from green function
+    
+    def launchBlinkingMode(self):
+        print 'LaunchBlinking mode'
+        if self.Green.isChecked() and not self.Red.isChecked() and not self.Blue.isChecked():
+            self.liveHistogram.led = 'g'
+            self.liveHistogram.blinkingLedMode()
+            print 'green LED blinking mode'
+        elif self.Red.isChecked() and not self.Blue.isChecked() and not self.Green.isChecked():
+            print 'red LED blinking mode'
+        elif self.Blue.isChecked() and not self.Red.isChecked() and not self.Green.isChecked():
+            print 'blue LED blinking mode'
+        elif not self.Blue.isChecked() and not self.Red.isChecked() and not self.Green.isChecked():
+            print 'black histogram'
+        else:
+            print 'Turn on only one LED before lauching histogram'
+        #self.liveHistogram.blinkingLedMode()
+        
+        
+    def reconnect(self, signal, newhandler=None, oldhandler=None):
+        """
+        Source : https://stackoverflow.com/questions/21586643/pyqt-widget-connect-and-disconnect
+        """
+        while True:
+            try:
+                if oldhandler is not None:
+                    signal.disconnect(oldhandler)
+                else:
+                    signal.disconnect()
+                print 'disconnection OK'
+            except TypeError:
+                break
+        if newhandler is not None:
+            signal.connect(newhandler)
+            print 'new connection ok'
 
 
 ##Launching everything

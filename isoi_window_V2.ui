@@ -402,7 +402,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>470</x>
@@ -464,7 +464,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>30</x>
@@ -504,7 +504,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>30</x>
@@ -541,7 +541,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="BLUE">
+        <widget class="QCheckBox" name="Blue">
          <property name="text">
           <string>BLUE</string>
          </property>

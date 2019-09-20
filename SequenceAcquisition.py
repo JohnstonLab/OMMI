@@ -12,7 +12,7 @@ from time import time, sleep
 from multiprocessing.pool import ThreadPool
 
 #Function import
-from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal
+from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, readSignal
 from saveFcts import filesInit, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata
 
 
@@ -93,8 +93,8 @@ class SequenceAcquisition(QThread):
                     blueOff(self.labjack)
                     ledTimeOn.append(end-start)
                     
-                ##read input from labjack
-                saveMetadata(self.textFile, str(time()),self.ledList[(imageCount)], str(imageCount))
+                valveValue = readSignal(self.labjack, 2)
+                saveMetadata(self.textFile, str(time()),self.ledList[(imageCount)], str(imageCount), str(valveValue))
                 imageCount+=1
         ledFaultCounter = 0
         ledFaultPosition =[]

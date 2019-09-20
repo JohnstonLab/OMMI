@@ -11,6 +11,10 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from time import sleep
 import numpy as np
 import cv2
+from multiprocessing.pool import ThreadPool
+
+#Function import
+from Labjack import waitForSignal, redOn, redOff, greenOn, greenOff, blueOn, blueOff, trigImage
 
 
 class LiveHistogram(QThread):
@@ -22,13 +26,14 @@ class LiveHistogram(QThread):
                                 --> https://gist.github.com/WEBMAMOFFICE/fea8e52c8105453628c0c2c648fe618f (source code)
     """
     
-    #launched = pyqtSignal()
+    modeChoice = pyqtSignal()
     
     
-    def __init__(self, mmc, parent=None):
+    def __init__(self, mmc, labjack, parent=None):
         QThread.__init__(self,parent)
         
         self.mmc = mmc
+        self.labjack = labjack
         #Set hist parameters
         self.hist_height = 512
         self.hist_width = 512
@@ -40,6 +45,10 @@ class LiveHistogram(QThread):
         mask_red = np.ones((self.mmc.getImageHeight(),self.mmc.getImageWidth()),dtype=np.uint8) * 255
         self.mask = np.zeros((self.mmc.getImageHeight(),self.mmc.getImageWidth(),3),dtype=np.uint8)
         self.mask[:,:,2] = mask_red[:,:] #red mask (0,0,256) (b,g,r)
+        
+        #Acquisition parameters
+        self.running = True
+        self.led =None
         
         
     def __del__(self):
@@ -64,7 +73,83 @@ class LiveHistogram(QThread):
         #Show the histogram
         #rgb = np.zeros((mmc.getImageHeight(),mmc.getImageWidth(),3),dtype=np.uint16)
         
-    def run(self):
+        
+            
+    def _ledBlinking(self, ledOnDuration):
+        """
+        Function in charge of blinking the LED.
+        """
+        print 'Blinking LED fct'
+        while(self.running):
+            #Will return only if ARM output signal from the camera raise
+            if waitForSignal(self.labjack, "TTL", "AIN", 0): #WaitForSignal return TRUE when AIN0 input is HIGH (>3V)
+                #Lighting good LED for next acquisition
+                #trigImage(self.labjack) # Trigger the image --> future improvements, use a basic OR gate to get all the LED signal
+                if self.led== 'r':
+                    redOn(self.labjack)
+                    sleep(ledOnDuration)
+                    redOff(self.labjack)
+                elif self.led == 'g':
+                    greenOn(self.labjack)
+                    sleep(ledOnDuration)
+                    greenOff(self.labjack)
+                elif self.led == 'b':
+                    blueOn(self.labjack)
+                    sleep(ledOnDuration)
+                    blueOff(self.labjack)
+                else:
+                    trigImage(self.labjack)
+                    
+    def _histoDisplaying(self):
+        """
+        Function in charge of acquiring the frame and displaying the histogram.
+        """
+        print 'Displaying frame fct'
+        cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
+        cv2.namedWindow('Video')
+        self.mmc.startContinuousSequenceAcquisition(1)
+        while(self.running):
+            try:
+                if self.mmc.getRemainingImageCount() > 0:
+                    img = self.mmc.getLastImage()
+                    rgb2 = cv2.cvtColor(img.astype("uint16"),cv2.COLOR_GRAY2RGB)
+                    rgb2[img>(self.pixMaxVal-2)]=self.mask[img>(self.pixMaxVal-2)]*256 #It cannot be compared to pixMaxVal because it will never reach this value
+                    cv2.imshow('Video', rgb2)
+                else:
+                    print('No frame')
+            except:
+                print 'HISTO : MMC acquisition error'
+            try:    
+                h = self._histoCalc(img)
+                cv2.imshow('Histogram',h)
+            except:
+                print 'HISTO : Calculation of the histogram error'
+            if cv2.waitKey(33) == 27:
+                break
+            if cv2.getWindowProperty('Video', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                break
+            elif cv2.getWindowProperty('Histogram', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                break
+        cv2.destroyAllWindows()
+        self.mmc.stopSequenceAcquisition()
+        self.mmc.clearCircularBuffer()
+
+    def blinkingLedMode(self):
+        print 'Blinking LED'
+        pool = ThreadPool(processes=2)
+        print 'Pool initialized'
+        ledOnDuration=0.005
+        
+        frameSavingThread = pool.apply_async(self._histoDisplaying,())
+        sleep(0.005) ## WAIT FOR INITIALIZATION AND WAITFORSIGNAL FCT
+        ledSwitchingThread = pool.apply_async(self._ledBlinking,(ledOnDuration,))
+        
+        #close the pool and wait for the work to finish
+        pool.close()
+        pool.join()
+        
+    def continousLedMode(self):
+        print 'old histogram version'
         cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
         cv2.namedWindow('Video')
         self.mmc.snapImage()
@@ -92,7 +177,12 @@ class LiveHistogram(QThread):
                 break
             elif cv2.getWindowProperty('Histogram', 1) == -1: #Condition verified when 'X' (close) button is pressed
                 break
-
         cv2.destroyAllWindows()
         self.mmc.stopSequenceAcquisition()
+    
+    def run(self):
+        print 'running thread'
+        self.modeChoice.emit()
+        
+        
 

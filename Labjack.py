@@ -117,6 +117,19 @@ def waitForSignal(device, signalType="TTL", channelType="FIO", channel=0):
         
     return trigger
 
+def readSignal(device, channel=2):
+    """
+    Read a signal coming into the LabJack (AIN)
+    
+    channel: int, default = 3
+        Sets the channel of `channelType` to listen on.
+    """
+    try:
+        sigValue = device.getAIN(channel)
+    except:
+        print 'Error, no signal coming into the labjack'
+    return sigValue
+
 def risingEdge(device):
     """
     Wait for a rising edge (minimum %trigLevel V) into the LabJack AIN0 port (cameraTrig_lj variable)
@@ -196,7 +209,12 @@ def multiSnap(device, nbImages, mmc, imageList):
 #mmc.unloadAllDevices()
 #DEVICE = camInit(mmc) 
 #labjack = labjackInit()
-
+#
+#print 'Listening to signal test'
+#for i in range (0,30):
+#    print 'Trying to read signal : ', readSignal(labjack, 2)
+#    sleep(1)
+#print 'test done'
 #exp = 0.9
 #
 #mmc.clearCircularBuffer() ## doesn't change anything
