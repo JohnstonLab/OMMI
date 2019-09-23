@@ -30,7 +30,7 @@ class LiveHistogram(QThread):
     
     
     def __init__(self, mmc, labjack, parent=None):
-        QThread.__init__(self,parent)
+        QThread.__init__(self,parent) #Call the parent class constructor
         
         self.mmc = mmc
         self.labjack = labjack
@@ -82,7 +82,7 @@ class LiveHistogram(QThread):
         print 'Blinking LED fct'
         while(self.running):
             #Will return only if ARM output signal from the camera raise
-            if waitForSignal(self.labjack, "TTL", "AIN", 0): #WaitForSignal return TRUE when AIN0 input is HIGH (>3V)
+            if waitForSignal(self.labjack, "TTL", "AIN", 0): #WaitForSignal return TRUE when AIN0 (ARM output from the camera) input is HIGH (>3V)
                 #Lighting good LED for next acquisition
                 #trigImage(self.labjack) # Trigger the image --> future improvements, use a basic OR gate to get all the LED signal
                 if self.led== 'r':
@@ -125,10 +125,13 @@ class LiveHistogram(QThread):
             except:
                 print 'HISTO : Calculation of the histogram error'
             if cv2.waitKey(33) == 27:
+                self.running = False #Stop the acquisition and LED blinking
                 break
             if cv2.getWindowProperty('Video', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                self.running = False #Stop the acquisition and LED blinking
                 break
             elif cv2.getWindowProperty('Histogram', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                self.running = False #Stop the acquisition and LED blinking
                 break
         cv2.destroyAllWindows()
         self.mmc.stopSequenceAcquisition()

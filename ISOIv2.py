@@ -381,9 +381,10 @@ class isoiWindow(QtWidgets.QMainWindow):
     ##### HISTOGRAM FCT ####
     def launchHisto(self):
         try:
-            self.liveHistogram = LiveHistogram(self.mmc)
+            self.liveHistogram = LiveHistogram(self.mmc, self.labjack)
             # Connections between LED settings button and histogram
             self.liveHistogram.modeChoice.connect(self.askHistoMode)
+            self.liveHistogram.finished.connect(self.histoDone)
             
             self.liveHistogram.start()  
         except:
@@ -445,6 +446,13 @@ class isoiWindow(QtWidgets.QMainWindow):
         else:
             print 'Turn on only one LED before lauching histogram'
         #self.liveHistogram.blinkingLedMode()
+        
+    def histoDone(self):
+        print 'Histo done'
+        #Change in toggle boxes connection
+        self.reconnect(self.Green.stateChanged, self.green) #Disconnect green led from green function
+        self.reconnect(self.Red.stateChanged, self.red) #Disconnect green led from green function
+        self.reconnect(self.Blue.stateChanged, self.blue) #Disconnect green led from green function
         
         
     def reconnect(self, signal, newhandler=None, oldhandler=None):
