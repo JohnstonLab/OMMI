@@ -82,10 +82,10 @@ class isoiWindow(QtWidgets.QMainWindow):
         
         # Connect push buttons
         self.cropBtn.clicked.connect(self.crop)
-        self.histoBtn.clicked.connect(self.launchHisto)
+        self.histoBtn.clicked.connect(self.oldHisto)
         self.SaveEBtn.clicked.connect(self.paramCheck)
         self.SaveEBtn.setEnabled(True)
-        self.trigBtn.clicked.connect(self.oldHisto)
+        self.trigBtn.clicked.connect(self.launchHisto)
         self.abortBtn.setEnabled(False)
         self.arduinoBtn.setEnabled(False)
         #self.arduinoBtn.clicked.connect(self.arduinoSync)
@@ -196,6 +196,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.Green.stateChanged.connect(self.green)
         self.Red.stateChanged.connect(self.red)
         self.Blue.stateChanged.connect(self.blue)
+        
+        #Led sequence mode toogle buttons
         
     
     def liveFunc(self): #Not connected

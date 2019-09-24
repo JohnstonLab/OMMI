@@ -56,7 +56,10 @@ class SequenceAcquisition(QThread):
         readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
         ## send all of this to sequence acq
         self.nbFrames = int((self.duration)/(readOutFrame+self.mmc.getExposure()))+1  ## Determine number of frames. (+1) because int round at the lower int
-        ledSeq = ['r']*self.ledRatio[0]+['g']*self.ledRatio[1]+['b']*self.ledRatio[2] #Sequence of LED lighting in function of the ratio
+        ledSeq = [0]*self.ledRatio[0]+[1]*self.ledRatio[1]+[2]*self.ledRatio[2] #Sequence of LED lighting in function of the ratio
+                                                                                #RED = 0
+                                                                                #GREEN = 1
+                                                                                #BLUE = 2
         print 'LED sequence : ', ledSeq
         self.ledList = ledSeq*(int(self.nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
         #NB : no return needed because each ledList and nbFrames are instance attribute
@@ -75,13 +78,13 @@ class SequenceAcquisition(QThread):
                 #Lighting good LED for next acquisition
                 #trigImage(self.labjack) # Trigger the image --> future improvements, use a basic OR gate to get all the LED signal
                 onTime = time()
-                if self.ledList[imageCount] == 'r':
+                if self.ledList[imageCount] == 0:
                     #onTime = clock()
                     redOn(self.labjack)
                     sleep(ledOnDuration)
                     redOff(self.labjack)
                     #offTime = clock()
-                elif self.ledList[imageCount] == 'g':
+                elif self.ledList[imageCount] == 1:
                     #onTime = clock()
                     greenOn(self.labjack)
                     sleep(ledOnDuration)
@@ -98,7 +101,7 @@ class SequenceAcquisition(QThread):
                 effectiveLedOnDuration = offTime-onTime
                 frameTime = onTime - startAcquisitionTime
                 valveValue = readOdourValve(self.labjack, 2)
-                saveMetadata(self.textFile, str(frameTime),self.ledList[(imageCount)], str(imageCount), str(valveValue), str(effectiveLedOnDuration))
+                saveMetadata(self.textFile, str(frameTime),str(self.ledList[(imageCount)]), str(imageCount), str(valveValue), str(effectiveLedOnDuration))
                 imageCount+=1
 #        #Print LED fault counter
 #        ledFaultCounter = 0
