@@ -55,8 +55,13 @@ def saveFrame(img, tiffWriterList, imageCount, maxFrames):
         thread1.start()
     #Write LED and timestamp in metadata"
 
-def saveMetadata(textFile, time, led, imageCount, valveSig): ## Should save : time // respiration // odor // LED /!\ parser = space
-    textFile.write(time+' '+led+' '+imageCount+' '+valveSig+'\n')
+def saveMetadata(textFile, time, led, imageCount, valveSig, ledOnDuration): 
+    """
+    Save the metadata of each frame in a given .txt file.
+    Each line of the .txt file corresponds to an image and the metadatas are 
+    separated by a tab space.
+    """
+    textFile.write(time+'\t'+led+'\t'+imageCount+'\t'+valveSig+'\t'+ledOnDuration+'\n')
 
 def filesInit(name, nbFrames, maxFrames):
     today = str(date.today())

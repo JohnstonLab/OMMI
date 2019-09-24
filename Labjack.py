@@ -79,8 +79,12 @@ def trigExposure(device, exp):
     print 'pulse generated'
     
 def trigImage(device):
+    """
+    Create a short-time pulse on the %trig output of the labjack.
+    Used to trigger an image when camera is in External trigger mode and %trig 
+    connected to the TRIGGER input of the camera.
+    """
     device.setFIOState(trig, 1)
-    #sleep(0.0001) #minimum required trig is 8 ns
     device.setFIOState(trig, 0)
 
     
@@ -130,6 +134,18 @@ def readSignal(device, channel=2):
         print 'Error, no signal coming into the labjack'
     return sigValue
 
+def readOdourValve(device, channel=2):
+    """
+    Converted signal read into 1 if valve open (low voltage) or valve close (high voltage)
+    """
+    valveState=None
+    sigValue = readSignal (device, channel)
+    if sigValue>3.5:
+        valveState=0
+    else :
+        valveState=1
+    return valveState
+    
 def risingEdge(device):
     """
     Wait for a rising edge (minimum %trigLevel V) into the LabJack AIN0 port (cameraTrig_lj variable)

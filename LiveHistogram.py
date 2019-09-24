@@ -40,6 +40,7 @@ class LiveHistogram(QThread):
         self.nbins = 512 # x axis
         self.bin_width = self.hist_width/self.nbins
         self.pixMaxVal=65536
+        self.ledOnDuration = 0.0005
         
         #Create a red mask to display the saturated pixel on this mask
         mask_red = np.ones((self.mmc.getImageHeight(),self.mmc.getImageWidth()),dtype=np.uint8) * 255
@@ -75,7 +76,7 @@ class LiveHistogram(QThread):
         
         
             
-    def _ledBlinking(self, ledOnDuration):
+    def _ledBlinking(self):
         """
         Function in charge of blinking the LED.
         """
@@ -87,15 +88,15 @@ class LiveHistogram(QThread):
                 #trigImage(self.labjack) # Trigger the image --> future improvements, use a basic OR gate to get all the LED signal
                 if self.led== 'r':
                     redOn(self.labjack)
-                    sleep(ledOnDuration)
+                    sleep(self.ledOnDuration)
                     redOff(self.labjack)
                 elif self.led == 'g':
                     greenOn(self.labjack)
-                    sleep(ledOnDuration)
+                    sleep(self.ledOnDuration)
                     greenOff(self.labjack)
                 elif self.led == 'b':
                     blueOn(self.labjack)
-                    sleep(ledOnDuration)
+                    sleep(self.ledOnDuration)
                     blueOff(self.labjack)
                 else:
                     trigImage(self.labjack)
@@ -145,7 +146,7 @@ class LiveHistogram(QThread):
         
         frameSavingThread = pool.apply_async(self._histoDisplaying,())
         sleep(0.005) ## WAIT FOR INITIALIZATION AND WAITFORSIGNAL FCT
-        ledSwitchingThread = pool.apply_async(self._ledBlinking,(ledOnDuration,))
+        ledSwitchingThread = pool.apply_async(self._ledBlinking,())
         
         #close the pool and wait for the work to finish
         pool.close()

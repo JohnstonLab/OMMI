@@ -8,11 +8,11 @@ Class of Sequence Acquisition
 """
 #Packages import
 from PyQt5.QtCore import QThread, pyqtSignal
-from time import time, sleep
+from time import time, sleep, clock
 from multiprocessing.pool import ThreadPool
 
 #Function import
-from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, readSignal
+from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, readSignal, readOdourValve
 from saveFcts import filesInit, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata
 
 
@@ -45,6 +45,7 @@ class SequenceAcquisition(QThread):
         self.tiffWriterList = None  #Initialized in filesInit method from SaveFcts.py
         self.textFile = None        #Initialized in filesInit method from SaveFcts.py
         self.savePath = None        #Initialized in filesInit method from SaveFcts.py
+        self.acquMode = None
         
 
     def __del__(self):
@@ -65,45 +66,58 @@ class SequenceAcquisition(QThread):
         "In charge of switching LED and saving metadata in a .txt file"
         imageCount=0
         print 'Transmitted ledOnDuration value : ',ledOnDuration
-        ledTimeOn = []
+        
+        #Timestamp to flag the beginning of acquisition 
+        startAcquisitionTime = time()
         while(imageCount<(self.nbFrames) and self.acqRunning):
             #Will return only if ARM output signal from the camera raise
             if waitForSignal(self.labjack, "TTL", "AIN", 0): #WaitForSignal return TRUE when AIN0 input is HIGH (>3V)
                 #Lighting good LED for next acquisition
                 #trigImage(self.labjack) # Trigger the image --> future improvements, use a basic OR gate to get all the LED signal
+                onTime = time()
                 if self.ledList[imageCount] == 'r':
+                    #onTime = clock()
                     redOn(self.labjack)
-                    start = time()
                     sleep(ledOnDuration)
-                    end = time()
                     redOff(self.labjack)
-                    ledTimeOn.append(end-start)
+                    #offTime = clock()
                 elif self.ledList[imageCount] == 'g':
+                    #onTime = clock()
                     greenOn(self.labjack)
-                    start = time()
                     sleep(ledOnDuration)
-                    end = time()
                     greenOff(self.labjack)
-                    ledTimeOn.append(end-start)
+                    #offTime = clock()
                 else:
+                    #onTime = clock()
                     blueOn(self.labjack)
-                    start = time()
                     sleep(ledOnDuration)
-                    end = time()
                     blueOff(self.labjack)
-                    ledTimeOn.append(end-start)
-                    
-                valveValue = readSignal(self.labjack, 2)
-                saveMetadata(self.textFile, str(time()),self.ledList[(imageCount)], str(imageCount), str(valveValue))
+                    #offTime = clock()
+                offTime = time()
+                
+                effectiveLedOnDuration = offTime-onTime
+                frameTime = onTime - startAcquisitionTime
+                valveValue = readOdourValve(self.labjack, 2)
+                saveMetadata(self.textFile, str(frameTime),self.ledList[(imageCount)], str(imageCount), str(valveValue), str(effectiveLedOnDuration))
                 imageCount+=1
-        ledFaultCounter = 0
-        ledFaultPosition =[]
-        for idx, deltaTime in enumerate(ledTimeOn):
-            if deltaTime > (ledOnDuration+0.0005) or deltaTime <(ledOnDuration-0.0005):
-                ledFaultCounter +=1
-                ledFaultPosition.append(idx)
-        print 'There are ', ledFaultCounter, ' with non correct illumination time. It concern the following frames :'
-        print ledFaultPosition
+#        #Print LED fault counter
+#        ledFaultCounter = 0
+#        ledFaultPosition =[]
+#        for idx, deltaTime in enumerate(ledTimeOn):
+#            if deltaTime > (ledOnDuration+0.0001) or deltaTime <(ledOnDuration-0.0001):
+#                ledFaultCounter +=1
+#                ledFaultPosition.append(idx)
+#        print 'There are ', ledFaultCounter, ' frames with non correct illumination time. It concern the following frames :'
+#        print ledFaultPosition
+#        
+#        #Print delay on labjack functions
+#        print '\n ON delays \n'
+#        for delay in onDelay:
+#            print delay
+#        print '\n OFF delays \n'
+#        for delay in offDelay:
+#            print delay
+        
         
         #close the metadata .txt file
         self.textFile.close()
@@ -171,6 +185,46 @@ class SequenceAcquisition(QThread):
         
         return imageCount
 
+    def _seqAcqCyclops(self):
+        print 'Cyclops running'
+        print "Nb of frames : ", self.nbFrames
+        imageCount = 0
+        
+        self.mmc.startContinuousSequenceAcquisition(1)
+
+        while(imageCount<(self.nbFrames) and self.acqRunning): #Loop stops if we have the number of frames wanted OR if abort button is press (see abortFunc)
+            
+            #Saving frame coming in the circular buffer
+            if self.mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished #Enter this loop BETWEEN acquisition
+                #trigImage(self.labjack) #Generate a pulse, which allows to flag the entry in this code statement with the oscilloscope
+                #Lighting good LED for next acquisition
+#                if self.ledList[imageCount] == 'r':
+#                    #print "Blue off"
+#                    greenOff(self.labjack)
+#                    redOn(labjack)
+#                elif ledList[imageCount] == 'g':
+#                    redOff(labjack)
+#                    greenOn(labjack)
+#                else:
+#                    redOff(labjack)
+#                    greenOff(labjack)
+                #sleep(0.005) #Wait 5ms to ensure LEDS are on
+                t = clock()
+                img = self.mmc.popNextImage() #Gets and removes the next image from the circular buffer
+                ##read input from labjack
+                valveValue = readOdourValve(self.labjack, 2)
+                saveMetadata(self.textFile, str(t),self.ledList[imageCount], str(imageCount), str(valveValue()))
+                saveFrame(img, self.tiffWriterList, imageCount, self.maxFrames) # saving frame of previous acquisition
+                imageCount +=1
+        
+        #Close tiff file open
+        tiffWritersClose(self.tiffWriterList)
+        
+        #Stop camera acquisition
+        self.mmc.stopSequenceAcquisition()
+        self.mmc.clearCircularBuffer() 
+        return imageCount
+        
     
     def run(self):
         print 'run fct'
@@ -184,7 +238,12 @@ class SequenceAcquisition(QThread):
                                                                         self.nbFrames, 
                                                                         self.maxFrames)
         #Launching the frame acquisition
-        self.imageCount = self._sequenceAcqu()
+        if self.acquMode == "Labjack":
+            self.imageCount = self._sequenceAcqu()
+        elif self.acquMode == "Cyclops":
+            self.imageCount = self._seqAcqCyclops()
+        else:
+            print 'Please select a valid mode of triggering the LED'
         print 'Image Count : ', self.imageCount
         
         #Closing all files opened

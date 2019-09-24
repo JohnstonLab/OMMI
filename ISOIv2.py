@@ -61,7 +61,7 @@ class isoiWindow(QtWidgets.QMainWindow):
     
     #LED lit time (as a ratio of the exposure time) 
     ratioMin = 0.05
-    ratioMax = 1.
+    ratioMax = 2.
     ratioDefault = 0.7
     ratioStep = 0.05
     
@@ -87,6 +87,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.SaveEBtn.setEnabled(True)
         self.trigBtn.clicked.connect(self.oldHisto)
         self.abortBtn.setEnabled(False)
+        self.arduinoBtn.setEnabled(False)
+        #self.arduinoBtn.clicked.connect(self.arduinoSync)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
         
@@ -123,11 +125,10 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.triggerBox.currentIndexChanged.connect(self.triggerChange)
         
         #LEDs trigger mode selection
-        self.ledTrigBox.addItem('Camera')
-        self.ledTrigBox.addItem('Software')
-        self.ledTrigBox.addItem('Labjack - Cyclops mode')
-        self.ledTrigBox.addItem('Labjack - Custom mode')
-        self.ledTrigBox.setCurrentText('Software')
+        self.ledTrigBox.addItem('Cyclops')
+        self.ledTrigBox.addItem('Labjack')
+        self.ledTrigBox.setCurrentText('Labjack')
+        self.ledTrigBox.currentIndexChanged.connect(self.ledTrigChange)
         
         #Overlap Mode
         self.overLapBox.addItem('On')
@@ -248,6 +249,11 @@ class isoiWindow(QtWidgets.QMainWindow):
             print 'Overlap set at ', self.mmc.getProperty(self.DEVICE[0], 'Overlap')
         except:
             print "CMM err, no possibility to set Overlap mode"
+                 
+    def ledTrigChange(self):
+        print 'm'
+    
+    
     def green(self,toggle_g):
         if toggle_g:
             greenOn(self.labjack)
@@ -347,6 +353,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.sequencAcq.finished.connect(self.acquisitionDone)
         self.sequencAcq.nbFramesSig.connect(self.initProgressBar)
         self.sequencAcq.progressSig.connect(self.updateProgressBar)
+        self.sequencAcq.acquMode = self.ledTrigBox.currentText()
         # We have all the events we need connected we can start the thread
         #print 'object connected'
         self.sequencAcq.start()
@@ -427,25 +434,29 @@ class isoiWindow(QtWidgets.QMainWindow):
         #Selection between blinking or continous mode histogram
         
         #Change in toggle boxes connection
-        self.reconnect(self.Green.stateChanged, self.launchBlinkingMode) #Disconnect green led from green function
-        self.reconnect(self.Red.stateChanged, self.launchBlinkingMode) #Disconnect green led from green function
-        self.reconnect(self.Blue.stateChanged, self.launchBlinkingMode) #Disconnect green led from green function
+        self.reconnect(self.Green.stateChanged, self.setBlinkingLED) #Disconnect green led from green function
+        self.reconnect(self.Red.stateChanged, self.setBlinkingLED) #Disconnect green led from green function
+        self.reconnect(self.Blue.stateChanged, self.setBlinkingLED) #Disconnect green led from green function
+        
     
-    def launchBlinkingMode(self):
-        print 'LaunchBlinking mode'
+    def setBlinkingLED(self):
+        print 'setBlinkingLED called'
         if self.Green.isChecked() and not self.Red.isChecked() and not self.Blue.isChecked():
             self.liveHistogram.led = 'g'
-            self.liveHistogram.blinkingLedMode()
             print 'green LED blinking mode'
         elif self.Red.isChecked() and not self.Blue.isChecked() and not self.Green.isChecked():
+            self.liveHistogram.led = 'r'
             print 'red LED blinking mode'
         elif self.Blue.isChecked() and not self.Red.isChecked() and not self.Green.isChecked():
+            self.liveHistogram.led = 'b'
             print 'blue LED blinking mode'
         elif not self.Blue.isChecked() and not self.Red.isChecked() and not self.Green.isChecked():
             print 'black histogram'
         else:
             print 'Turn on only one LED before lauching histogram'
         #self.liveHistogram.blinkingLedMode()
+        #launch blinking LED mode of the histogram
+        self.liveHistogram.blinkingLedMode()
         
     def histoDone(self):
         print 'Histo done'
