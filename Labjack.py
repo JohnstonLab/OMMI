@@ -121,7 +121,7 @@ def waitForSignal(device, signalType="TTL", channelType="FIO", channel=0):
         
     return trigger
 
-def readSignal(device, channel=2):
+def readSignal(device, channel):
     """
     Read a signal coming into the LabJack (AIN)
     
@@ -134,17 +134,20 @@ def readSignal(device, channel=2):
         print 'Error, no signal coming into the labjack'
     return sigValue
 
-def readOdourValve(device, channel=2):
+def readOdourValve(device, channel):
     """
     Converted signal read into 1 if valve open (low voltage) or valve close (high voltage)
     """
     valveState=None
-    sigValue = readSignal (device, channel)
-    if sigValue>3.5:
+    sigValue = readSignal(device, channel)
+    print(sigValue)
+    if sigValue>2.8:
         valveState=0
     else :
         valveState=1
     return valveState
+
+
     
 def risingEdge(device):
     """

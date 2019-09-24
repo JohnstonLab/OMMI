@@ -28,13 +28,14 @@ class SequenceAcquisition(QThread):
     
 
     
-    def __init__(self, experimentName, duration, ledRatio, maxFrames, expRatio, mmc, labjack, parent=None):
+    def __init__(self, experimentName, duration, rgbLedRatio, rbGreenRatio, maxFrames, expRatio, mmc, labjack, parent=None):
         QThread.__init__(self,parent)
         
         #Set instance attributes
         self.experimentName = experimentName
         self.duration = duration
-        self.ledRatio = ledRatio
+        self.rgbLedRatio = rgbLedRatio
+        self.rbGreenRatio = rbGreenRatio
         self.maxFrames = maxFrames
         self.expRatio = expRatio
         self.mmc = mmc
@@ -46,22 +47,50 @@ class SequenceAcquisition(QThread):
         self.textFile = None        #Initialized in filesInit method from SaveFcts.py
         self.savePath = None        #Initialized in filesInit method from SaveFcts.py
         self.acquMode = None
+        self.seqMode = None
         
 
     def __del__(self):
         self.wait()
             
-    def _sequenceInit(self):
-        """Prepare infos about the sequence acq coming"""
-        readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide)
+    def _rgbSequenceInit(self):
+        """
+        Set the LEDs sequence list in function of the time of the experiment. 
+        This function will take 3 LED ratio and make a list 
+        with each of these ratios on the pattern [xR,yG,zB]
+        """
+        readOutFrame = 5 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide) #WARNING : this vary in fct of the cropping
         ## send all of this to sequence acq
         self.nbFrames = int((self.duration)/(readOutFrame+self.mmc.getExposure()))+1  ## Determine number of frames. (+1) because int round at the lower int
-        ledSeq = [0]*self.ledRatio[0]+[1]*self.ledRatio[1]+[2]*self.ledRatio[2] #Sequence of LED lighting in function of the ratio
+        ledSeq = [0]*self.rgbLedRatio[0]+[1]*self.rgbLedRatio[1]+[2]*self.rgbLedRatio[2] #Sequence of LED lighting in function of the ratio
                                                                                 #RED = 0
                                                                                 #GREEN = 1
                                                                                 #BLUE = 2
         print 'LED sequence : ', ledSeq
         self.ledList = ledSeq*(int(self.nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
+        #NB : no return needed because each ledList and nbFrames are instance attribute
+        
+    def _rbSequenceInit(self):
+        """
+        Set the LEDs sequence list in function of the time of the experiment.
+        This function generate list with an alternance of red (0) and blue (2)
+        frames with some green (1) frame at precise interval
+        """
+        readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide) #WARNING : this vary in fct of the cropping
+        ## send all of this to sequence acq
+        self.nbFrames = int((self.duration)/(readOutFrame+self.mmc.getExposure()))+1  ## Determine number of frames. (+1) because int round at the lower int
+        #nbGreenFrames = self.rbGreenRatio[0] #nb of green frames in each green sequence #NOT YET USED
+        greenFrameInterval = self.rbGreenRatio[1] #Interval between each green sequence (nb of frames)
+        nbGreenSequence = float(self.nbFrames)/greenFrameInterval #Dividing nbFrames by the green frame interval with a float to have float division
+        print 'Nb of green frames : ', nbGreenSequence
+        nbGreenSequence = int(round(nbGreenSequence))
+        print 'Nb of green frames : ', nbGreenSequence
+        self.ledList = [0,2]*int(round((self.nbFrames-nbGreenSequence)/2)) #Initiate a whole list of R-B alternance
+        #list.insert(index, elem) -- inserts the element at the given index, shifting elements to the right
+        greenSeqIdx = 0
+        while greenSeqIdx <= self.nbFrames :
+            self.ledList.insert(greenSeqIdx,1)
+            greenSeqIdx+= greenFrameInterval
         #NB : no return needed because each ledList and nbFrames are instance attribute
 
 
@@ -76,7 +105,6 @@ class SequenceAcquisition(QThread):
             #Will return only if ARM output signal from the camera raise
             if waitForSignal(self.labjack, "TTL", "AIN", 0): #WaitForSignal return TRUE when AIN0 input is HIGH (>3V)
                 #Lighting good LED for next acquisition
-                #trigImage(self.labjack) # Trigger the image --> future improvements, use a basic OR gate to get all the LED signal
                 onTime = time()
                 if self.ledList[imageCount] == 0:
                     #onTime = clock()
@@ -100,26 +128,10 @@ class SequenceAcquisition(QThread):
                 
                 effectiveLedOnDuration = offTime-onTime
                 frameTime = onTime - startAcquisitionTime
-                valveValue = readOdourValve(self.labjack, 2)
-                saveMetadata(self.textFile, str(frameTime),str(self.ledList[(imageCount)]), str(imageCount), str(valveValue), str(effectiveLedOnDuration))
+                odourValveSig = readOdourValve(self.labjack, 2)
+                respirationSig = readSignal(self.labjack, 3)
+                saveMetadata(self.textFile, str(frameTime),str(self.ledList[(imageCount)]), str(imageCount), str(odourValveSig), str(respirationSig), str(effectiveLedOnDuration))
                 imageCount+=1
-#        #Print LED fault counter
-#        ledFaultCounter = 0
-#        ledFaultPosition =[]
-#        for idx, deltaTime in enumerate(ledTimeOn):
-#            if deltaTime > (ledOnDuration+0.0001) or deltaTime <(ledOnDuration-0.0001):
-#                ledFaultCounter +=1
-#                ledFaultPosition.append(idx)
-#        print 'There are ', ledFaultCounter, ' frames with non correct illumination time. It concern the following frames :'
-#        print ledFaultPosition
-#        
-#        #Print delay on labjack functions
-#        print '\n ON delays \n'
-#        for delay in onDelay:
-#            print delay
-#        print '\n OFF delays \n'
-#        for delay in offDelay:
-#            print delay
         
         
         #close the metadata .txt file
@@ -233,7 +245,12 @@ class SequenceAcquisition(QThread):
         print 'run fct'
         
         #Calculation of the number of frames in function of the duration + LED list for the acquisition
-        self._sequenceInit()
+        if self.seqMode == "rgbMode":
+            self._rgbSequenceInit()
+        elif self.seqMode == 'rbMode':
+            self._rbSequenceInit()
+        else:
+            print('Please select a valid mode of led sequence initialization')
         #Sending nb of frames to initialize the progress bar
         self.nbFramesSig.emit(self.nbFrames)
         #initialization of the saving files : .tif (frames) and .txt (metadata)

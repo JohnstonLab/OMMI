@@ -83,8 +83,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         # Connect push buttons
         self.cropBtn.clicked.connect(self.crop)
         self.histoBtn.clicked.connect(self.oldHisto)
-        self.SaveEBtn.clicked.connect(self.paramCheck)
-        self.SaveEBtn.setEnabled(True)
+        self.runSaveBtn.clicked.connect(self.paramCheck)
+        self.runSaveBtn.setEnabled(False)
         self.trigBtn.clicked.connect(self.launchHisto)
         self.abortBtn.setEnabled(False)
         self.arduinoBtn.setEnabled(False)
@@ -198,7 +198,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.Blue.stateChanged.connect(self.blue)
         
         #Led sequence mode toogle buttons
-        
+        self.rgbMode.stateChanged.connect(self.ledSequenceMode)
+        self.rbMode.stateChanged.connect(self.ledSequenceMode)
     
     def liveFunc(self): #Not connected
         grayLive(self.mmc)
@@ -273,7 +274,19 @@ class isoiWindow(QtWidgets.QMainWindow):
             blueOn(self.labjack)
         else :
             blueOff(self.labjack)
-    
+        
+    def ledSequenceMode(self):
+        """
+        Check wich LED sequence mode is selected and enable the good buttons
+        """
+        if self.rgbMode.isChecked() and self.rbMode.isChecked() :
+            self.runSaveBtn.setEnabled(False)
+        elif self.rgbMode.isChecked():
+            self.runSaveBtn.setEnabled(True)
+        elif self.rbMode.isChecked():
+            self.runSaveBtn.setEnabled(True)
+        else:
+            self.runSaveBtn.setEnabled(False)
     
     def fileSizeSetting(self):
         sizeMax = self.fileSize.value()
@@ -338,15 +351,18 @@ class isoiWindow(QtWidgets.QMainWindow):
         #Get experiment/acquisition settings from the GUI
         name = self.name.text() #str
         duration = self.dur.value()*1000 # int (+conversion in ms)
-        ledRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
+        rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
         maxFrames =  int(self.framesPerFileLabel.text()) #int
-        expRatio = self.expRatio.value()
+        expRatio = self.expRatio.value() #int
+        rbGreenRatio = [self.gNbFrames.value(), self.gInterval.value()] #list of int
+        
         
          
         #Creation of a SequenceAcquisition class instance
         self.sequencAcq = SequenceAcquisition(name, 
                                          duration, 
-                                         ledRatio,
+                                         rgbLedRatio,
+                                         rbGreenRatio,
                                          maxFrames,
                                          expRatio,
                                          self.mmc,
@@ -356,6 +372,10 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.sequencAcq.nbFramesSig.connect(self.initProgressBar)
         self.sequencAcq.progressSig.connect(self.updateProgressBar)
         self.sequencAcq.acquMode = self.ledTrigBox.currentText()
+        if self.rgbMode.isChecked():
+            self.sequencAcq.seqMode = "rgbMode"
+        elif self.rbMode.isChecked():
+            self.sequencAcq.seqMode = "rbMode"
         # We have all the events we need connected we can start the thread
         #print 'object connected'
         self.sequencAcq.start()
@@ -368,7 +388,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.abortBtn.clicked.connect(self.sequencAcq.abort)
         # We don't want to enable user to start another thread while this one is
         # running so we disable the start button.
-        self.SaveEBtn.setEnabled(False)
+        self.runSaveBtn.setEnabled(False)
     
     ##### Methods in charge of communication with SequenceAcquisition class instance ####
     def initProgressBar(self,nbFrames):
@@ -384,7 +404,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.progressBar.reset()
         #Change button state
         self.abortBtn.setEnabled(False)
-        self.SaveEBtn.setEnabled(True)
+        self.runSaveBtn.setEnabled(True)
         
         
     ##### HISTOGRAM FCT ####

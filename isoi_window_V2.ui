@@ -421,7 +421,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="SaveEBtn">
+        <widget class="QPushButton" name="runSaveBtn">
          <property name="text">
           <string>RUN AND SAVE</string>
          </property>
@@ -533,7 +533,7 @@
         </layout>
        </item>
        <item row="5" column="0" colspan="2">
-        <widget class="QCheckBox" name="rgbMode_2">
+        <widget class="QCheckBox" name="rbMode">
          <property name="font">
           <font>
            <pointsize>12</pointsize>
@@ -561,7 +561,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="gRatio_2">
+          <widget class="QSpinBox" name="gNbFrames">
            <property name="value">
             <number>1</number>
            </property>
@@ -580,7 +580,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="gInterval_2">
+          <widget class="QSpinBox" name="gInterval">
            <property name="maximum">
             <number>10000</number>
            </property>
