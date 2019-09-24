@@ -103,34 +103,35 @@ class SequenceAcquisition(QThread):
         startAcquisitionTime = time()
         while(imageCount<(self.nbFrames) and self.acqRunning):
             #Will return only if ARM output signal from the camera raise
-            if waitForSignal(self.labjack, "TTL", "AIN", 0): #WaitForSignal return TRUE when AIN0 input is HIGH (>3V)
-                #Lighting good LED for next acquisition
-                onTime = time()
-                if self.ledList[imageCount] == 0:
-                    #onTime = clock()
+            #to check if the camera is ready to receive trigger signal
+            if waitForSignal(self.labjack, "TTL", "AIN", 0): 	#WaitForSignal return TRUE when AIN0 input is HIGH (>3V),
+                
+                onTime = time()		#flag the begining of a LED illumination
+                if self.ledList[imageCount] == 0: 	#RED
                     redOn(self.labjack)
                     sleep(ledOnDuration)
                     redOff(self.labjack)
-                    #offTime = clock()
-                elif self.ledList[imageCount] == 1:
-                    #onTime = clock()
+                elif self.ledList[imageCount] == 1:	#GREEN
                     greenOn(self.labjack)
                     sleep(ledOnDuration)
                     greenOff(self.labjack)
-                    #offTime = clock()
-                else:
-                    #onTime = clock()
+                else:								#BLUE
                     blueOn(self.labjack)
                     sleep(ledOnDuration)
                     blueOff(self.labjack)
-                    #offTime = clock()
-                offTime = time()
+                offTime = time()	#flag the end of a LED illumination
                 
                 effectiveLedOnDuration = offTime-onTime
-                frameTime = onTime - startAcquisitionTime
+                frameTime = offTime - startAcquisitionTime #Taking the off time to be synchronized with metadata
                 odourValveSig = readOdourValve(self.labjack, 2)
                 respirationSig = readSignal(self.labjack, 3)
-                saveMetadata(self.textFile, str(frameTime),str(self.ledList[(imageCount)]), str(imageCount), str(odourValveSig), str(respirationSig), str(effectiveLedOnDuration))
+                saveMetadata(	self.textFile, 
+								str(frameTime),
+								str(self.ledList[imageCount]), 
+								str(imageCount), 
+								str(odourValveSig), 
+								str(respirationSig), 
+								str(effectiveLedOnDuration))
                 imageCount+=1
         
         
