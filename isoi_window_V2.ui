@@ -631,7 +631,7 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_8">
            <item>
-            <widget class="QLabel" name="approxFramerate">
+            <widget class="QLabel" name="approxFramerateLabel">
              <property name="font">
               <font>
                <pointsize>8</pointsize>
@@ -654,7 +654,7 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_10">
            <item>
-            <widget class="QLabel" name="testFramerate">
+            <widget class="QLabel" name="testFramerateLabel">
              <property name="font">
               <font>
                <pointsize>8</pointsize>

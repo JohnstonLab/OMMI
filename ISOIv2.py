@@ -91,6 +91,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         #self.arduinoBtn.clicked.connect(self.arduinoSync)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
+        self.approxFramerateBtn.clicked.connect(self.approxFramerate)
         
         ###### ComboBoxes ######
         
@@ -188,6 +189,9 @@ class isoiWindow(QtWidgets.QMainWindow):
         #Initialize exposure label
         self.realExp.setText(str(self.mmc.getExposure()))
         
+        #Initialize framerate label
+        #self.approxFramerate()
+        
         #ProgressBar
         self.progressBar.setMinimum(0)
         self.progressBar.setValue(0)
@@ -203,6 +207,53 @@ class isoiWindow(QtWidgets.QMainWindow):
     
     def liveFunc(self): #Not connected
         grayLive(self.mmc)
+        
+    def approxFramerate(self):
+        """
+        This function approximate the framerate. Approximation based on Zyla
+        specifications mentioned in the hardware user guide.
+        """
+        print('Approximation of the framerate')
+        ##### From Hardware User Guide #####
+        ### settings > Global Shutter and external/software triggering,
+        ### Sensor Readout Rate = 560MHz 
+        row =  9.24E-6      #(s)
+        fullFrame= 9.98E-3  #(s)
+        interFrame= 9*row
+        startDelay= 2*row
+        #Overlap Off :
+            #CycleTime = exposure + 1 Frame + 1 interframe + 5 rows
+        #Overlap On :
+            #CycleTime =  exposure dependant (look at documentation)
+        
+        if self.binBox.currentText() == '4x4':
+            fullFrameNbPix = 640*540 #Binning4x4
+        elif self.binBox.currentText() == '1x1':
+            fullFrameNbPix = 2560*2160 #Binning1x1
+        elif self.binBox.currentText() == '2x2':
+            fullFrameNbPix = 1280*1080 #Binning2x2
+        elif self.binBox.currentText() == '8x8':
+            fullFrameNbPix = 320*270 #Binning1x1
+            
+        exposure = float(self.realExp.text())*1E-3 #conversion in s
+        print('exposure : ',exposure)
+        ROI = self.mmc.getROI()
+        print('ROI : ',ROI)
+        nbPix = ROI[-1]*ROI[-2] #(horizontal nb of pix) * (vertical nb of pix), last objects of ROI list
+        
+        print('nbPix : ',nbPix)
+        frameRatio = float(nbPix)/fullFrameNbPix #One must be float to have a float div
+        print('frameRatio : ',frameRatio)
+        
+        #Cycle time calculation
+        #Note that it doesn't take the LED triggering by the labjack in count
+        self.cycleTime = exposure + fullFrame*frameRatio+interFrame+5*row+startDelay
+        print('cycleTime : ',self.cycleTime)
+        self.approxFramerateLabel.setText(str(round(1/self.cycleTime,2)))
+        
+    def testFramerate(self):
+        print('test of the framerate')
+        
         
     def crop(self):
         self.mmc.clearROI()
