@@ -28,12 +28,13 @@ class SequenceAcquisition(QThread):
     
 
     
-    def __init__(self, experimentName, duration, rgbLedRatio, rbGreenRatio, maxFrames, expRatio, mmc, labjack, parent=None):
+    def __init__(self, experimentName, duration, cycleTime, rgbLedRatio, rbGreenRatio, maxFrames, expRatio, mmc, labjack, parent=None):
         QThread.__init__(self,parent)
         
         #Set instance attributes
         self.experimentName = experimentName
         self.duration = duration
+        self.cycleTime = cycleTime
         self.rgbLedRatio = rgbLedRatio
         self.rbGreenRatio = rbGreenRatio
         self.maxFrames = maxFrames
@@ -59,9 +60,8 @@ class SequenceAcquisition(QThread):
         This function will take 3 LED ratio and make a list 
         with each of these ratios on the pattern [xR,yG,zB]
         """
-        readOutFrame = 5 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide) #WARNING : this vary in fct of the cropping
         ## send all of this to sequence acq
-        self.nbFrames = int((self.duration)/(readOutFrame+self.mmc.getExposure()))+1  ## Determine number of frames. (+1) because int round at the lower int
+        self.nbFrames = int(self.duration/self.cycleTime)+1  ## Determine number of frames. (+1) because int round at the lower int
         ledSeq = [0]*self.rgbLedRatio[0]+[1]*self.rgbLedRatio[1]+[2]*self.rgbLedRatio[2] #Sequence of LED lighting in function of the ratio
                                                                                 #RED = 0
                                                                                 #GREEN = 1
@@ -76,9 +76,9 @@ class SequenceAcquisition(QThread):
         This function generate list with an alternance of red (0) and blue (2)
         frames with some green (1) frame at precise interval
         """
-        readOutFrame = 10 #ms ##Minimal time between 2 frames (cf page 45 zyla hardware guide) #WARNING : this vary in fct of the cropping
+        
         ## send all of this to sequence acq
-        self.nbFrames = int((self.duration)/(readOutFrame+self.mmc.getExposure()))+1  ## Determine number of frames. (+1) because int round at the lower int
+        self.nbFrames = int(self.duration/self.cycleTime)+1 ## Determine number of frames. (+1) because int round at the lower int
         #nbGreenFrames = self.rbGreenRatio[0] #nb of green frames in each green sequence #NOT YET USED
         greenFrameInterval = self.rbGreenRatio[1] #Interval between each green sequence (nb of frames)
         nbGreenSequence = float(self.nbFrames)/greenFrameInterval #Dividing nbFrames by the green frame interval with a float to have float division
@@ -156,6 +156,12 @@ class SequenceAcquisition(QThread):
         
         #Close tiff file open
         tiffWritersClose(self.tiffWriterList)
+        
+        #### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####
+        print(self.acqRunning)
+        print(self.nbFrames/self.maxFrames)
+        if (not self.acqRunning) and ((self.nbFrames/self.maxFrames)>=1): #check if abort fct was called and that multiples .tif were initialized
+            tiffWriterDel(self.experimentName, self.savePath, imageCount, self.maxFrames, self.tiffWriterList)
         
         #Stop camera acquisition
         self.mmc.stopSequenceAcquisition()
@@ -236,6 +242,7 @@ class SequenceAcquisition(QThread):
         #Close tiff file open
         tiffWritersClose(self.tiffWriterList)
         
+        
         #Stop camera acquisition
         self.mmc.stopSequenceAcquisition()
         self.mmc.clearCircularBuffer() 
@@ -260,19 +267,13 @@ class SequenceAcquisition(QThread):
                                                                         self.maxFrames)
         #Launching the frame acquisition
         if self.acquMode == "Labjack":
+            print'sequ acq about to start'
             self.imageCount = self._sequenceAcqu()
+            print'sequ acq done'
         elif self.acquMode == "Cyclops":
             self.imageCount = self._seqAcqCyclops()
         else:
             print 'Please select a valid mode of triggering the LED'
-        print 'Image Count : ', self.imageCount
-        
-        #Closing all files opened
-        self.textFile.close()
-        tiffWritersClose(self.tiffWriterList)
-        #### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####  
-        if not self.acqRunning and ((self.nbFrames/self.maxFrames)>=1): #check if abort fct was called and that multiples .tif were initialized
-            tiffWriterDel(self.experimentName, self.savePath, self.imageCount, self.maxFrames, self.tiffWriterList)
         
         print 'end of the thread'
             

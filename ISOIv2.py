@@ -85,7 +85,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.histoBtn.clicked.connect(self.oldHisto)
         self.runSaveBtn.clicked.connect(self.paramCheck)
         self.runSaveBtn.setEnabled(False)
-        self.trigBtn.clicked.connect(self.launchHisto)
+        #self.trigBtn.clicked.connect(self.launchHisto)
         self.abortBtn.setEnabled(False)
         self.arduinoBtn.setEnabled(False)
         #self.arduinoBtn.clicked.connect(self.arduinoSync)
@@ -257,6 +257,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         This function test the framerate. Fire an image using the external 
         trigger and mesure the cycle time.
         """
+        self.cycleTime = None
         print('test of the framerate')
         if not self.triggerBox.currentText() == 'External':
             print 'Set the trigger mode to external'
@@ -274,6 +275,7 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.cycleTime = end-start
             print(self.cycleTime)
             self.testFramerateLabel.setText(str(round(1/self.cycleTime,2)))
+        return self.cycleTime
         
         
     def crop(self):
@@ -423,6 +425,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         #Get experiment/acquisition settings from the GUI
         name = self.name.text() #str
         duration = self.dur.value()*1000 # int (+conversion in ms)
+        cycleTime = (self.testFramerate())*1000 #conversion in ms
         rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
         maxFrames =  int(self.framesPerFileLabel.text()) #int
         expRatio = self.expRatio.value() #int
@@ -432,7 +435,8 @@ class isoiWindow(QtWidgets.QMainWindow):
          
         #Creation of a SequenceAcquisition class instance
         self.sequencAcq = SequenceAcquisition(name, 
-                                         duration, 
+                                         duration,
+                                         cycleTime,
                                          rgbLedRatio,
                                          rbGreenRatio,
                                          maxFrames,

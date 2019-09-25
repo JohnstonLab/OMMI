@@ -98,6 +98,7 @@ def filesInit(name, nbFrames, maxFrames):
     return (tifList, textFile,savePath)
 
 def tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList):
+    print 'TiffWriterdel fct called'
     for i in range((imageCount/maxFrames)+1,len(tiffWriterList)):   #All files that are empty (imageCount/maxFrames)+1, will be suppressed
         filename = savePath+"/"+name+'%(number)04d.tif' % {"number": i+1}
         try:
