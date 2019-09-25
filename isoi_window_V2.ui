@@ -52,7 +52,7 @@
       <property name="geometry">
        <rect>
         <x>32</x>
-        <y>102</y>
+        <y>192</y>
         <width>721</width>
         <height>26</height>
        </rect>
@@ -109,7 +109,7 @@
       <property name="geometry">
        <rect>
         <x>270</x>
-        <y>130</y>
+        <y>220</y>
         <width>484</width>
         <height>30</height>
        </rect>
@@ -158,7 +158,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>250</y>
+        <y>320</y>
         <width>181</width>
         <height>31</height>
        </rect>
@@ -176,7 +176,7 @@
       <property name="geometry">
        <rect>
         <x>420</x>
-        <y>200</y>
+        <y>270</y>
         <width>261</width>
         <height>24</height>
        </rect>
@@ -305,7 +305,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>190</y>
+        <y>260</y>
         <width>321</width>
         <height>41</height>
        </rect>
@@ -350,7 +350,7 @@
       <property name="geometry">
        <rect>
         <x>560</x>
-        <y>300</y>
+        <y>370</y>
         <width>215</width>
         <height>191</height>
        </rect>
@@ -443,11 +443,11 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>301</y>
+        <y>371</y>
         <width>438</width>
         <height>186</height>
        </rect>
@@ -601,6 +601,80 @@
           <string>LEDs ratio :</string>
          </property>
         </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="">
+      <property name="geometry">
+       <rect>
+        <x>470</x>
+        <y>80</y>
+        <width>281</width>
+        <height>60</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_11">
+       <item>
+        <widget class="QLabel" name="expLabel_3">
+         <property name="font">
+          <font>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Framerate :</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_8">
+           <item>
+            <widget class="QLabel" name="approxFramerate">
+             <property name="font">
+              <font>
+               <pointsize>8</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>press btn</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="approxFramerateBtn">
+             <property name="text">
+              <string>Approx Framerate</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_10">
+           <item>
+            <widget class="QLabel" name="testFramerate">
+             <property name="font">
+              <font>
+               <pointsize>8</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>press btn</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="testFramerateBtn">
+             <property name="text">
+              <string>Test Framerate</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
