@@ -140,7 +140,6 @@ def readOdourValve(device, channel):
     """
     valveState=None
     sigValue = readSignal(device, channel)
-    print(sigValue)
     if sigValue>2.8:
         valveState=0
     else :

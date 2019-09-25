@@ -85,7 +85,7 @@ class SequenceAcquisition(QThread):
         print 'Nb of green frames : ', nbGreenSequence
         nbGreenSequence = int(round(nbGreenSequence))
         print 'Nb of green frames : ', nbGreenSequence
-        self.ledList = [0,2]*int(round((self.nbFrames-nbGreenSequence)/2)) #Initiate a whole list of R-B alternance
+        self.ledList = [0,2]*int(round(float(self.nbFrames-nbGreenSequence)/2)) #Initiate a whole list of R-B alternance
         #list.insert(index, elem) -- inserts the element at the given index, shifting elements to the right
         greenSeqIdx = 0
         while greenSeqIdx <= self.nbFrames :
@@ -277,7 +277,14 @@ class SequenceAcquisition(QThread):
         print 'end of the thread'
             
     def abort(self):
-        print 'things to do before abort'
+        
+        try:
+            #Closing all files opened
+            self.textFile.close()
+            tiffWritersClose(self.tiffWriterList)
+        except:
+            print 'Cannot close files'
+            
         try:
             self.acqRunning = False
         except:

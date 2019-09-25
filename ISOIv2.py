@@ -14,7 +14,7 @@ import sys
 import MMCorePy
 import cv2
 from PyQt5 import QtWidgets, uic
-#from time import sleep, time
+from time import time
 
 #Class import
 from SequenceAcquisition import SequenceAcquisition
@@ -62,7 +62,7 @@ class isoiWindow(QtWidgets.QMainWindow):
     #LED lit time (as a ratio of the exposure time) 
     ratioMin = 0.05
     ratioMax = 2.
-    ratioDefault = 0.7
+    ratioDefault = 1.1
     ratioStep = 0.05
     
     #Bit depth (cam properties)
@@ -92,6 +92,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
         self.approxFramerateBtn.clicked.connect(self.approxFramerate)
+        self.testFramerateBtn.clicked.connect(self.testFramerate)
         
         ###### ComboBoxes ######
         
@@ -190,7 +191,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.realExp.setText(str(self.mmc.getExposure()))
         
         #Initialize framerate label
-        #self.approxFramerate()
+        self.approxFramerate()
         
         #ProgressBar
         self.progressBar.setMinimum(0)
@@ -252,7 +253,27 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.approxFramerateLabel.setText(str(round(1/self.cycleTime,2)))
         
     def testFramerate(self):
+        """
+        This function test the framerate. Fire an image using the external 
+        trigger and mesure the cycle time.
+        """
         print('test of the framerate')
+        if not self.triggerBox.currentText() == 'External':
+            print 'Set the trigger mode to external'
+        else:
+            self.mmc.startContinuousSequenceAcquisition(1)
+            print('acquisition start')
+            waitForSignal(self.labjack, "TTL", "AIN", 0)
+            start = time()
+            #One acquisition begin
+            trigImage(self.labjack)
+            waitForSignal(self.labjack, "TTL", "AIN", 0)
+            #When the ARM signal back in high state, acquisition is done
+            end = time()
+            self.mmc.stopSequenceAcquisition()
+            self.cycleTime = end-start
+            print(self.cycleTime)
+            self.testFramerateLabel.setText(str(round(1/self.cycleTime,2)))
         
         
     def crop(self):
