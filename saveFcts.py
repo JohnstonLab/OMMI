@@ -63,15 +63,57 @@ def saveMetadata(textFile, time, led, imageCount, odourValveSig, respirationSig,
     """
     textFile.write(time+'\t'+led+'\t'+imageCount+'\t'+odourValveSig+'\t'+respirationSig+'\t'+ledOnDuration+'\n')
 
-def filesInit(name, nbFrames, maxFrames):
+
+def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode, ledSwitchingMode, rgbLedRatio, rbGreenRatio, framerate, mmc, deviceLabel):
+    """
+    Save the experiment configuration parameters in a JSON file.
+    """
+    print 'initializing folder'
     today = str(date.today())
     savePath="C:/data_OIIS/"+today[2:4]+today[5:7]+today[8:10]+"/"+name
-    # savePath="C:/Users/Louis Vande Perre/Documents/Polytech/Stage/Johnston Lab/ISOI Project 2/"+date[2:4]+date[5:7]+date[8:10]
     
     #Checking if a folder already exist for the experiments of the day
     if not os.path.exists(savePath):
         os.makedirs(savePath)
-    
+    print 'Saving configuration file'
+    #Create a Python dictionary with all the informations
+    experimentConfiguration = {
+            "Experiment date and time":str(datetime.now()),         #str
+            "Experiment name":name,                                 #str
+            "Number of frames":nbFrames,                            #int
+            "Duration":duration,                                    #float
+            "LED illunation time (% of exposure)":ledIllumRatio,    #float
+            "LED trigger mode":ledTriggerMode,                      #str
+            "LED switching mode":ledSwitchingMode,                  #str
+            "(RGB) LED ratio":rgbLedRatio,                          #list of int
+            "(RB) Green frames and interval":rbGreenRatio,          #list of int
+            "Tested framerate": framerate,                          #float
+            ### Camera settings ###
+            "Exposure":mmc.getExposure(),                                           #double
+            "Bit depth":mmc.getProperty(deviceLabel,'Sensitivity/DynamicRange'),    #str
+            "Binning":mmc.getProperty(deviceLabel,'Binning'),                       #str   
+            "Shutter mode":mmc.getProperty(deviceLabel, 'ElectronicShutteringMode'),#str
+            "Trigger mode":mmc.getProperty(deviceLabel, 'TriggerMode'),             #str
+            "Overlap mode":mmc.getProperty(deviceLabel, 'Overlap'),                 #str
+            "ROI": mmc.getROI(),                                                    #list of int
+            "Pixel readout rate":mmc.getProperty(deviceLabel,'PixelReadoutRate')    #str
+    }
+    print 'Saving in JSON format'
+    with open(savePath+"/"+name+"CFG.json", 'w') as outfile:
+        json.dump(experimentConfiguration, outfile)
+        outfile.close()
+    print 'saving succeed'
+    return savePath
+    #Inititate a .txt file where the configuration of the camera is saved
+#    textFileCfg = open(savePath+"/"+name+"CFG.txt", 'w')
+#    textFileCfg.write(str(datetime.now()))
+#    textFileCfg.close()
+
+def filesInit(savePath, name, nbFrames, maxFrames):
+    """
+    Initialize the right number of .tif files to save the frames.
+    Initialize a .txt file to save metadata related to each frame.
+    """
     #Initiate a list of TiffWriter object (one per file)    
     tifList=[]
     if ((nbFrames%maxFrames) > 0 ): ##checking if nbFrames/maxFrames returned an int
@@ -86,16 +128,11 @@ def filesInit(name, nbFrames, maxFrames):
             tifList.append(tif)
     print len(tifList),' Tif(s) initiated'
     
-    #Inititate a .txt file where the configuration of the camera is saved
-    textFileCfg = open(savePath+"/"+name+"CFG.txt", 'w')
-    textFileCfg.write(str(datetime.now()))
-    textFileCfg.close()
-    ## Others cfg parameters to write
-    
     #Inititate a .txt file where the metadata will be written
     textFile = open(savePath+"/"+name+".txt", 'w')
     
-    return (tifList, textFile,savePath)
+    return (tifList, textFile)
+
 
 def tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList):
     print 'TiffWriterdel fct called'

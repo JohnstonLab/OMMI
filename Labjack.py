@@ -226,6 +226,11 @@ def multiSnap(device, nbImages, mmc, imageList):
 #mmc = MMCorePy.CMMCore()
 #mmc.unloadAllDevices()
 #DEVICE = camInit(mmc) 
+#print (mmc.getLoadedDevices())
+#print(mmc.getDeviceType('Zyla'))
+##print (mmc.getLoadedDevicesOfType('Camera'))
+#mmc.unloadAllDevices()
+
 #labjack = labjackInit()
 #
 #print 'Listening to signal test'

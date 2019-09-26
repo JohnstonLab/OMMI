@@ -211,8 +211,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.Blue.stateChanged.connect(self.blue)
         
         #Led sequence mode toogle buttons
-        self.rgbMode.stateChanged.connect(self.ledSequenceMode)
-        self.rbMode.stateChanged.connect(self.ledSequenceMode)
+        self.rgbMode.stateChanged.connect(self.ledSequenceModeCheck)
+        self.rbMode.stateChanged.connect(self.ledSequenceModeCheck)
     
     def liveFunc(self): #Not connected
         grayLive(self.mmc)
@@ -291,7 +291,7 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.mmc.clearROI()
             self.mmc.snapImage()
             img = self.mmc.getImage()
-            (x,y,w,h) = crop_w_mouse(img, self.mmc.getROI())
+            (x,y,w,h) = crop_w_mouse(img,self.mmc.getROI())
             self.mmc.setROI(x,y,w,h)
             print "image width: "+str(self.mmc.getImageWidth())
             print "image height: "+str(self.mmc.getImageHeight())
@@ -359,18 +359,23 @@ class isoiWindow(QtWidgets.QMainWindow):
         else :
             blueOff(self.labjack)
         
-    def ledSequenceMode(self):
+    def ledSequenceModeCheck(self):
         """
-        Check wich LED sequence mode is selected and enable the good buttons
+        Check wich LED sequence mode is selected and enable the good buttons.
+        Return the mode selected
         """
+        mode = None
         if self.rgbMode.isChecked() and self.rbMode.isChecked() :
             self.runSaveBtn.setEnabled(False)
         elif self.rgbMode.isChecked():
             self.runSaveBtn.setEnabled(True)
+            mode ="rgbMode"
         elif self.rbMode.isChecked():
             self.runSaveBtn.setEnabled(True)
+            mode ="rbMode"
         else:
             self.runSaveBtn.setEnabled(False)
+        return mode
     
     def fileSizeSetting(self):
         sizeMax = self.fileSize.value()

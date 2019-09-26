@@ -13,7 +13,7 @@ from multiprocessing.pool import ThreadPool
 
 #Function import
 from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, readSignal, readOdourValve
-from saveFcts import filesInit, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata
+from saveFcts import filesInit, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata, cfgFileSaving
 
 
 class SequenceAcquisition(QThread):
@@ -261,10 +261,25 @@ class SequenceAcquisition(QThread):
             print('Please select a valid mode of led sequence initialization')
         #Sending nb of frames to initialize the progress bar
         self.nbFramesSig.emit(self.nbFrames)
-        #initialization of the saving files : .tif (frames) and .txt (metadata)
-        (self.tiffWriterList, self.textFile,self.savePath) = filesInit( self.experimentName,
-                                                                        self.nbFrames, 
-                                                                        self.maxFrames)
+        
+        #Saving the configuration of the experiment file (.json)
+        self.savePath = cfgFileSaving(self.experimentName, 
+                                      self.nbFrames, 
+                                      self.duration,
+                                      self.expRatio,
+                                      self.acquMode,
+                                      self.seqMode,
+                                      self.rgbLedRatio,
+                                      self.rbGreenRatio,
+                                      round(1/self.cycleTime,2), #framerate
+                                      self.mmc, 
+                                      'Zyla') #WARNING > modulabilty
+        
+        #initialization of the acquisition saving files : .tif (frames) and .txt (metadata)
+        (self.tiffWriterList, self.textFile) = filesInit(   self.savePath,
+                                                            self.experimentName,
+                                                            self.nbFrames, 
+                                                            self.maxFrames)
         #Launching the frame acquisition
         if self.acquMode == "Labjack":
             print'sequ acq about to start'
