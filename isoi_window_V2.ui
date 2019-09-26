@@ -131,13 +131,6 @@
         <widget class="QComboBox" name="triggerBox"/>
        </item>
        <item>
-        <widget class="QPushButton" name="trigBtn">
-         <property name="text">
-          <string>Trig</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QLabel" name="label_18">
          <property name="font">
           <font>
@@ -604,7 +597,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>470</x>

@@ -15,6 +15,7 @@ import MMCorePy
 import cv2
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QMessageBox
 from time import time
 
 #Class import
@@ -265,10 +266,9 @@ class isoiWindow(QtWidgets.QMainWindow):
         trigger and mesure the cycle time.
         """
         self.cycleTime = None
+        triggerMode = 'External'
         print('test of the framerate')
-        if not self.triggerBox.currentText() == 'External':
-            print 'Set the trigger mode to external'
-        else:
+        if self.triggerModeCheck(triggerMode):
             self.mmc.startContinuousSequenceAcquisition(1)
             print('acquisition start')
             waitForSignal(self.labjack, "TTL", "AIN", 0)
@@ -286,15 +286,17 @@ class isoiWindow(QtWidgets.QMainWindow):
         
         
     def crop(self):
-        self.mmc.clearROI()
-        self.mmc.snapImage()
-        img = self.mmc.getImage()
-        (x,y,w,h) = crop_w_mouse(img, self.mmc.getROI())
-        self.mmc.setROI(x,y,w,h)
-        print "image width: "+str(self.mmc.getImageWidth())
-        print "image height: "+str(self.mmc.getImageHeight())
-        cv2.destroyAllWindows()
-        self.updateFramesPerFile.emit()
+        triggerMode = 'Internal (Recommended for fast acquisitions)'
+        if self.triggerModeCheck(triggerMode):
+            self.mmc.clearROI()
+            self.mmc.snapImage()
+            img = self.mmc.getImage()
+            (x,y,w,h) = crop_w_mouse(img, self.mmc.getROI())
+            self.mmc.setROI(x,y,w,h)
+            print "image width: "+str(self.mmc.getImageWidth())
+            print "image height: "+str(self.mmc.getImageHeight())
+            cv2.destroyAllWindows()
+            self.updateFramesPerFile.emit()
     
     def expFunc(self, expVal):
         #exp=expVal/float(div)
@@ -398,16 +400,28 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.DEVICE = camInit(self.mmc)
         print 'Device ',self.DEVICE[0],' loaded'
     
+    def triggerModeCheck(self, triggerMode):
+        print triggerMode
+        if self.mmc.getProperty(self.DEVICE[0], 'TriggerMode') != triggerMode:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText("Set the trigger mode to : \n" + triggerMode)
+            msg.setWindowTitle("Trigger mode warning")
+            msg.exec_()
+            return False
+        else:
+            return True
+    
     def paramCheck(self):
         """ Check that the user is well informed about certains acquisition settings before launching the acquisition"""
         run = True
         
         #Shutter mode check
         if mmc.getProperty(DEVICE[0], 'ElectronicShutteringMode')== 'Rolling':
-            choice = QtWidgets.QMessageBox.question(self, 'Shutter Mode',
+            choice = QMessageBox.question(self, 'Shutter Mode',
                                                 "Running acquisition in Rolling mode ?",
-                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-            if choice == QtWidgets.QMessageBox.Yes:
+                                                QMessageBox.Yes | QMessageBox.No)
+            if choice == QMessageBox.Yes:
                 print("Running in Rolling mode")
                 run = True
             else:
@@ -416,16 +430,23 @@ class isoiWindow(QtWidgets.QMainWindow):
                 
         #Arduino synchronization check        
         if (self.ledTrigBox.currentText() == 'Cyclops' and run):
-            choice = QtWidgets.QMessageBox.question(self, 'Cyclops driver initialisation',
+            choice = QMessageBox.question(self, 'Cyclops driver initialisation',
                                                 "Are the cyclops Arduino synchronized ?",
-                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-            if choice == QtWidgets.QMessageBox.No:
+                                                QMessageBox.Yes | QMessageBox.No)
+            if choice == QMessageBox.No:
                 print("sending exposur to arduino")
-                run = self.arduinoSync()
+                #run = self.arduinoSync()
+                run = False
             else:
                 print('are you sure you have update it ???')
                 run = True
                 
+        #Trigger mode check
+        if(self.ledTrigBox.currentText() == 'Labjack') and run:
+            if (self.triggerModeCheck('External')):
+                run = True
+            else:
+                run = False
         if run:
             self.saveImageSeq()
             
@@ -491,7 +512,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.runSaveBtn.setEnabled(True)
         
         
-    ##### HISTOGRAM FCT ####
+    ##### HISTOGRAM FCT #### NOT USED ANY MORE
     def launchHisto(self):
         try:
             self.liveHistogram = LiveHistogram(self.mmc, self.labjack)
@@ -504,35 +525,40 @@ class isoiWindow(QtWidgets.QMainWindow):
             print 'cannot instanciate the LiveHistogram class'
             
     def oldHisto(self):
-        (mask, h_h, h_w, pixMaxVal, bin_width, nbins) = histoInit(mmc)
-        cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
-        cv2.namedWindow('Video')
-        self.mmc.snapImage()
-        g = self.mmc.getImage() #Initialize g
-        self.mmc.startContinuousSequenceAcquisition(1)
-        while True:
-                if self.mmc.getRemainingImageCount() > 0:
-                    g = self.mmc.getLastImage()
-                    rgb2 = cv2.cvtColor(g.astype("uint16"),cv2.COLOR_GRAY2RGB)
-                    rgb2[g>(pixMaxVal-2)]=mask[g>(pixMaxVal-2)]*256 #It cannot be compared to pixMaxVal because it will never reach this value
-                    cv2.imshow('Video', rgb2)
+        """
+        Function that calculate and display a histogram.
+        """
+        triggerMode = 'Internal (Recommended for fast acquisitions)'
+        if self.triggerModeCheck(triggerMode):
+            (mask, h_h, h_w, pixMaxVal, bin_width, nbins) = histoInit(mmc)
+            cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
+            cv2.namedWindow('Video')
+            self.mmc.snapImage()
+            g = self.mmc.getImage() #Initialize g
+            self.mmc.startContinuousSequenceAcquisition(1)
+            while True:
+                    if self.mmc.getRemainingImageCount() > 0:
+                        g = self.mmc.getLastImage()
+                        rgb2 = cv2.cvtColor(g.astype("uint16"),cv2.COLOR_GRAY2RGB)
+                        rgb2[g>(pixMaxVal-2)]=mask[g>(pixMaxVal-2)]*256 #It cannot be compared to pixMaxVal because it will never reach this value
+                        cv2.imshow('Video', rgb2)
+                            
+                    else:
+                        print('No frame')
                         
-                else:
-                    print('No frame')
+                    h = histoCalc(nbins, pixMaxVal, bin_width, h_h, h_w, g)
+                    cv2.imshow('Histogram',h)
                     
-                h = histoCalc(nbins, pixMaxVal, bin_width, h_h, h_w, g)
-                cv2.imshow('Histogram',h)
+                    if cv2.waitKey(33) == 27:
+                        break
+                    if cv2.getWindowProperty('Video', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                        break
+                    elif cv2.getWindowProperty('Histogram', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                        break
+    
+            cv2.destroyAllWindows()
+            self.mmc.stopSequenceAcquisition()
                 
-                if cv2.waitKey(33) == 27:
-                    break
-                if cv2.getWindowProperty('Video', 1) == -1: #Condition verified when 'X' (close) button is pressed
-                    break
-                elif cv2.getWindowProperty('Histogram', 1) == -1: #Condition verified when 'X' (close) button is pressed
-                    break
-
-        cv2.destroyAllWindows()
-        self.mmc.stopSequenceAcquisition()
-            
     ### Methods in charge of communication with LiveHisto class instance
     def askHistoMode(self):
         print 'popup window to ask mode'
