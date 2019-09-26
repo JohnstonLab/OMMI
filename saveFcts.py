@@ -108,6 +108,18 @@ def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode, ledSw
 #    textFileCfg = open(savePath+"/"+name+"CFG.txt", 'w')
 #    textFileCfg.write(str(datetime.now()))
 #    textFileCfg.close()
+    
+def cfgFileLoading(settingsFilePath):
+    """
+    Open a json file and creat a python dictionnary.
+    """
+    settingsDict = None
+    try:
+            with open(settingsFilePath) as json_file:
+                settingsDict = json.load(json_file)
+    except:
+            print 'error in loading the file'
+    return settingsDict
 
 def filesInit(savePath, name, nbFrames, maxFrames):
     """

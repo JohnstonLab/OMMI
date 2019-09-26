@@ -21,15 +21,16 @@ from time import time
 #Class import
 from SequenceAcquisition import SequenceAcquisition
 from LiveHistogram import LiveHistogram
+from BrowseWindow import BrowseWindow
 
 #Function import
 from histogram import histoInit, histoCalc
 from crop import crop_w_mouse
-from continousAcq import grayLive, sequenceAcqSoftTrig, sequenceAcqCamTrig, sequenceInit , sequenceAcqLabjackTrig, sequenceAcqLabjackTrig2, guiUpdating
+from continousAcq import grayLive
 from camInit import camInit
-from saveFcts import filesInit, fileSizeCalculation, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata
-from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, blueOn, blueOff, risingEdge, waitForSignal, trigImage
-from ArduinoComm import connect, sendExposure, sendLedList, close
+from saveFcts import fileSizeCalculation, cfgFileLoading
+from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, trigImage
+#from ArduinoComm import connect, sendExposure, sendLedList, close
 
 ########## GLOBAL VAR - needed for displays information ######
 
@@ -68,7 +69,7 @@ class isoiWindow(QtWidgets.QMainWindow):
     ratioStep = 0.05
     
     #PyQt Signals definition, allows communication between different devices
-    updateFramesPerFile = pyqtSignal()
+    updateFramesPerFile = pyqtSignal() ##Better to use pyqtSlot ?
     
     #Bit depth (cam properties)
     bit= ['12-bit (high well capacity)','12-bit (low noise)',"16-bit (low noise & high well capacity)"]
@@ -98,6 +99,9 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.unloadBtn.clicked.connect(self.unloadDevices)
         self.approxFramerateBtn.clicked.connect(self.approxFramerate)
         self.testFramerateBtn.clicked.connect(self.testFramerate)
+        self.selectSettingsFileBtn.clicked.connect(self.browseSettingsFile)
+        self.loadSettingsBtn.clicked.connect(self.loadSettings)
+        #self.savingPathBtn.clicked.connect()
         
         #Connect Signals
         self.updateFramesPerFile.connect(self.fileSizeSetting)
@@ -190,7 +194,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         #####
         
         #Name text area
-        self.name.insert("DefaultName")
+        self.experimentName.insert("DefaultName")
         
         #Initialize frames per files text label
         self.framesPerFileLabel.setText('1146') #nb frames per file (1GB) for uncropped frame with 16 bits per pixels
@@ -284,7 +288,54 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.testFramerateLabel.setText(str(round(1/self.cycleTime,2)))
         return self.cycleTime
         
+    def browseSettingsFile(self):
+        """
+        Create and display a browse window to select a file to load.
+        """
+        try:
+            self.browseWindow = BrowseWindow()
+            self.browseWindow.resize(666, 333)
+            self.browseWindow.filePathSig.connect(self.updateSettingsPath)
+            self.browseWindow.fileNameSig.connect(self.updateSettingsName)
+            self.browseWindow.show()
+        except:
+            print 'No way to display this shit'
+            
+    def updateSettingsName(self, settingsFileName):
+        """
+        Update the GUI field with the CFG file name.
+        """
+        self.settingsFileName.text() #Clear the QlineEdit widget
+        self.settingsFileName.insert(settingsFileName)
+    
+    def updateSettingsPath(self, settingsPath):
+        """
+        Update the instance attribute settingsFilePath used to load a CFG file.
+        """
+        self.settingsFilePath = settingsPath
+    
+    def loadSettings(self):
+        """
+        Load the CFG file, update all the experiment 'settings with infos from the file.
+        """
+        print 'Loading : ',self.settingsFilePath
+        cfgDict = cfgFileLoading(self.settingsFilePath)
         
+        ### Load camera settings ###
+        print cfgDict['Experiment date and time']
+        self.mmc.setROI(cfgDict["ROI"][0],cfgDict["ROI"][1],cfgDict["ROI"][2],cfgDict["ROI"][3])
+        self.mmc.setExposure(DEVICE[0], cfgDict["Exposure"])
+        self.mmc.setProperty(self.DEVICE[0],"Binning",cfgDict["Binning"] )
+        self.mmc.setProperty(self.DEVICE[0],"Bit depth",cfgDict["Bit depth"] )
+        self.mmc.setProperty(self.DEVICE[0],"Shutter mode",cfgDict["Shutter mode"] )
+        self.mmc.setProperty(self.DEVICE[0],"Trigger mode",cfgDict["Trigger mode"] )
+        self.mmc.setProperty(self.DEVICE[0],"Overlap mode",cfgDict["Overlap mode"] )
+        
+        ### Load acquisiiton settings
+        
+        ###Update GUI
+        
+    
     def crop(self):
         triggerMode = 'Internal (Recommended for fast acquisitions)'
         if self.triggerModeCheck(triggerMode):
@@ -466,7 +517,7 @@ class isoiWindow(QtWidgets.QMainWindow):
             
     def saveImageSeq(self):
         #Get experiment/acquisition settings from the GUI
-        name = self.name.text() #str
+        name = self.experimentName.text() #str
         duration = self.dur.value()*1000 # int (+conversion in ms)
         cycleTime = (self.testFramerate())*1000 #conversion in ms
         rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
