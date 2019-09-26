@@ -14,6 +14,7 @@ import sys
 import MMCorePy
 import cv2
 from PyQt5 import QtWidgets, uic
+from PyQt5.QtCore import pyqtSignal
 from time import time
 
 #Class import
@@ -65,6 +66,9 @@ class isoiWindow(QtWidgets.QMainWindow):
     ratioDefault = 1.1
     ratioStep = 0.05
     
+    #PyQt Signals definition, allows communication between different devices
+    updateFramesPerFile = pyqtSignal()
+    
     #Bit depth (cam properties)
     bit= ['12-bit (high well capacity)','12-bit (low noise)',"16-bit (low noise & high well capacity)"]
     
@@ -94,6 +98,9 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.approxFramerateBtn.clicked.connect(self.approxFramerate)
         self.testFramerateBtn.clicked.connect(self.testFramerate)
         
+        #Connect Signals
+        self.updateFramesPerFile.connect(self.fileSizeSetting)
+        
         ###### ComboBoxes ######
         
         #Binning selection
@@ -119,15 +126,15 @@ class isoiWindow(QtWidgets.QMainWindow):
         
         #Trigger mode selection
         self.triggerBox.addItem('Internal (Recommended for fast acquisitions)')
-        self.triggerBox.addItem('Software (Recommended for Live Mode)')
-        self.triggerBox.addItem('External Start')
-        self.triggerBox.addItem('External Exposure')
+        #self.triggerBox.addItem('Software (Recommended for Live Mode)')
+        #self.triggerBox.addItem('External Start')
+        #self.triggerBox.addItem('External Exposure')
         self.triggerBox.addItem('External')
         self.triggerBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'TriggerMode'))
         self.triggerBox.currentIndexChanged.connect(self.triggerChange)
         
         #LEDs trigger mode selection
-        self.ledTrigBox.addItem('Cyclops')
+        #self.ledTrigBox.addItem('Cyclops')
         self.ledTrigBox.addItem('Labjack')
         self.ledTrigBox.setCurrentText('Labjack')
         self.ledTrigBox.currentIndexChanged.connect(self.ledTrigChange)
@@ -171,7 +178,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.fileSize.setSingleStep(isoiWindow.fileSizeStep)
         self.fileSize.setMaximum(isoiWindow.fileSizeMax)
         self.fileSize.setMinimum(isoiWindow.fileSizeMin)
-        self.fileSize.valueChanged.connect(self.fileSizeSetting)
+        self.fileSize.valueChanged.connect(self.updateFramesPerFile.emit)
       
         #Interval Ms
         self.expRatio.setValue(isoiWindow.ratioDefault)
@@ -287,6 +294,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         print "image width: "+str(self.mmc.getImageWidth())
         print "image height: "+str(self.mmc.getImageHeight())
         cv2.destroyAllWindows()
+        self.updateFramesPerFile.emit()
     
     def expFunc(self, expVal):
         #exp=expVal/float(div)
@@ -407,7 +415,7 @@ class isoiWindow(QtWidgets.QMainWindow):
                 run = False
                 
         #Arduino synchronization check        
-        if (self.ledTrigBox.currentText() == 'Camera' and run):
+        if (self.ledTrigBox.currentText() == 'Cyclops' and run):
             choice = QtWidgets.QMessageBox.question(self, 'Cyclops driver initialisation',
                                                 "Are the cyclops Arduino synchronized ?",
                                                 QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
