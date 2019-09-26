@@ -385,13 +385,22 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.framesPerFileLabel.setText(str(framesMax))
     
     def unloadDevices(self):
-        self.mmc.unloadAllDevices()
-        print 'all devices UNLOADED'
-        return True
+        try:
+            self.mmc.unloadAllDevices()
+            print 'all devices UNLOADED'
+        except:
+            print 'CMM error : fail to unload all devices'
+        
     
     def closeEvent(self, event):
         # Close all before closing the main window
-        if self.unloadDevices(): # UNLOAD DEVICES befor closing the program
+        closingChoice = QMessageBox.question(self, 
+                                             'Close Confirmation',
+                                             "Exit ?",
+                                             QMessageBox.Yes | QMessageBox.No)
+        
+        if closingChoice == QMessageBox.Yes: # UNLOAD DEVICES before closing the program
+            self.unloadDevices()
             event.accept() # let the window close
         else:
             event.ignore()
