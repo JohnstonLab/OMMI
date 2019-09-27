@@ -64,13 +64,13 @@ def saveMetadata(textFile, time, led, imageCount, odourValveSig, respirationSig,
     textFile.write(time+'\t'+led+'\t'+imageCount+'\t'+odourValveSig+'\t'+respirationSig+'\t'+ledOnDuration+'\n')
 
 
-def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode, ledSwitchingMode, rgbLedRatio, rbGreenRatio, framerate, mmc, deviceLabel):
+def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode, ledSwitchingMode, rgbLedRatio, rbGreenRatio, framerate, folderPath, mmc, deviceLabel):
     """
     Save the experiment configuration parameters in a JSON file.
     """
     print 'initializing folder'
     today = str(date.today())
-    savePath="C:/data_OIIS/"+today[2:4]+today[5:7]+today[8:10]+"/"+name
+    savePath=folderPath+'/'+today[2:4]+today[5:7]+today[8:10]+"/"+name
     
     #Checking if a folder already exist for the experiments of the day
     if not os.path.exists(savePath):

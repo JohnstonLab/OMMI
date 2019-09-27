@@ -28,7 +28,7 @@ class SequenceAcquisition(QThread):
     
 
     
-    def __init__(self, experimentName, duration, cycleTime, rgbLedRatio, rbGreenRatio, maxFrames, expRatio, mmc, labjack, parent=None):
+    def __init__(self, experimentName, duration, cycleTime, rgbLedRatio, rbGreenRatio, maxFrames, expRatio, folderPath, mmc, labjack, parent=None):
         QThread.__init__(self,parent)
         
         #Set instance attributes
@@ -46,7 +46,8 @@ class SequenceAcquisition(QThread):
         self.ledList = None     #Initialized in _sequenceInit method
         self.tiffWriterList = None  #Initialized in filesInit method from SaveFcts.py
         self.textFile = None        #Initialized in filesInit method from SaveFcts.py
-        self.savePath = None        #Initialized in filesInit method from SaveFcts.py
+        self.savePath = None
+        self.folderPath = folderPath
         self.acquMode = None
         self.seqMode = None
         
@@ -272,6 +273,7 @@ class SequenceAcquisition(QThread):
                                       self.rgbLedRatio,
                                       self.rbGreenRatio,
                                       round(1/self.cycleTime,2), #framerate
+                                      self.folderPath,
                                       self.mmc, 
                                       'Zyla') #WARNING > modulabilty
         

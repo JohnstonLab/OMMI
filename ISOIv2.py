@@ -17,6 +17,7 @@ from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
 from time import time
+from os import path
 
 #Class import
 from SequenceAcquisition import SequenceAcquisition
@@ -101,7 +102,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.testFramerateBtn.clicked.connect(self.testFramerate)
         self.selectSettingsFileBtn.clicked.connect(self.browseSettingsFile)
         self.loadSettingsBtn.clicked.connect(self.loadSettings)
-        #self.savingPathBtn.clicked.connect()
+        self.savingPathBtn.clicked.connect(self.browseSavingFolder)
         
         #Connect Signals
         self.updateFramesPerFile.connect(self.fileSizeSetting)
@@ -168,7 +169,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         
         #Experiment duration
         self.experimentDuration.setSingleStep(float(isoiWindow.step))
-        self.dur.setMaximum(1000)
+        self.experimentDuration.setMaximum(1000)
         
         #LEDs ratios
         self.gRatio.setMinimum(isoiWindow.ledFrameNbMin)
@@ -287,19 +288,20 @@ class isoiWindow(QtWidgets.QMainWindow):
             print(self.cycleTime)
             self.testFramerateLabel.setText(str(round(1/self.cycleTime,2)))
         return self.cycleTime
-        
+    
+
+    ### LOADING EXPERIMENT ###    
     def browseSettingsFile(self):
         """
         Create and display a browse window to select a file to load.
         """
-        try:
-            self.browseWindow = BrowseWindow()
-            self.browseWindow.resize(666, 333)
-            self.browseWindow.filePathSig.connect(self.updateSettingsPath)
-            self.browseWindow.fileNameSig.connect(self.updateSettingsName)
-            self.browseWindow.show()
-        except:
-            print 'No way to display this shit'
+        self.browseWindow = BrowseWindow()
+        self.browseWindow.resize(666, 333)
+        #self.browseWindow.filePathSig.connect(self.updateSettingsPath)
+        self.reconnect(self.browseWindow.filePathSig, self.updateSettingsPath)
+        #self.browseWindow.fileNameSig.connect(self.updateSettingsName)
+        self.reconnect(self.browseWindow.fileNameSig, self.updateSettingsName)
+        self.browseWindow.show()
             
     def updateSettingsName(self, settingsFileName):
         """
@@ -353,11 +355,38 @@ class isoiWindow(QtWidgets.QMainWindow):
                 self.rbMode.setChecked(True)
                 self.gNbFrames.setValue(acqSettings["(RB) Green frames and interval"][0])
                 self.gInterval.setValue(acqSettings["(RB) Green frames and interval"][1])
-            self.experimentDuration.setValue(cfgDict['Camera settings']['Duration'])
+            self.experimentDuration.setValue(cfgDict['Global informations']['Duration'])
         except:
             print 'Acquisition settings dictionary is not accessible'
+            
+    ### SAVING FOLDER CHOICE ###
+    def browseSavingFolder(self):
+        """
+        Create and display a browse window to select a folder where 
+        the experiment data will be save.
+        """
+        self.browseWindow = BrowseWindow()
+        self.reconnect(self.browseWindow.filePathSig, self.updateSavingPath)
+        #self.browseFolderWindow.fileNameSig.connect()
+        self.browseWindow.show()
+     
         
-    
+    def updateSavingPath(self, savingPath):
+        """
+        Update the GUI field with the saving folder path name.
+        """
+        if path.isdir(savingPath):
+            self.savingPath.clear() #Clear the QlineEdit widget
+            self.savingPath.insert(savingPath)
+        else:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText(savingPath+" is not a folder")
+            msg.setWindowTitle("Saving folder selection")
+            msg.exec_()
+        
+        
+    ### CROP CAMERA IMAGE ###
     def crop(self):
         triggerMode = 'Internal (Recommended for fast acquisitions)'
         if self.triggerModeCheck(triggerMode):
@@ -578,7 +607,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         maxFrames =  int(self.framesPerFileLabel.text()) #int
         expRatio = self.expRatio.value() #int
         rbGreenRatio = [self.gNbFrames.value(), self.gInterval.value()] #list of int
-        
+        savingPath = self.savingPath.text() #str
         
          
         #Creation of a SequenceAcquisition class instance
@@ -589,6 +618,7 @@ class isoiWindow(QtWidgets.QMainWindow):
                                          rbGreenRatio,
                                          maxFrames,
                                          expRatio,
+                                         savingPath,
                                          self.mmc,
                                          self.labjack)
         print 'object initialized'
