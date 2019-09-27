@@ -28,7 +28,7 @@ class SequenceAcquisition(QThread):
     
 
     
-    def __init__(self, experimentName, duration, cycleTime, rgbLedRatio, rbGreenRatio, maxFrames, expRatio, folderPath, mmc, labjack, parent=None):
+    def __init__(self, experimentName, duration, cycleTime, rgbLedRatio, greenFrameInterval, maxFrames, expRatio, folderPath, mmc, labjack, parent=None):
         QThread.__init__(self,parent)
         
         #Set instance attributes
@@ -36,7 +36,7 @@ class SequenceAcquisition(QThread):
         self.duration = duration
         self.cycleTime = cycleTime
         self.rgbLedRatio = rgbLedRatio
-        self.rbGreenRatio = rbGreenRatio
+        self.greenFrameInterval = greenFrameInterval
         self.maxFrames = maxFrames
         self.expRatio = expRatio
         self.mmc = mmc
@@ -81,8 +81,7 @@ class SequenceAcquisition(QThread):
         ## send all of this to sequence acq
         self.nbFrames = int(self.duration/self.cycleTime)+1 ## Determine number of frames. (+1) because int round at the lower int
         #nbGreenFrames = self.rbGreenRatio[0] #nb of green frames in each green sequence #NOT YET USED
-        greenFrameInterval = self.rbGreenRatio[1] #Interval between each green sequence (nb of frames)
-        nbGreenSequence = float(self.nbFrames)/greenFrameInterval #Dividing nbFrames by the green frame interval with a float to have float division
+        nbGreenSequence = float(self.nbFrames)/self.greenFrameInterval #Dividing nbFrames by the green frame interval with a float to have float division
         print 'Nb of green frames : ', nbGreenSequence
         nbGreenSequence = int(round(nbGreenSequence))
         print 'Nb of green frames : ', nbGreenSequence
@@ -91,7 +90,7 @@ class SequenceAcquisition(QThread):
         greenSeqIdx = 0
         while greenSeqIdx <= self.nbFrames :
             self.ledList.insert(greenSeqIdx,1)
-            greenSeqIdx+= greenFrameInterval
+            greenSeqIdx+= self.greenFrameInterval
         #NB : no return needed because each ledList and nbFrames are instance attribute
 
 
@@ -271,7 +270,7 @@ class SequenceAcquisition(QThread):
                                       self.acquMode,
                                       self.seqMode,
                                       self.rgbLedRatio,
-                                      self.rbGreenRatio,
+                                      self.greenFrameInterval,
                                       round(1/self.cycleTime,2), #framerate
                                       self.folderPath,
                                       self.mmc, 

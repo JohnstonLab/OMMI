@@ -100,8 +100,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.unloadBtn.clicked.connect(self.unloadDevices)
         self.approxFramerateBtn.clicked.connect(self.approxFramerate)
         self.testFramerateBtn.clicked.connect(self.testFramerate)
-        self.selectSettingsFileBtn.clicked.connect(self.browseSettingsFile)
-        self.loadSettingsBtn.clicked.connect(self.loadSettings)
+        self.loadSettingsFileBtn.clicked.connect(self.browseSettingsFile)
+        #self.defaultSettingsBtn.clicked.connect()
         self.savingPathBtn.clicked.connect(self.browseSavingFolder)
         
         #Connect Signals
@@ -300,29 +300,36 @@ class isoiWindow(QtWidgets.QMainWindow):
         #self.browseWindow.filePathSig.connect(self.updateSettingsPath)
         self.reconnect(self.browseWindow.filePathSig, self.updateSettingsPath)
         #self.browseWindow.fileNameSig.connect(self.updateSettingsName)
-        self.reconnect(self.browseWindow.fileNameSig, self.updateSettingsName)
+        #self.reconnect(self.browseWindow.fileNameSig, self.updateSettingsName)
         self.browseWindow.show()
             
-    def updateSettingsName(self, settingsFileName):
-        """
-        Update the GUI field with the CFG file name.
-        """
-        self.settingsFileName.clear() #Clear the QlineEdit widget
-        self.settingsFileName.insert(settingsFileName)
+#    def updateSettingsName(self, settingsFileName):
+#        """
+#        Update the GUI field with the CFG file name.
+#        """
+#        self.settingsFileName.clear() #Clear the QlineEdit widget
+#        self.settingsFileName.insert(settingsFileName)
     
-    def updateSettingsPath(self, settingsPath):
+    def checkSettingsPath(self, settingsPath):
         """
         Update the instance attribute settingsFilePath used to load a CFG file.
         """
-        self.settingsFilePath = settingsPath
+        if path.isfile(settingsPath) and settingsPath[-5:]=='.json':
+            self.loadSettings(settingsPath)
+        else:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText(settingsPath+" is not a .json file")
+            msg.setWindowTitle("Settings file selection")
+            msg.exec_()
     
-    def loadSettings(self):
+    def loadSettings(self, settingsPath):
         """
         Load the CFG file, update all the experiment 'settings with infos from the file.
         """
-        print 'Loading : ',self.settingsFilePath
+        print 'Loading : ',settingsPath
         #POP UP window to avoid none path calling
-        cfgDict = cfgFileLoading(self.settingsFilePath)
+        cfgDict = cfgFileLoading(settingsPath)
         
         ### Load camera settings ###
         try:
@@ -353,8 +360,7 @@ class isoiWindow(QtWidgets.QMainWindow):
             elif ledSequenceMode == "rbMode":
                 self.rgbMode.setChecked(False)
                 self.rbMode.setChecked(True)
-                self.gNbFrames.setValue(acqSettings["(RB) Green frames and interval"][0])
-                self.gInterval.setValue(acqSettings["(RB) Green frames and interval"][1])
+                self.gInterval.setValue(acqSettings["(RB) Green frames and interval"])
             self.experimentDuration.setValue(cfgDict['Global informations']['Duration'])
         except:
             print 'Acquisition settings dictionary is not accessible'
@@ -606,7 +612,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
         maxFrames =  int(self.framesPerFileLabel.text()) #int
         expRatio = self.expRatio.value() #int
-        rbGreenRatio = [self.gNbFrames.value(), self.gInterval.value()] #list of int
+        rbGreenRatio = self.gInterval.value() #int
         savingPath = self.savingPath.text() #str
         
          

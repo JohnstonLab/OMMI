@@ -64,7 +64,7 @@ def saveMetadata(textFile, time, led, imageCount, odourValveSig, respirationSig,
     textFile.write(time+'\t'+led+'\t'+imageCount+'\t'+odourValveSig+'\t'+respirationSig+'\t'+ledOnDuration+'\n')
 
 
-def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode, ledSwitchingMode, rgbLedRatio, rbGreenRatio, framerate, folderPath, mmc, deviceLabel):
+def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode, ledSwitchingMode, rgbLedRatio, greenFrameInterval, framerate, folderPath, mmc, deviceLabel):
     """
     Save the experiment configuration parameters in a JSON file.
     """
@@ -92,7 +92,7 @@ def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode, ledSw
                     "LED trigger mode":ledTriggerMode,                      #str
                     "LED switching mode":ledSwitchingMode,                  #str
                     "(RGB) LED ratio":rgbLedRatio,                          #list of int
-                    "(RB) Green frames and interval":rbGreenRatio,          #list of int
+                    "(RB) Green frames interval":greenFrameInterval,          # int
                     "Tested framerate": framerate                           #float
             },
             
