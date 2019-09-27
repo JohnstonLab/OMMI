@@ -77,26 +77,36 @@ def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode, ledSw
         os.makedirs(savePath)
     print 'Saving configuration file'
     #Create a Python dictionary with all the informations
+    
+    
     experimentConfiguration = {
-            "Experiment date and time":str(datetime.now()),         #str
-            "Experiment name":name,                                 #str
-            "Number of frames":nbFrames,                            #int
-            "Duration":duration,                                    #float
-            "LED illunation time (% of exposure)":ledIllumRatio,    #float
-            "LED trigger mode":ledTriggerMode,                      #str
-            "LED switching mode":ledSwitchingMode,                  #str
-            "(RGB) LED ratio":rgbLedRatio,                          #list of int
-            "(RB) Green frames and interval":rbGreenRatio,          #list of int
-            "Tested framerate": framerate,                          #float
+            "Global informations":{
+                    "Experiment date and time":str(datetime.now()),         #str
+                    "Experiment name":name,                                 #str
+                    "Number of frames":nbFrames,                            #int
+                    "Duration":duration                                    #float
+            },
+            ### Acquisition settings ###
+            "Acquisition settings":{
+                    "LED illumination time (% of exposure)":ledIllumRatio,    #float
+                    "LED trigger mode":ledTriggerMode,                      #str
+                    "LED switching mode":ledSwitchingMode,                  #str
+                    "(RGB) LED ratio":rgbLedRatio,                          #list of int
+                    "(RB) Green frames and interval":rbGreenRatio,          #list of int
+                    "Tested framerate": framerate                           #float
+            },
+            
             ### Camera settings ###
-            "Exposure":mmc.getExposure(),                                           #double
-            "Bit depth":mmc.getProperty(deviceLabel,'Sensitivity/DynamicRange'),    #str
-            "Binning":mmc.getProperty(deviceLabel,'Binning'),                       #str   
-            "Shutter mode":mmc.getProperty(deviceLabel, 'ElectronicShutteringMode'),#str
-            "Trigger mode":mmc.getProperty(deviceLabel, 'TriggerMode'),             #str
-            "Overlap mode":mmc.getProperty(deviceLabel, 'Overlap'),                 #str
-            "ROI": mmc.getROI(),                                                    #list of int
-            "Pixel readout rate":mmc.getProperty(deviceLabel,'PixelReadoutRate')    #str
+            "Camera settings" :{
+                    "Exposure":mmc.getExposure(),                                           #double
+                    "Bit depth":mmc.getProperty(deviceLabel,'Sensitivity/DynamicRange'),    #str
+                    "Binning":mmc.getProperty(deviceLabel,'Binning'),                       #str   
+                    "Shutter mode":mmc.getProperty(deviceLabel, 'ElectronicShutteringMode'),#str
+                    "Trigger mode":mmc.getProperty(deviceLabel, 'TriggerMode'),             #str
+                    "Overlap mode":mmc.getProperty(deviceLabel, 'Overlap'),                 #str
+                    "ROI": mmc.getROI(),                                                    #list of int
+                    "Pixel readout rate":mmc.getProperty(deviceLabel,'PixelReadoutRate')    #str
+            }
     }
     print 'Saving in JSON format'
     with open(savePath+"/"+name+"CFG.json", 'w') as outfile:
@@ -104,10 +114,6 @@ def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode, ledSw
         outfile.close()
     print 'saving succeed'
     return savePath
-    #Inititate a .txt file where the configuration of the camera is saved
-#    textFileCfg = open(savePath+"/"+name+"CFG.txt", 'w')
-#    textFileCfg.write(str(datetime.now()))
-#    textFileCfg.close()
     
 def cfgFileLoading(settingsFilePath):
     """

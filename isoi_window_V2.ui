@@ -143,7 +143,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="overLapBox"/>
+        <widget class="QComboBox" name="overlapBox"/>
        </item>
       </layout>
      </widget>
@@ -470,7 +470,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>340</x>
@@ -510,13 +510,13 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>542</x>
         <y>50</y>
         <width>261</width>
-        <height>51</height>
+        <height>54</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
@@ -551,7 +551,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>30</x>
@@ -585,7 +585,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>30</x>
@@ -612,7 +612,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>30</x>

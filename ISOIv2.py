@@ -113,21 +113,21 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.binBox.addItem(isoiWindow.binn[1])
         self.binBox.addItem(isoiWindow.binn[2])
         self.binBox.addItem(isoiWindow.binn[3])
-        self.binBox.currentIndexChanged.connect(self.binChange)
+        self.binBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'Binning'))
+        self.binBox.currentTextChanged.connect(self.binChange)
         
         #Bit depth selection
         self.bitBox.addItem(isoiWindow.bit[0])
         self.bitBox.addItem(isoiWindow.bit[1])
         self.bitBox.addItem(isoiWindow.bit[2])
-        self.binBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'Binning'))
         self.bitBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'Sensitivity/DynamicRange'))
-        self.bitBox.currentIndexChanged.connect(self.bitChange)
+        self.bitBox.currentTextChanged.connect(self.bitChange)
         
         #Shutter mode selection
         self.shutBox.addItem("Rolling")
         self.shutBox.addItem("Global")
         self.shutBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'ElectronicShutteringMode'))
-        self.shutBox.currentIndexChanged.connect(self.shutChange)
+        self.shutBox.currentTextChanged.connect(self.shutChange)
         
         #Trigger mode selection
         self.triggerBox.addItem('Internal (Recommended for fast acquisitions)')
@@ -136,25 +136,25 @@ class isoiWindow(QtWidgets.QMainWindow):
         #self.triggerBox.addItem('External Exposure')
         self.triggerBox.addItem('External')
         self.triggerBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'TriggerMode'))
-        self.triggerBox.currentIndexChanged.connect(self.triggerChange)
+        self.triggerBox.currentTextChanged.connect(self.triggerChange)
         
         #LEDs trigger mode selection
         #self.ledTrigBox.addItem('Cyclops')
         self.ledTrigBox.addItem('Labjack')
         self.ledTrigBox.setCurrentText('Labjack')
-        self.ledTrigBox.currentIndexChanged.connect(self.ledTrigChange)
+        self.ledTrigBox.currentTextChanged.connect(self.ledTrigChange)
         
         #Overlap Mode
-        self.overLapBox.addItem('On')
-        self.overLapBox.addItem('Off')
-        self.overLapBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'Overlap'))
-        self.overLapBox.currentIndexChanged.connect(self.overlapChange)
+        self.overlapBox.addItem('On')
+        self.overlapBox.addItem('Off')
+        self.overlapBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'Overlap'))
+        self.overlapBox.currentTextChanged.connect(self.overlapChange)
         
         ####### Slider #####
         self.expSlider.setMinimum(isoiWindow.expMin)
         self.expSlider.setMaximum(isoiWindow.expMax)
         self.expSlider.setValue(self.mmc.getExposure())  
-        self.expSlider.valueChanged.connect(self.expFunc)
+        self.expSlider.valueChanged.connect(self.exposureChange)
         self.expSlider.setSingleStep(isoiWindow.step)
         
         #### Spinboxes ###
@@ -163,11 +163,11 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.C_expSb.setMaximum(isoiWindow.expMax)
         self.C_expSb.setMinimum(isoiWindow.expMin)
         self.C_expSb.setValue(self.mmc.getExposure())
-        self.C_expSb.valueChanged.connect(self.expFunc)
+        self.C_expSb.valueChanged.connect(self.exposureChange)
         self.C_expSb.setSingleStep(isoiWindow.step)
         
         #Experiment duration
-        self.dur.setSingleStep(float(isoiWindow.step))
+        self.experimentDuration.setSingleStep(float(isoiWindow.step))
         self.dur.setMaximum(1000)
         
         #LEDs ratios
@@ -305,7 +305,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         """
         Update the GUI field with the CFG file name.
         """
-        self.settingsFileName.text() #Clear the QlineEdit widget
+        self.settingsFileName.clear() #Clear the QlineEdit widget
         self.settingsFileName.insert(settingsFileName)
     
     def updateSettingsPath(self, settingsPath):
@@ -319,21 +319,43 @@ class isoiWindow(QtWidgets.QMainWindow):
         Load the CFG file, update all the experiment 'settings with infos from the file.
         """
         print 'Loading : ',self.settingsFilePath
+        #POP UP window to avoid none path calling
         cfgDict = cfgFileLoading(self.settingsFilePath)
         
         ### Load camera settings ###
-        print cfgDict['Experiment date and time']
-        self.mmc.setROI(cfgDict["ROI"][0],cfgDict["ROI"][1],cfgDict["ROI"][2],cfgDict["ROI"][3])
-        self.mmc.setExposure(DEVICE[0], cfgDict["Exposure"])
-        self.mmc.setProperty(self.DEVICE[0],"Binning",cfgDict["Binning"] )
-        self.mmc.setProperty(self.DEVICE[0],"Bit depth",cfgDict["Bit depth"] )
-        self.mmc.setProperty(self.DEVICE[0],"Shutter mode",cfgDict["Shutter mode"] )
-        self.mmc.setProperty(self.DEVICE[0],"Trigger mode",cfgDict["Trigger mode"] )
-        self.mmc.setProperty(self.DEVICE[0],"Overlap mode",cfgDict["Overlap mode"] )
-        
+        try:
+            camSettingsDict = cfgDict['Camera settings']
+            ROI = camSettingsDict["ROI"]
+            self.mmc.setROI(ROI[0],ROI[1],ROI[2],ROI[3])
+            self.exposureChange(camSettingsDict["Exposure"])
+            self.binChange(camSettingsDict["Binning"])
+            self.bitChange(camSettingsDict["Bit depth"])
+            self.shutChange(camSettingsDict["Shutter mode"])
+            self.triggerChange(camSettingsDict["Trigger mode"])
+            self.overlapChange(camSettingsDict["Overlap mode"])
+        except:
+            print 'Camera settings dictionary is not accessible'
+            
         ### Load acquisiiton settings
-        
-        ###Update GUI
+        try:
+            acqSettings = cfgDict["Acquisition settings"]
+            self.expRatio.setValue(acqSettings['LED illumination time (% of exposure)'])
+            self.ledTrigBox.setCurrentText(acqSettings['LED trigger mode'])
+            ledSequenceMode = acqSettings['LED switching mode']
+            if ledSequenceMode == "rgbMode":
+                self.rgbMode.setChecked(True)
+                self.rbMode.setChecked(False)
+                self.rRatio.setValue(acqSettings["(RGB) LED ratio"][0])
+                self.gRatio.setValue(acqSettings["(RGB) LED ratio"][1])
+                self.bRatio.setValue(acqSettings["(RGB) LED ratio"][2])
+            elif ledSequenceMode == "rbMode":
+                self.rgbMode.setChecked(False)
+                self.rbMode.setChecked(True)
+                self.gNbFrames.setValue(acqSettings["(RB) Green frames and interval"][0])
+                self.gInterval.setValue(acqSettings["(RB) Green frames and interval"][1])
+            self.experimentDuration.setValue(cfgDict['Camera settings']['Duration'])
+        except:
+            print 'Acquisition settings dictionary is not accessible'
         
     
     def crop(self):
@@ -349,7 +371,11 @@ class isoiWindow(QtWidgets.QMainWindow):
             cv2.destroyAllWindows()
             self.updateFramesPerFile.emit()
     
-    def expFunc(self, expVal):
+    def exposureChange(self, expVal):
+        """
+        Change the exposure in the camera settings and update the GUI 
+        with the real exposure.
+        """
         #exp=expVal/float(div)
         self.C_expSb.setValue(expVal) #update spinbox value
         self.expSlider.setValue(expVal) #update slider value
@@ -360,31 +386,59 @@ class isoiWindow(QtWidgets.QMainWindow):
         except:
             print "CMM err, no possibility to set exposure"
             
-    def binChange(self):
-        binn = self.binBox.currentText()
-        self.mmc.setProperty(self.DEVICE[0], 'Binning', str(binn))
-        print "Binning set at", self.mmc.getProperty(self.DEVICE[0],'Binning') 
+    def binChange(self, binn):
+        """
+        Change the Binning in the camera settings and update the GUI.
+        """
+        try:
+            self.mmc.setProperty(self.DEVICE[0], 'Binning', str(binn))
+            realBinning = self.mmc.getProperty(self.DEVICE[0],'Binning')
+            self.binBox.setCurrentText(realBinning) #Ensure that the change are effective
+                                                    #and update the GUI
+        except:
+            print 'CMM err, no possibility to set Binning'
 
-    def bitChange(self):
-        bit = self.bitBox.currentText()
-        self.mmc.setProperty(self.DEVICE[0], 'Sensitivity/DynamicRange', str(bit))
-        print "Bit depth set at", self.mmc.getProperty(self.DEVICE[0],'Sensitivity/DynamicRange')
+    def bitChange(self, bit):
+        """
+        Change the Sensitivity/DynamicRange in the camera settings and update the GUI.
+        """
+        try:
+            self.mmc.setProperty(self.DEVICE[0], 'Sensitivity/DynamicRange', str(bit))
+            actualBitDepth = self.mmc.getProperty(self.DEVICE[0],'Sensitivity/DynamicRange')
+            self.bitBox.setCurrentText(actualBitDepth)
+        except:
+            print 'CMM err, no possibility to set Sensitivity/DynamicRange'
+            
+    def shutChange(self,shutterMode):
+        """
+        Change the ElectronicShutteringMode in the camera settings and update the GUI.
+        """
+        try:
+            self.mmc.setProperty(self.DEVICE[0],'ElectronicShutteringMode',str(shutterMode))
+            actualShutterMode = self.mmc.getProperty(self.DEVICE[0], 'ElectronicShutteringMode')
+            self.shutBox.setCurrentText(actualShutterMode)
+        except:
+            print 'CMM err, no possibility to set ElectronicShutteringMode'
         
-    def shutChange(self):
-        shut = self.shutBox.currentText()
-        self.mmc.setProperty(self.DEVICE[0],'ElectronicShutteringMode',str(shut))
-        print 'Shutter mode set at ', self.mmc.getProperty(self.DEVICE[0], 'ElectronicShutteringMode')
+    def triggerChange(self, triggerMode):
+        """
+        Change the TriggerMode in the camera settings and update the GUI.
+        """
+        try:
+            self.mmc.setProperty(self.DEVICE[0],'TriggerMode',str(triggerMode))
+            actualTriggerMode = self.mmc.getProperty(self.DEVICE[0], 'TriggerMode')
+            self.triggerBox.setCurrentText(actualTriggerMode)
+        except:
+            print 'CMM err, no possibility to set TriggerMode'
 
-    def triggerChange(self):
-        trig = self.triggerBox.currentText()
-        self.mmc.setProperty(self.DEVICE[0],'TriggerMode',str(trig))
-        print 'Trigger mode set at ', self.mmc.getProperty(self.DEVICE[0], 'TriggerMode')
-
-    def overlapChange(self):
-        overlap = self.overLapBox.currentText()
+    def overlapChange(self, overlap):
+        """
+        Change the TriggerMode in the camera settings and update the GUI.
+        """
         try:
             self.mmc.setProperty(self.DEVICE[0],'Overlap', str(overlap))
-            print 'Overlap set at ', self.mmc.getProperty(self.DEVICE[0], 'Overlap')
+            actualOverlap = self.mmc.getProperty(self.DEVICE[0], 'Overlap')
+            self.overlapBox.setCurrentText(actualOverlap)
         except:
             print "CMM err, no possibility to set Overlap mode"
                  
@@ -518,7 +572,7 @@ class isoiWindow(QtWidgets.QMainWindow):
     def saveImageSeq(self):
         #Get experiment/acquisition settings from the GUI
         name = self.experimentName.text() #str
-        duration = self.dur.value()*1000 # int (+conversion in ms)
+        duration = self.experimentDuration.value()*1000 # int (+conversion in ms)
         cycleTime = (self.testFramerate())*1000 #conversion in ms
         rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
         maxFrames =  int(self.framesPerFileLabel.text()) #int
