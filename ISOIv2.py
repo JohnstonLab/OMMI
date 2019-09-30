@@ -571,8 +571,16 @@ class isoiWindow(QtWidgets.QMainWindow):
         else:
             return True
     
+    
+    
+    ######################################
+    #### Sequence acquisition section ####
+    ######################################
+    
     def paramCheck(self):
-        """ Check that the user is well informed about certains acquisition settings before launching the acquisition"""
+        """ 
+        Check that the user is well informed about certains acquisition settings before launching the acquisition
+        """
         run = True
         
         #Shutter mode check
@@ -587,18 +595,6 @@ class isoiWindow(QtWidgets.QMainWindow):
                 print('Change mode in the other panel')
                 run = False
                 
-        #Arduino synchronization check        
-        if (self.ledTrigBox.currentText() == 'Cyclops' and run):
-            choice = QMessageBox.question(self, 'Cyclops driver initialisation',
-                                                "Are the cyclops Arduino synchronized ?",
-                                                QMessageBox.Yes | QMessageBox.No)
-            if choice == QMessageBox.No:
-                print("sending exposur to arduino")
-                #run = self.arduinoSync()
-                run = False
-            else:
-                print('are you sure you have update it ???')
-                run = True
                 
         #Trigger mode check
         if(self.ledTrigBox.currentText() == 'Labjack') and run:
@@ -619,6 +615,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         expRatio = self.expRatio.value() #int
         rbGreenRatio = self.gInterval.value() #int
         savingPath = self.savingPath.text() #str
+        triggerStart = self.startTriggerBox.isChecked()
+        triggerStop = self.stopTriggerBox.isChecked()
         
          
         #Creation of a SequenceAcquisition class instance
@@ -646,11 +644,15 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.sequencAcq.start()
         print 'object started'
         # At this point we want to allow user to stop/terminate the thread
-        # so we enable that button
-        self.abortBtn.setEnabled(True)
-        # And we connect the click of that button to the built in
-        # terminate method that all QThread instances have
-        self.abortBtn.clicked.connect(self.sequencAcq.abort)
+        if not triggerStop :
+            # so we enable that button
+            self.abortBtn.setEnabled(True)
+            # And we connect the click of that button to the built in
+            # terminate method that all QThread instances have
+            self.abortBtn.clicked.connect(self.sequencAcq.abort)
+        #else --> reading an while looping for the image acquisition
+        # input and when the signal goes high
+        
         # We don't want to enable user to start another thread while this one is
         # running so we disable the start button.
         self.runSaveBtn.setEnabled(False)
