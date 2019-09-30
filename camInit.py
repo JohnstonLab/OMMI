@@ -25,24 +25,37 @@ binn=['1x1','2x2','4x4','8x8']
 bit= ['12-bit (high well capacity)','12-bit (low noise)',"16-bit (low noise & high well capacity)"]
 
 #Exposure
-exp=10
+exp=10.01
 
 def camInit(mmc):
+    """
+    Initialize the camera specified in DEVICE list above.
+    """
+    
     mmc.loadDevice(*DEVICE)
     mmc.initializeAllDevices()
     mmc.setCameraDevice(DEVICE[0])
     
     mmc.setProperty(DEVICE[0], 'TriggerMode', 'External') #Internal (Recommended for fast acquisitions) #External
-    """trigger mode"""
-    print 'Trigger mode :', mmc.getProperty(DEVICE[0], 'TriggerMode')
-    
-    """initial camera properties"""
     mmc.setProperty(DEVICE[0], 'Binning', binn[2])
-    print "Binning set at", mmc.getProperty(DEVICE[0],'Binning')  
     mmc.setExposure(DEVICE[0], exp)
     mmc.setProperty(DEVICE[0], 'AcquisitionWindow', AcqWindow) #NOT AVAILABLE IN DEMO
     mmc.setProperty(DEVICE[0], 'PixelReadoutRate', PixRR) #NOT AVAILABLE IN DEMO
     mmc.setProperty(DEVICE[0], 'Sensitivity/DynamicRange', bit[2]) #NOT AVAILABLE IN DEMO
     mmc.setProperty(DEVICE[0],'ElectronicShutteringMode','Global') #Rolling Global #NOT AVAILABLE IN DEMO
     mmc.setProperty(DEVICE[0],'Overlap','Off') #NOT AVAILABLE IN DEMO
+   
     return DEVICE
+
+def defaultCameraSettings(isoiWindow):
+    """
+    Set the camera settings to default configuration and update the GUI.
+    """
+    
+    isoiWindow.mmc.clearROI()
+    isoiWindow.exposureChange(exp)
+    isoiWindow.binChange(binn[2])
+    isoiWindow.bitChange(bit[2])
+    isoiWindow.shutChange('Global')
+    isoiWindow.triggerChange('External')
+    isoiWindow.overlapChange('Off')

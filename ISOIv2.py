@@ -28,16 +28,11 @@ from BrowseWindow import BrowseWindow
 from histogram import histoInit, histoCalc
 from crop import crop_w_mouse
 from continousAcq import grayLive
-from camInit import camInit
+from camInit import camInit, defaultCameraSettings
 from saveFcts import fileSizeCalculation, cfgFileLoading
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, trigImage
 #from ArduinoComm import connect, sendExposure, sendLedList, close
 
-########## GLOBAL VAR - needed for displays information ######
-
-#Allows to abort an acquisition
-#global exit
-#exit = Event()
 
 
 
@@ -71,6 +66,7 @@ class isoiWindow(QtWidgets.QMainWindow):
     
     #PyQt Signals definition, allows communication between different devices
     updateFramesPerFile = pyqtSignal() ##Better to use pyqtSlot ?
+    settingsLoaded = pyqtSignal()
     
     #Bit depth (cam properties)
     bit= ['12-bit (high well capacity)','12-bit (low noise)',"16-bit (low noise & high well capacity)"]
@@ -101,7 +97,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.approxFramerateBtn.clicked.connect(self.approxFramerate)
         self.testFramerateBtn.clicked.connect(self.testFramerate)
         self.loadSettingsFileBtn.clicked.connect(self.browseSettingsFile)
-        #self.defaultSettingsBtn.clicked.connect()
+        self.defaultSettingsBtn.clicked.connect(self.defaultSettings)
         self.savingPathBtn.clicked.connect(self.browseSavingFolder)
         
         #Connect Signals
@@ -156,7 +152,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.expSlider.setMaximum(isoiWindow.expMax)
         self.expSlider.setValue(self.mmc.getExposure())  
         self.expSlider.valueChanged.connect(self.exposureChange)
-        self.expSlider.setSingleStep(isoiWindow.step)
+        self.expSlider.setSingleStep(isoiWindow.step*10) ##doesn't affect anything 
         
         #### Spinboxes ###
         
@@ -261,16 +257,16 @@ class isoiWindow(QtWidgets.QMainWindow):
         
         #Cycle time calculation
         #Note that it doesn't take the LED triggering by the labjack in count
-        self.cycleTime = exposure + fullFrame*frameRatio+interFrame+5*row+startDelay
-        print('cycleTime : ',self.cycleTime)
-        self.approxFramerateLabel.setText(str(round(1/self.cycleTime,2)))
+        cycleTime = exposure + fullFrame*frameRatio+interFrame+5*row+startDelay
+        print('cycleTime : ',cycleTime)
+        self.approxFramerateLabel.setText(str(round(1/cycleTime,2)))
         
     def testFramerate(self):
         """
         This function test the framerate. Fire an image using the external 
         trigger and mesure the cycle time.
         """
-        self.cycleTime = None
+        cycleTime = None
         triggerMode = 'External'
         print('test of the framerate')
         if self.triggerModeCheck(triggerMode):
@@ -284,10 +280,10 @@ class isoiWindow(QtWidgets.QMainWindow):
             #When the ARM signal back in high state, acquisition is done
             end = time()
             self.mmc.stopSequenceAcquisition()
-            self.cycleTime = end-start
-            print(self.cycleTime)
-            self.testFramerateLabel.setText(str(round(1/self.cycleTime,2)))
-        return self.cycleTime
+            cycleTime = end-start
+            print(cycleTime)
+            self.testFramerateLabel.setText(str(round(1/cycleTime,2)))
+        return cycleTime
     
 
     ### LOADING EXPERIMENT ###    
@@ -295,20 +291,24 @@ class isoiWindow(QtWidgets.QMainWindow):
         """
         Create and display a browse window to select a file to load.
         """
-        self.browseWindow = BrowseWindow()
+        self.browseWindow = BrowseWindow(self)
         self.browseWindow.resize(666, 333)
         #self.browseWindow.filePathSig.connect(self.updateSettingsPath)
-        self.reconnect(self.browseWindow.filePathSig, self.updateSettingsPath)
+        self.reconnect(self.browseWindow.filePathSig, self.checkSettingsPath)
         #self.browseWindow.fileNameSig.connect(self.updateSettingsName)
         #self.reconnect(self.browseWindow.fileNameSig, self.updateSettingsName)
         self.browseWindow.show()
             
-#    def updateSettingsName(self, settingsFileName):
-#        """
-#        Update the GUI field with the CFG file name.
-#        """
-#        self.settingsFileName.clear() #Clear the QlineEdit widget
-#        self.settingsFileName.insert(settingsFileName)
+    def defaultSettings(self):
+        """
+        Reset the camera and acquisition settings.
+        """
+        print 'default settings loading'
+        
+        ### Reset Camera Settings ###
+        defaultCameraSettings(self)
+        
+        ### Reset Acquisition Settings ###
     
     def checkSettingsPath(self, settingsPath):
         """
@@ -360,10 +360,15 @@ class isoiWindow(QtWidgets.QMainWindow):
             elif ledSequenceMode == "rbMode":
                 self.rgbMode.setChecked(False)
                 self.rbMode.setChecked(True)
-                self.gInterval.setValue(acqSettings["(RB) Green frames and interval"])
-            self.experimentDuration.setValue(cfgDict['Global informations']['Duration'])
+                self.gInterval.setValue(acqSettings["(RB) Green frames interval"])
         except:
             print 'Acquisition settings dictionary is not accessible'
+        try:
+            self.experimentDuration.setValue(cfgDict['Global informations']['Duration'])
+        except:
+            print 'Global informations are not accessible'
+            
+        self.settingsLoaded.emit()
             
     ### SAVING FOLDER CHOICE ###
     def browseSavingFolder(self):
@@ -607,8 +612,8 @@ class isoiWindow(QtWidgets.QMainWindow):
     def saveImageSeq(self):
         #Get experiment/acquisition settings from the GUI
         name = self.experimentName.text() #str
-        duration = self.experimentDuration.value()*1000 # int (+conversion in ms)
-        cycleTime = (self.testFramerate())*1000 #conversion in ms
+        duration = self.experimentDuration.value() # int (seconds)
+        cycleTime = (self.testFramerate()) # int (seconds)
         rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
         maxFrames =  int(self.framesPerFileLabel.text()) #int
         expRatio = self.expRatio.value() #int

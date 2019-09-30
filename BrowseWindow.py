@@ -18,7 +18,7 @@ class BrowseWindow(QtWidgets.QWidget):
     filePathSig = QtCore.pyqtSignal(str)
     fileNameSig = QtCore.pyqtSignal(str)
     
-    def __init__(self, parent=None):
+    def __init__(self, isoiWindow=None, parent=None):
         super(BrowseWindow, self).__init__(parent)
 
         self.pathRoot = QtCore.QDir.rootPath()
@@ -52,6 +52,11 @@ class BrowseWindow(QtWidgets.QWidget):
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addLayout(self.gridLayout)
         self.layout.addWidget(self.treeView)
+        
+        if isoiWindow != None :
+            print 'signal connection'
+            self.isoiWindow = isoiWindow
+            self.isoiWindow.settingsLoaded.connect(self.close)
 
     @QtCore.pyqtSlot(QtCore.QModelIndex)
     def on_treeView_clicked(self, index):

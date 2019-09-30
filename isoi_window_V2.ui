@@ -17,10 +17,10 @@
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>90</x>
-      <y>10</y>
-      <width>981</width>
-      <height>641</height>
+      <x>10</x>
+      <y>0</y>
+      <width>831</width>
+      <height>531</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -249,24 +249,10 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="2" colspan="2">
-        <widget class="QPushButton" name="loadSettingsFileBtn">
-         <property name="text">
-          <string>Load Settings</string>
-         </property>
-        </widget>
-       </item>
        <item row="11" column="0" colspan="2">
         <widget class="QPushButton" name="loadBtn">
          <property name="text">
           <string>load Zyla</string>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="3">
-        <widget class="QPushButton" name="unloadBtn">
-         <property name="text">
-          <string>Unload Zyla</string>
          </property>
         </widget>
        </item>
@@ -296,10 +282,30 @@
          </item>
         </layout>
        </item>
+       <item row="10" column="3">
+        <widget class="QPushButton" name="loadSettingsFileBtn">
+         <property name="text">
+          <string>Load Settings</string>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="3">
+        <widget class="QPushButton" name="unloadBtn">
+         <property name="text">
+          <string>Unload Zyla</string>
+         </property>
+        </widget>
+       </item>
       </layout>
-      <zorder>layoutWidget</zorder>
-      <zorder></zorder>
-      <zorder></zorder>
+      <zorder>label_7</zorder>
+      <zorder>bitBox</zorder>
+      <zorder>label_3</zorder>
+      <zorder>binBox</zorder>
+      <zorder>histoBtn</zorder>
+      <zorder>cropBtn</zorder>
+      <zorder>expLabel_2</zorder>
+      <zorder>expLabel</zorder>
+      <zorder>realExp</zorder>
       <zorder></zorder>
       <zorder></zorder>
       <zorder>shutBox</zorder>
@@ -308,8 +314,6 @@
       <zorder>triggerBox</zorder>
       <zorder>overlapBox</zorder>
       <zorder>label_18</zorder>
-      <zorder>layoutWidget</zorder>
-      <zorder>layoutWidget</zorder>
       <zorder>defaultSettingsBtn</zorder>
       <zorder>loadSettingsFileBtn</zorder>
       <zorder>unloadBtn</zorder>
@@ -320,8 +324,8 @@
        <rect>
         <x>350</x>
         <y>20</y>
-        <width>421</width>
-        <height>421</height>
+        <width>451</width>
+        <height>481</height>
        </rect>
       </property>
       <property name="font">
@@ -335,359 +339,307 @@
       <property name="title">
        <string>Acquisition Settings</string>
       </property>
-      <widget class="QWidget" name="layoutWidget">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>160</y>
-         <width>326</width>
-         <height>25</height>
-        </rect>
-       </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_5">
-        <item>
-         <widget class="QLabel" name="label_19">
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Saving folder :</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="savingPath"/>
-        </item>
-        <item>
-         <widget class="QPushButton" name="savingPathBtn">
-          <property name="text">
-           <string>Browse...</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="layoutWidget">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>219</y>
-         <width>215</width>
-         <height>190</height>
-        </rect>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <layout class="QGridLayout" name="gridLayout_3">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_12">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Max file size (GB) :</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QDoubleSpinBox" name="fileSize"/>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_10">
-            <property name="font">
-             <font>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Frames per file :</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="framesPerFileLabel">
-            <property name="text">
-             <string>5787</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
-          <item>
-           <widget class="QLabel" name="label_16">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>LED trigger mode :</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="ledTrigBox"/>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QPushButton" name="arduinoBtn">
-          <property name="text">
-           <string>ARDUINO SYNC</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="runSaveBtn">
-          <property name="text">
-           <string>RUN AND SAVE</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="abortBtn">
-          <property name="text">
-           <string>ABORT</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QProgressBar" name="progressBar">
-          <property name="value">
-           <number>24</number>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="layoutWidget">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>191</y>
-         <width>193</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_12">
-        <item>
-         <widget class="QLabel" name="label_11">
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Name :</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="experimentName"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QLabel" name="label_4">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>23</y>
-         <width>96</width>
-         <height>19</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>12</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>Duration (s) :</string>
-       </property>
-      </widget>
-      <widget class="QDoubleSpinBox" name="experimentDuration">
-       <property name="geometry">
-        <rect>
-         <x>113</x>
-         <y>24</y>
-         <width>53</width>
-         <height>20</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QWidget" name="layoutWidget_5">
-       <property name="geometry">
-        <rect>
-         <x>215</x>
-         <y>23</y>
-         <width>196</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_7">
-        <item>
-         <widget class="QLabel" name="label_15">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Interval LED ON (%exp)</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QDoubleSpinBox" name="expRatio"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QCheckBox" name="rgbMode">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>76</y>
-         <width>110</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>12</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Sequential</string>
-       </property>
-      </widget>
-      <widget class="QWidget" name="">
-       <property name="geometry">
-        <rect>
-         <x>210</x>
-         <y>60</y>
-         <width>79</width>
-         <height>74</height>
-        </rect>
-       </property>
-       <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_6">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Green</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QSpinBox" name="gRatio"/>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_8">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Red</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QSpinBox" name="rRatio"/>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_9">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Blue</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QSpinBox" name="bRatio"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QCheckBox" name="rbMode">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>131</y>
-         <width>121</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>12</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>R-B mode :</string>
-       </property>
-      </widget>
-      <widget class="QWidget" name="">
-       <property name="geometry">
-        <rect>
-         <x>150</x>
-         <y>130</y>
-         <width>247</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_9">
-        <item>
-         <widget class="QLabel" name="label_20">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Green frame each (nb frames) :</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QSpinBox" name="gInterval">
-          <property name="maximum">
-           <number>10000</number>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
+      <layout class="QGridLayout" name="gridLayout_4">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Duration (s) :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QDoubleSpinBox" name="experimentDuration"/>
+       </item>
+       <item row="0" column="3">
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <item>
+          <widget class="QLabel" name="label_15">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Interval LED ON (%exp)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="expRatio"/>
+         </item>
+        </layout>
+       </item>
+       <item row="1" column="0" colspan="2">
+        <widget class="QCheckBox" name="rgbMode">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Sequential</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_6">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Green</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QSpinBox" name="gRatio"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_8">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Red</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="rRatio"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_9">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Blue</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSpinBox" name="bRatio"/>
+         </item>
+        </layout>
+       </item>
+       <item row="2" column="0" colspan="2">
+        <widget class="QCheckBox" name="rbMode">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>R-B mode :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2" colspan="2">
+        <layout class="QHBoxLayout" name="horizontalLayout_9">
+         <item>
+          <widget class="QLabel" name="label_20">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Green frame each (nb frames) :</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="gInterval">
+           <property name="maximum">
+            <number>10000</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="3" column="0" colspan="4">
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QLabel" name="label_19">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Saving folder :</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="savingPath"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="savingPathBtn">
+           <property name="text">
+            <string>Browse...</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="4" column="0" colspan="2">
+        <layout class="QHBoxLayout" name="horizontalLayout_12">
+         <item>
+          <widget class="QLabel" name="label_11">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Name :</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="experimentName"/>
+         </item>
+        </layout>
+       </item>
+       <item row="5" column="0" colspan="3">
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_12">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Max file size (GB) :</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QDoubleSpinBox" name="fileSize"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_10">
+           <property name="font">
+            <font>
+             <pointsize>11</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Frames per file :</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="framesPerFileLabel">
+           <property name="text">
+            <string>5787</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="6" column="0" colspan="3">
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLabel" name="label_16">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>LED trigger mode :</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="ledTrigBox"/>
+         </item>
+        </layout>
+       </item>
+       <item row="7" column="0">
+        <widget class="QPushButton" name="arduinoBtn">
+         <property name="text">
+          <string>ARDUINO SYNC</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0" colspan="2">
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QPushButton" name="runSaveBtn">
+           <property name="text">
+            <string>RUN AND SAVE</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <item>
+            <widget class="QCheckBox" name="startTriggerBox">
+             <property name="text">
+              <string>Start Trigger</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="stopTriggerBox">
+             <property name="text">
+              <string>Stop Trigger</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item row="9" column="0">
+        <widget class="QPushButton" name="abortBtn">
+         <property name="text">
+          <string>ABORT</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0" colspan="3">
+        <widget class="QProgressBar" name="progressBar">
+         <property name="value">
+          <number>24</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
+      <zorder>label_4</zorder>
+      <zorder>experimentDuration</zorder>
+      <zorder>layoutWidget_5</zorder>
+      <zorder>rgbMode</zorder>
+      <zorder>rbMode</zorder>
       <zorder>layoutWidget</zorder>
       <zorder>layoutWidget</zorder>
       <zorder>layoutWidget</zorder>
       <zorder>layoutWidget</zorder>
       <zorder>layoutWidget</zorder>
+      <zorder>startTriggerBox</zorder>
+      <zorder>stopTriggerBox</zorder>
      </widget>
-     <zorder>layoutWidget</zorder>
-     <zorder>layoutWidget</zorder>
-     <zorder>layoutWidget</zorder>
-     <zorder>label_15</zorder>
-     <zorder>groupBox</zorder>
-     <zorder>groupBox_2</zorder>
     </widget>
     <widget class="QWidget" name="tab_2">
      <attribute name="title">
