@@ -18,6 +18,8 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
 from time import time
 from os import path
+from datetime import date
+import numpy as np
 
 #Class import
 from SequenceAcquisition import SequenceAcquisition
@@ -31,6 +33,7 @@ from continousAcq import grayLive
 from camInit import camInit, defaultCameraSettings
 from saveFcts import fileSizeCalculation, cfgFileLoading
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, trigImage
+from ParsingTif import load2DArrayFromTxt, get_immediate_subdirectories, getTifLists
 #from ArduinoComm import connect, sendExposure, sendLedList, close
 
 
@@ -99,6 +102,9 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.loadSettingsFileBtn.clicked.connect(self.browseSettingsFile)
         self.defaultSettingsBtn.clicked.connect(self.defaultSettings)
         self.savingPathBtn.clicked.connect(self.browseSavingFolder)
+        
+        self.loadFileBtn.clicked.connect(self.loadFolder)
+        self.splitBtn.clicked.connect(self.splitChannels)
         
         #Connect Signals
         self.updateFramesPerFile.connect(self.fileSizeSetting)
@@ -387,8 +393,9 @@ class isoiWindow(QtWidgets.QMainWindow):
         Update the GUI field with the saving folder path name.
         """
         if path.isdir(savingPath):
+            today = str(date.today())
             self.savingPath.clear() #Clear the QlineEdit widget
-            self.savingPath.insert(savingPath)
+            self.savingPath.insert(savingPath+'/'+today[2:4]+today[5:7]+today[8:10]+'/Default_folder_name')
         else:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Warning)
@@ -631,7 +638,7 @@ class isoiWindow(QtWidgets.QMainWindow):
                                          self.mmc,
                                          self.labjack)
         print 'object initialized'
-        self.sequencAcq.finished.connect(self.acquisitionDone)
+        self.sequencAcq.isFinished.connect(self.acquisitionDone)
         self.sequencAcq.nbFramesSig.connect(self.initProgressBar)
         self.sequencAcq.progressSig.connect(self.updateProgressBar)
         self.sequencAcq.acquMode = self.ledTrigBox.currentText()
@@ -759,9 +766,69 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.reconnect(self.Red.stateChanged, self.red) #Disconnect green led from green function
         self.reconnect(self.Blue.stateChanged, self.blue) #Disconnect green led from green function
         
+    #######################    
+    #### Analysis part ####
+    #######################
+    
+    def loadFolder(self):
+        """
+        Load a folder containing experiments.
+        """
+        self.browseWindow = BrowseWindow(self)
+        self.browseWindow.resize(666, 333)
+        self.reconnect(self.browseWindow.filePathSig, self.setAnalysisPath)
+        self.reconnect(self.browseWindow.fileNameSig, self.updateAnalysisFolder)
+        self.browseWindow.show()
         
+    def setAnalysisPath(self, path):
+        """
+        Update the path of analysis
+        """
+        print 'Analysis path update'
+        ### Add a verification that is a folder
+        self.analysisPath = path
+        subDirectories = get_immediate_subdirectories(self.analysisPath)
+        self.subDirList.clear()
+        self.subDirList.addItems(subDirectories)
+        #self.subDirList.itemDoubleClicked.connect(self.splitChannels)
+    
+    def updateAnalysisFolder(self, folderName):
+        """
+        Display the folder name.
+        """
+        print 'Analysis path display'
+        self.folderName.setText(folderName)
+        
+    def splitChannels(self, experimentFile=None):
+        """
+        Concatenate all the .tif to segment them in blue, red and green channels.
+        Create new .txt files for each channels containing the timestamps.
+        """
+        print'split channel fct'
+        
+        #Converting text file to an array
+        experimentFile = self.subDirList.currentItem()
+        if experimentFile != None:
+            experimentFolderName =experimentFile.text()
+            experimentFolderPath = self.analysisPath+'/'+experimentFolderName
+            filePath =self.analysisPath+'/'+experimentFolderName+'/'+experimentFolderName
+            txtFile=filePath+'.txt'
+            txtArray = load2DArrayFromTxt(txtFile,"\t")
+            tifsPathList = getTifLists(experimentFolderPath)
+            print tifsPathList
+            
+            
+        else:
+            print 'Please, select an item'
+
+    
+    
+    #################################
+    #### common utility function ####
+    #################################
     def reconnect(self, signal, newhandler=None, oldhandler=None):
         """
+        Deconnect a signal and reconnect it to another handler function.
         Source : https://stackoverflow.com/questions/21586643/pyqt-widget-connect-and-disconnect
         """
         while True:

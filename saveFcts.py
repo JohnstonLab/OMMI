@@ -69,8 +69,9 @@ def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode, ledSw
     Save the experiment configuration parameters in a JSON file.
     """
     print 'initializing folder'
-    today = str(date.today())
-    savePath=folderPath+'/'+today[2:4]+today[5:7]+today[8:10]+"/"+name
+#    today = str(date.today())
+#    '/'+today[2:4]+today[5:7]+today[8:10]+
+    savePath=folderPath+"/"+name
     
     #Checking if a folder already exist for the experiments of the day
     if not os.path.exists(savePath):

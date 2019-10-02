@@ -25,6 +25,7 @@ class SequenceAcquisition(QThread):
     """
     nbFramesSig = pyqtSignal(int)
     progressSig = pyqtSignal(int)
+    isFinished = pyqtSignal()
     
 
     
@@ -147,22 +148,40 @@ class SequenceAcquisition(QThread):
         self.mmc.startContinuousSequenceAcquisition(1)
         while(imageCount<(self.nbFrames) and self.acqRunning):
             if self.mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished #Enter this loop BETWEEN acquisition
-                #trigImage(labjack) #Generate a pulse, which allows to flag the entry in this code statement with the oscilloscope
+                #trigImage(labjack) #Generate a pulse, which allows to flag the entry in this code statement with the oscilloscope    
                 img = self.mmc.popNextImage() #Gets and removes the next image from the circular buffer
-                ##read input from labjack
                 saveFrame(img, self.tiffWriterList, (imageCount), self.maxFrames) # saving frame of previous acquisition
                 imageCount +=1
                 self.progressSig.emit(imageCount)
         
+        
+        
+        
+        #### IF ABORTED acquisition #####
+        if (not self.acqRunning):
+            #Get the last images in the circular buffer
+            #This step ensure that there are the same amount of metadata than frames
+            print('cycleTime :',self.cycleTime)
+            sleep(self.cycleTime)
+            print ('remaining images in the circular buffer :',self.mmc.getRemainingImageCount())
+            while(self.mmc.getRemainingImageCount() > 0):
+                print'getting last image, num : ', imageCount
+                img = self.mmc.popNextImage() #Gets and removes the next image from the circular buffer
+                saveFrame(img, self.tiffWriterList, (imageCount), self.maxFrames) # saving frame of previous acquisition
+                imageCount +=1
+                sleep(self.cycleTime)
+            #Close tiff file open
+            tiffWritersClose(self.tiffWriterList)
+            if ((self.nbFrames/self.maxFrames)>=1): #check that multiples .tif were initialized
+                # --> CHECK WICH .tif are empty and suppress it
+                tiffWriterDel(self.experimentName, 
+                              self.savePath, 
+                              imageCount, 
+                              self.maxFrames, 
+                              self.tiffWriterList)
+        
         #Close tiff file open
         tiffWritersClose(self.tiffWriterList)
-        
-        #### IF ABORTED acquisition --> CHECK WICH .tif are empty and suppress it #####
-        print(self.acqRunning)
-        print(self.nbFrames/self.maxFrames)
-        if (not self.acqRunning) and ((self.nbFrames/self.maxFrames)>=1): #check if abort fct was called and that multiples .tif were initialized
-            tiffWriterDel(self.experimentName, self.savePath, imageCount, self.maxFrames, self.tiffWriterList)
-        
         #Stop camera acquisition
         self.mmc.stopSequenceAcquisition()
         print 'end of the _frameSavingThread'
@@ -197,14 +216,13 @@ class SequenceAcquisition(QThread):
         frameSavingThread = pool.apply_async(self._frameSaving,())
         sleep(0.005) ## WAIT FOR INITIALIZATION AND WAITFORSIGNAL FCT
         ledSwitchingThread = pool.apply_async(self._ledSwitching,(ledOnDuration,))
-        #guiUpdatingThread = pool.apply_async(guiUpdating,(duration, app, exit,))
-        print 'Saving process counter : ', frameSavingThread.get()
         imageCount = ledSwitchingThread.get()
+        print 'Saving process counter : ', frameSavingThread.get()
         print 'LED process counter : ', imageCount
         #close the pool and wait for the work to finish
         pool.close()
         pool.join()
-        
+        print 'sequ acq done'
         return imageCount
 
     def _seqAcqCyclops(self):
@@ -285,22 +303,23 @@ class SequenceAcquisition(QThread):
         if self.acquMode == "Labjack":
             print'sequ acq about to start'
             self.imageCount = self._sequenceAcqu()
-            print'sequ acq done'
+            print'run fct done'
         elif self.acquMode == "Cyclops":
             self.imageCount = self._seqAcqCyclops()
         else:
             print 'Please select a valid mode of triggering the LED'
         
         print 'end of the thread'
+        self.isFinished.emit()
             
     def abort(self):
         
-        try:
-            #Closing all files opened
-            self.textFile.close()
-            tiffWritersClose(self.tiffWriterList)
-        except:
-            print 'Cannot close files'
+#        try:
+#            #Closing all files opened
+#            self.textFile.close()
+#            tiffWritersClose(self.tiffWriterList)
+#        except:
+#            print 'Cannot close files'
             
         try:
             self.acqRunning = False
