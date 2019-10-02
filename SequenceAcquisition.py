@@ -313,14 +313,9 @@ class SequenceAcquisition(QThread):
         self.isFinished.emit()
             
     def abort(self):
-        
-#        try:
-#            #Closing all files opened
-#            self.textFile.close()
-#            tiffWritersClose(self.tiffWriterList)
-#        except:
-#            print 'Cannot close files'
-            
+        """
+        Interrupt the threads running for LED switching and frame saving.
+        """
         try:
             self.acqRunning = False
         except:

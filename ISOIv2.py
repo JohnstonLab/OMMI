@@ -33,7 +33,7 @@ from continousAcq import grayLive
 from camInit import camInit, defaultCameraSettings
 from saveFcts import fileSizeCalculation, cfgFileLoading
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, trigImage
-from ParsingFiles import load2DArrayFromTxt, get_immediate_subdirectories, getTifLists
+from ParsingFiles import load2DArrayFromTxt, get_immediate_subdirectories, getTifLists, splitColorChannel
 #from ArduinoComm import connect, sendExposure, sendLedList, close
 
 
@@ -799,27 +799,45 @@ class isoiWindow(QtWidgets.QMainWindow):
         print 'Analysis path display'
         self.folderName.setText(folderName)
         
-    def splitChannels(self, experimentFile=None):
+    def splitChannels(self, experimentFolderName=None):
         """
         Concatenate all the .tif to segment them in blue, red and green channels.
         Create new .txt files for each channels containing the timestamps.
         """
         print'split channel fct'
         
-        #Converting text file to an array
-        experimentFile = self.subDirList.currentItem()
-        if experimentFile != None:
-            experimentFolderName =experimentFile.text()
+        #If method called witout argument, trie
+        print experimentFolderName
+        if not experimentFolderName : #experimentFolderName = False or None will enter the statement
+            experimentFolder = self.subDirList.currentItem() 
+            print 'item well selected'
+            experimentFolderName = experimentFolder.text()
+            print str(experimentFolderName)
+        if experimentFolderName : #experimentFolderName = something will enter this statement
+            print self.analysisPath
+            print str(experimentFolderName)
             experimentFolderPath = self.analysisPath+'/'+experimentFolderName
+            print experimentFolderPath
             filePath =self.analysisPath+'/'+experimentFolderName+'/'+experimentFolderName
+            print filePath
             txtFile=filePath+'.txt'
-            txtArray = load2DArrayFromTxt(txtFile,"\t")
-            tifsPathList = getTifLists(experimentFolderPath)
-            print tifsPathList
+            try:
+                txtArray = load2DArrayFromTxt(txtFile,"\t")
+            except:
+                print 'error to convert txt to array'
+            try:
+                tifsPathList = getTifLists(experimentFolderPath)
+                print tifsPathList
+            except:
+                print 'error to convert txt to array'
+            try:
+                splitColorChannel(experimentFolderPath, txtArray, tifsPathList)
+            except:
+                print 'error to split channels'   
             
             
         else:
-            print 'Please, select an item'
+            print 'Please, select a folder'
 
     
     

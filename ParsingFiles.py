@@ -73,7 +73,7 @@ def getTifLists(currdir):
             tifsList.append(currdir+"/"+file)
     return tifsList
 
-def splitColorChannel( experimentDir, txtFile, tifsList):
+def splitColorChannel(experimentDir, txtArray, tifsList):
     """
     Takes the metadat and a list of .tif path to create a folder with
     one channel tif and the time stamps corresponding
@@ -83,12 +83,12 @@ def splitColorChannel( experimentDir, txtFile, tifsList):
     
     
     #Separate infos from the .txt file
-    time = txtFile[:,0]
-    channel = txtFile[:,1]
-    frames = txtFile[:,2] #Useless
+    time = txtArray[:,0]
+    channel = txtArray[:,1]
+    #frames = txtFile[:,2] #Useless
     odourValve = txtFile[:,3] #useless
-    respiration = txtFile[:,4] #useless
-    ledOnDuration =txtFile[:,5] #useless
+    #respiration = txtFile[:,4] #useless
+    #ledOnDuration =txtFile[:,5] #useless
     
     #Create or verify that processed folder exsits
     savePath = experimentDir+'/Processed'
@@ -108,7 +108,12 @@ def splitColorChannel( experimentDir, txtFile, tifsList):
     splitTifs(redTif, tifsList, 0, channel)
     splitTifs(greenTif, tifsList, 1, channel)
     splitTifs(blueTif, tifsList, 2, channel)
-    print'split done'
+    print'split .tif done'
+    
+    splitTimestamps(redTextFile, time, odourValve, 0, channel)
+    splitTimestamps(greenTextFile, time, odourValve, 1, channel)
+    splitTimestamps(blueTextFile, time, odourValve, 2, channel)
+    print'split .txt done'
     
     redTextFile.close()
     greenTextFile.close()
@@ -124,8 +129,11 @@ def txtFileSizeCorrection():
     when an acquisition is aborted we can not ensure that the nb of
     frames are the same per file
     """
+    ##TO IMPLEMENT
+    #could be useful in case of crash
+    print ('Text and tif file size correction')
 
-            
+       
 def splitTifs(tiffWriter, tifsList, numChannel, channel):
     """
     Loop through the .tif files and save by channel
@@ -141,6 +149,7 @@ def splitTifs(tiffWriter, tifsList, numChannel, channel):
                 nbFrames = int(images.shape[0])
                 segmentChannel = channel[startNb:startNb+nbFrames]##problem last frame
                 toSaveArray = np.nonzero(segmentChannel==numChannel)[0] #We now that it is 1D array
+                                                                        #np.nonzero is the same function as np.where
             except:
                 print'no access to channel ?'
             try:
@@ -148,10 +157,21 @@ def splitTifs(tiffWriter, tifsList, numChannel, channel):
                     tiffWriter.save(images[frameNb])
             except:
                 print 'error with list'
-                  
 
+
+def splitTimestamps(textFile, time, odourValve, numChannel, channel):
+    """
+    Create new .txt file with timestamps of each frame.
+    """
+    try:
+        toSaveArray = np.nonzero(channel==numChannel)[0] #We now that it is 1D array
+        for frameNb in toSaveArray:
+            textFile.write(str(time[frameNb])+'\t'+str(odourValve[frameNb])+'\n')
+    except:
+        print('Parsing .txt file doesnt work')
+        
 ####TEST SECTION ###
-#                
+                
 #print 'TEST'
 ##txtArray = load2DArrayFromTxt('C:/data_OIIS/190925/ID709_strong_01pc/ID709_strong_01pc.txt',"\t") #EVEN nb of frames
 ##txtArray = load2DArrayFromTxt('C:/data_OIIS/191002/ID_test/oddNbOfFrames/oddNbOfFrames.txt',"\t") #Odd nb of frames
