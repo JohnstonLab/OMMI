@@ -33,7 +33,7 @@ from continousAcq import grayLive
 from camInit import camInit, defaultCameraSettings
 from saveFcts import fileSizeCalculation, cfgFileLoading
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, trigImage
-from ParsingTif import load2DArrayFromTxt, get_immediate_subdirectories, getTifLists
+from ParsingFiles import load2DArrayFromTxt, get_immediate_subdirectories, getTifLists
 #from ArduinoComm import connect, sendExposure, sendLedList, close
 
 
