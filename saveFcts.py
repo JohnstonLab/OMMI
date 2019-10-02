@@ -173,12 +173,11 @@ def tiffClose(tif):
     print 'tif closed at time : ', datetime.now()
 
 
-def fileSizeCalculation(sizeMax, ROI, bitDepth):
+def fileSizeCalculation(framePerFile, ROI, bitDepth):
     print 'xSize : ',ROI[-2],'and ySize : ', ROI[-1]
     nbPix = ROI[-1]*ROI[-2] #(horizontal nb of pix) * (vertical nb of pix), last objects of ROI list
     frameSize = nbPix*bitDepth #in bits
     frameSize = float(frameSize)/(8*1e9) #in gigabytes
     print 'One frame size in GB : ', frameSize
-    framesMax = sizeMax/frameSize
-    framesMax = int(framesMax)
-    return framesMax
+    sizeMax = frameSize*framePerFile
+    return round(sizeMax,2)

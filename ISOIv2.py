@@ -56,10 +56,7 @@ class isoiWindow(QtWidgets.QMainWindow):
     ledFrameNbMin=0
     
     #File Size params
-    fileSizeMax =4.
-    fileSizeMin =0.5
-    fileSizeStep =0.5
-    fileSizeDefault =1.
+    framePerFileDefault =512
     
     #LED lit time (as a ratio of the exposure time) 
     ratioMin = 0.05
@@ -182,11 +179,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.bRatio.setMaximum(isoiWindow.ledFrameNbMax)
         
         #File size
-        self.fileSize.setValue(isoiWindow.fileSizeDefault)
-        self.fileSize.setSingleStep(isoiWindow.fileSizeStep)
-        self.fileSize.setMaximum(isoiWindow.fileSizeMax)
-        self.fileSize.setMinimum(isoiWindow.fileSizeMin)
-        self.fileSize.valueChanged.connect(self.updateFramesPerFile.emit)
+        self.framePerFileBox.setValue(isoiWindow.framePerFileDefault)
+        self.framePerFileBox.valueChanged.connect(self.updateFramesPerFile.emit)
       
         #Interval Ms
         self.expRatio.setValue(isoiWindow.ratioDefault)
@@ -200,7 +194,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.experimentName.insert("DefaultName")
         
         #Initialize frames per files text label
-        self.framesPerFileLabel.setText('1146') #nb frames per file (1GB) for uncropped frame with 16 bits per pixels
+        #self.framesPerFileLabel.setText('1146') #nb frames per file (1GB) for uncropped frame with 16 bits per pixels
+        self.fileSizeSetting()
         
         #Initialize exposure label
         self.realExp.setText(str(self.mmc.getExposure()))
@@ -530,7 +525,12 @@ class isoiWindow(QtWidgets.QMainWindow):
         return mode
     
     def fileSizeSetting(self):
-        sizeMax = self.fileSize.value()
+        """
+        Calculate the size of each .tif file in function of the number of frames
+        per file wanted.
+        """
+        framePerFile = self.framePerFileBox.value()
+        #sizeMax = self.fileSize.value()
         ROI = self.mmc.getROI()
         bitDepth = self.bitBox.currentText()
         if bitDepth == isoiWindow.bit[2]:
@@ -538,8 +538,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         else:
             bitPPix = 12
         
-        framesMax = fileSizeCalculation(sizeMax, ROI, bitPPix)
-        self.framesPerFileLabel.setText(str(framesMax))
+        sizeMax = fileSizeCalculation(framePerFile, ROI, bitPPix)
+        self.sizePerFileLabel.setText(str(sizeMax))
     
     def unloadDevices(self):
         try:
@@ -615,10 +615,10 @@ class isoiWindow(QtWidgets.QMainWindow):
     def saveImageSeq(self):
         #Get experiment/acquisition settings from the GUI
         name = self.experimentName.text() #str
-        duration = self.experimentDuration.value() # int (seconds)
+        duration = self.experimentDuration.value() # float (seconds)
         cycleTime = (self.testFramerate()) # int (seconds)
         rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
-        maxFrames =  int(self.framesPerFileLabel.text()) #int
+        maxFrames =  self.framePerFileBox.value() #int
         expRatio = self.expRatio.value() #int
         rbGreenRatio = self.gInterval.value() #int
         savingPath = self.savingPath.text() #str
