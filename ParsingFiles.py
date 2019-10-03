@@ -86,7 +86,7 @@ def splitColorChannel(experimentDir, txtArray, tifsList):
     time = txtArray[:,0]
     channel = txtArray[:,1]
     #frames = txtFile[:,2] #Useless
-    odourValve = txtFile[:,3] #useless
+    odourValve = txtArray[:,3] #useless
     #respiration = txtFile[:,4] #useless
     #ledOnDuration =txtFile[:,5] #useless
     

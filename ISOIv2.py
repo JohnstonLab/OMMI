@@ -20,6 +20,7 @@ from time import time
 from os import path
 from datetime import date
 import numpy as np
+import threading
 
 #Class import
 from SequenceAcquisition import SequenceAcquisition
@@ -659,6 +660,12 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.abortBtn.clicked.connect(self.sequencAcq.abort)
         #else --> reading an while looping for the image acquisition
         # input and when the signal goes high
+        else:
+            WAIT_TIME_SECONDS=1
+            ticker = threading.Event()
+            while not ticker.wait(WAIT_TIME_SECONDS):
+                print 'Check signal'
+                #check labjack input
         
         # We don't want to enable user to start another thread while this one is
         # running so we disable the start button.
