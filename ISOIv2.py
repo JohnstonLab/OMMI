@@ -647,20 +647,22 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.sequencAcq.seqMode = "rgbMode"
         elif self.rbMode.isChecked():
             self.sequencAcq.seqMode = "rbMode"
-        # We have all the events we need connected we can start the thread
-        #print 'object connected'
-        self.sequencAcq.start()
-        print 'object started'
-        # At this point we want to allow user to stop/terminate the thread
+        
         if not triggerStop :
+            # We have all the events we need connected we can start the thread
+            #print 'object connected'
+            self.sequencAcq.start()
+            print 'object started'
+            # At this point we want to allow user to stop/terminate the thread
             # so we enable that button
             self.abortBtn.setEnabled(True)
             # And we connect the click of that button to the built in
             # terminate method that all QThread instances have
             self.abortBtn.clicked.connect(self.sequencAcq.abort)
-        #else --> reading an while looping for the image acquisition
-        # input and when the signal goes high
+        
         else:
+            #--> reading an while looping for the image acquisition
+            # input and when the signal goes high
             WAIT_TIME_SECONDS=1
             ticker = threading.Event()
             while not ticker.wait(WAIT_TIME_SECONDS):
