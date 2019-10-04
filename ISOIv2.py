@@ -218,9 +218,34 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.rgbMode.stateChanged.connect(self.ledSequenceModeCheck)
         self.rbMode.stateChanged.connect(self.ledSequenceModeCheck)
     
-    def liveFunc(self): #Not connected
-        grayLive(self.mmc)
+    
+            
+
         
+    
+    
+    #################################
+    #### Camera settings methods ####
+    #################################
+    
+    ###Button related###
+    #Organized like the GUI panel
+    
+    def exposureChange(self, expVal):
+        """
+        Change the exposure in the camera settings and update the GUI 
+        with the real exposure.
+        """
+        #exp=expVal/float(div)
+        self.C_expSb.setValue(expVal) #update spinbox value
+        self.expSlider.setValue(expVal) #update slider value
+        print 'exposure wanted : ', expVal
+        try:
+            self.mmc.setExposure(DEVICE[0], expVal)
+            self.realExp.setText(str(self.mmc.getExposure()))
+        except:
+            print "CMM err, no possibility to set exposure"
+    
     def approxFramerate(self):
         """
         This function approximate the framerate. Approximation based on Zyla
@@ -288,8 +313,144 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.testFramerateLabel.setText(str(round(1/cycleTime,2)))
         return cycleTime
     
+    
+    def binChange(self, binn):
+        """
+        Change the Binning in the camera settings and update the GUI.
+        """
+        try:
+            self.mmc.setProperty(self.DEVICE[0], 'Binning', str(binn))
+            realBinning = self.mmc.getProperty(self.DEVICE[0],'Binning')
+            self.binBox.setCurrentText(realBinning) #Ensure that the change are effective
+                                                    #and update the GUI
+        except:
+            print 'CMM err, no possibility to set Binning'
 
-    ### LOADING EXPERIMENT ###    
+    def bitChange(self, bit):
+        """
+        Change the Sensitivity/DynamicRange in the camera settings and update the GUI.
+        """
+        try:
+            self.mmc.setProperty(self.DEVICE[0], 'Sensitivity/DynamicRange', str(bit))
+            actualBitDepth = self.mmc.getProperty(self.DEVICE[0],'Sensitivity/DynamicRange')
+            self.bitBox.setCurrentText(actualBitDepth)
+        except:
+            print 'CMM err, no possibility to set Sensitivity/DynamicRange'
+            
+    def shutChange(self,shutterMode):
+        """
+        Change the ElectronicShutteringMode in the camera settings and update the GUI.
+        """
+        try:
+            self.mmc.setProperty(self.DEVICE[0],'ElectronicShutteringMode',str(shutterMode))
+            actualShutterMode = self.mmc.getProperty(self.DEVICE[0], 'ElectronicShutteringMode')
+            self.shutBox.setCurrentText(actualShutterMode)
+        except:
+            print 'CMM err, no possibility to set ElectronicShutteringMode'
+        
+    def triggerChange(self, triggerMode):
+        """
+        Change the TriggerMode in the camera settings and update the GUI.
+        """
+        try:
+            self.mmc.setProperty(self.DEVICE[0],'TriggerMode',str(triggerMode))
+            actualTriggerMode = self.mmc.getProperty(self.DEVICE[0], 'TriggerMode')
+            self.triggerBox.setCurrentText(actualTriggerMode)
+        except:
+            print 'CMM err, no possibility to set TriggerMode'
+
+    def overlapChange(self, overlap):
+        """
+        Change the TriggerMode in the camera settings and update the GUI.
+        """
+        try:
+            self.mmc.setProperty(self.DEVICE[0],'Overlap', str(overlap))
+            actualOverlap = self.mmc.getProperty(self.DEVICE[0], 'Overlap')
+            self.overlapBox.setCurrentText(actualOverlap)
+        except:
+            print "CMM err, no possibility to set Overlap mode"
+            
+    def loadZyla(self):
+        """
+        Load a device on the MMC API.
+        The device loaded will be used to acquire images.
+        """
+        try:
+            self.DEVICE = camInit(self.mmc)
+            print 'Device ',self.DEVICE[0],' loaded'
+        except:
+            print 'CMM error : fail to load device'
+    
+    def unloadDevices(self):
+        """
+        Unload all devices from the MMC API > closing communication.
+        """
+        try:
+            self.mmc.unloadAllDevices()
+            print 'all devices UNLOADED'
+        except:
+            print 'CMM error : fail to unload all devices'
+    
+    
+    ###LED ligtening###
+    def green(self,toggle_g):
+        """
+        Turn on or off the green LED in function of the QCheckBox state.
+        """
+        if toggle_g:
+            greenOn(self.labjack)
+        else :
+            greenOff(self.labjack)
+          
+    def red(self,toggle_r):
+        """
+        Turn on or off the red LED in function of the QCheckBox state.
+        """
+        if toggle_r:
+            redOn(self.labjack)
+        else :
+            redOff(self.labjack)    
+            
+    def blue(self,toggle_b):
+        """
+        Turn on or off the blue LED in function of the QCheckBox state.
+        """
+        if toggle_b:
+            blueOn(self.labjack)
+        else :
+            blueOff(self.labjack)
+    
+    ### CROP CAMERA IMAGE ###
+    def crop(self):
+        """
+        Set the ROI of the camera.
+        If a ROI is mouse drawn on the screen > this ROI is selected.
+        Else the ROI is reset() to the default one. 
+        """
+        triggerMode = 'Internal (Recommended for fast acquisitions)'
+        if self.triggerModeCheck(triggerMode):
+            self.mmc.clearROI()
+            self.mmc.snapImage()
+            img = self.mmc.getImage()
+            (x,y,w,h) = crop_w_mouse(img,self.mmc.getROI())
+            self.mmc.setROI(x,y,w,h)
+            print "image width: "+str(self.mmc.getImageWidth())
+            print "image height: "+str(self.mmc.getImageHeight())
+            cv2.destroyAllWindows()
+            self.updateFramesPerFile.emit()
+    
+    ### LOADING EXPERIMENT SETTINGS ###    
+    
+    def defaultSettings(self):
+        """
+        Reset the camera and acquisition settings.
+        """
+        print 'default settings loading'
+        
+        # Reset Camera Settings 
+        defaultCameraSettings(self)
+        # Reset Acquisition Settings #TO DO ?
+    
     def browseSettingsFile(self):
         """
         Create and display a browse window to select a file to load.
@@ -301,17 +462,6 @@ class isoiWindow(QtWidgets.QMainWindow):
         #self.browseWindow.fileNameSig.connect(self.updateSettingsName)
         #self.reconnect(self.browseWindow.fileNameSig, self.updateSettingsName)
         self.browseWindow.show()
-            
-    def defaultSettings(self):
-        """
-        Reset the camera and acquisition settings.
-        """
-        print 'default settings loading'
-        
-        ### Reset Camera Settings ###
-        defaultCameraSettings(self)
-        
-        ### Reset Acquisition Settings ###
     
     def checkSettingsPath(self, settingsPath):
         """
@@ -372,142 +522,36 @@ class isoiWindow(QtWidgets.QMainWindow):
             print 'Global informations are not accessible'
             
         self.settingsLoaded.emit()
-            
-    ### SAVING FOLDER CHOICE ###
-    def browseSavingFolder(self):
+    
+    ### Msg display ###
+    def triggerModeCheck(self, triggerMode):
         """
-        Create and display a browse window to select a folder where 
-        the experiment data will be save.
+        Check if the camera trigger mode is set to the triggerMode argument.
+        Pop-up window is generated if the wrong trigger mode is set on.
         """
-        self.browseWindow = BrowseWindow()
-        self.reconnect(self.browseWindow.filePathSig, self.updateSavingPath)
-        #self.browseFolderWindow.fileNameSig.connect()
-        self.browseWindow.show()
-     
-        
-    def updateSavingPath(self, savingPath):
-        """
-        Update the GUI field with the saving folder path name.
-        """
-        if path.isdir(savingPath):
-            today = str(date.today())
-            self.savingPath.clear() #Clear the QlineEdit widget
-            self.savingPath.insert(savingPath+'/'+today[2:4]+today[5:7]+today[8:10]+'/Default_folder_name')
-        else:
+        print triggerMode
+        if self.mmc.getProperty(self.DEVICE[0], 'TriggerMode') != triggerMode:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Warning)
-            msg.setText(savingPath+" is not a folder")
-            msg.setWindowTitle("Saving folder selection")
+            msg.setText("Set the trigger mode to : \n" + triggerMode)
+            msg.setWindowTitle("Trigger mode warning")
             msg.exec_()
+            return False
+        else:
+            return True
         
-        
-    ### CROP CAMERA IMAGE ###
-    def crop(self):
-        triggerMode = 'Internal (Recommended for fast acquisitions)'
-        if self.triggerModeCheck(triggerMode):
-            self.mmc.clearROI()
-            self.mmc.snapImage()
-            img = self.mmc.getImage()
-            (x,y,w,h) = crop_w_mouse(img,self.mmc.getROI())
-            self.mmc.setROI(x,y,w,h)
-            print "image width: "+str(self.mmc.getImageWidth())
-            print "image height: "+str(self.mmc.getImageHeight())
-            cv2.destroyAllWindows()
-            self.updateFramesPerFile.emit()
     
-    def exposureChange(self, expVal):
-        """
-        Change the exposure in the camera settings and update the GUI 
-        with the real exposure.
-        """
-        #exp=expVal/float(div)
-        self.C_expSb.setValue(expVal) #update spinbox value
-        self.expSlider.setValue(expVal) #update slider value
-        print 'exposure wanted : ', expVal
-        try:
-            self.mmc.setExposure(DEVICE[0], expVal)
-            self.realExp.setText(str(self.mmc.getExposure()))
-        except:
-            print "CMM err, no possibility to set exposure"
-            
-    def binChange(self, binn):
-        """
-        Change the Binning in the camera settings and update the GUI.
-        """
-        try:
-            self.mmc.setProperty(self.DEVICE[0], 'Binning', str(binn))
-            realBinning = self.mmc.getProperty(self.DEVICE[0],'Binning')
-            self.binBox.setCurrentText(realBinning) #Ensure that the change are effective
-                                                    #and update the GUI
-        except:
-            print 'CMM err, no possibility to set Binning'
-
-    def bitChange(self, bit):
-        """
-        Change the Sensitivity/DynamicRange in the camera settings and update the GUI.
-        """
-        try:
-            self.mmc.setProperty(self.DEVICE[0], 'Sensitivity/DynamicRange', str(bit))
-            actualBitDepth = self.mmc.getProperty(self.DEVICE[0],'Sensitivity/DynamicRange')
-            self.bitBox.setCurrentText(actualBitDepth)
-        except:
-            print 'CMM err, no possibility to set Sensitivity/DynamicRange'
-            
-    def shutChange(self,shutterMode):
-        """
-        Change the ElectronicShutteringMode in the camera settings and update the GUI.
-        """
-        try:
-            self.mmc.setProperty(self.DEVICE[0],'ElectronicShutteringMode',str(shutterMode))
-            actualShutterMode = self.mmc.getProperty(self.DEVICE[0], 'ElectronicShutteringMode')
-            self.shutBox.setCurrentText(actualShutterMode)
-        except:
-            print 'CMM err, no possibility to set ElectronicShutteringMode'
-        
-    def triggerChange(self, triggerMode):
-        """
-        Change the TriggerMode in the camera settings and update the GUI.
-        """
-        try:
-            self.mmc.setProperty(self.DEVICE[0],'TriggerMode',str(triggerMode))
-            actualTriggerMode = self.mmc.getProperty(self.DEVICE[0], 'TriggerMode')
-            self.triggerBox.setCurrentText(actualTriggerMode)
-        except:
-            print 'CMM err, no possibility to set TriggerMode'
-
-    def overlapChange(self, overlap):
-        """
-        Change the TriggerMode in the camera settings and update the GUI.
-        """
-        try:
-            self.mmc.setProperty(self.DEVICE[0],'Overlap', str(overlap))
-            actualOverlap = self.mmc.getProperty(self.DEVICE[0], 'Overlap')
-            self.overlapBox.setCurrentText(actualOverlap)
-        except:
-            print "CMM err, no possibility to set Overlap mode"
-                 
+    ######################################
+    #### Acquisition settings methods ####
+    ######################################
+    
     def ledTrigChange(self):
+        """
+        Handle a change in the LED trigger mode.
+        """
+        #Only Labjack mode for the moment so not implemented for the moment.
         print 'm'
     
-    
-    def green(self,toggle_g):
-        if toggle_g:
-            greenOn(self.labjack)
-        else :
-            greenOff(self.labjack)
-          
-    def red(self,toggle_r):
-        if toggle_r:
-            redOn(self.labjack)
-        else :
-            redOff(self.labjack)    
-            
-    def blue(self,toggle_b):
-        if toggle_b:
-            blueOn(self.labjack)
-        else :
-            blueOff(self.labjack)
-        
     def ledSequenceModeCheck(self):
         """
         Check wich LED sequence mode is selected and enable the good buttons.
@@ -543,43 +587,32 @@ class isoiWindow(QtWidgets.QMainWindow):
         sizeMax = fileSizeCalculation(framePerFile, ROI, bitPPix)
         self.sizePerFileLabel.setText(str(sizeMax))
     
-    def unloadDevices(self):
-        try:
-            self.mmc.unloadAllDevices()
-            print 'all devices UNLOADED'
-        except:
-            print 'CMM error : fail to unload all devices'
+    ### SAVING FOLDER CHOICE ###
+    def browseSavingFolder(self):
+        """
+        Create and display a browse window to select a folder where 
+        the experiment data will be save.
+        """
+        self.browseWindow = BrowseWindow()
+        self.reconnect(self.browseWindow.filePathSig, self.updateSavingPath)
+        #self.browseFolderWindow.fileNameSig.connect()
+        self.browseWindow.show()
+     
         
-    
-    def closeEvent(self, event):
-        # Close all before closing the main window
-        closingChoice = QMessageBox.question(self, 
-                                             'Close Confirmation',
-                                             "Exit ?",
-                                             QMessageBox.Yes | QMessageBox.No)
-        
-        if closingChoice == QMessageBox.Yes: # UNLOAD DEVICES before closing the program
-            self.unloadDevices()
-            event.accept() # let the window close
+    def updateSavingPath(self, savingPath):
+        """
+        Update the GUI field with the saving folder path name.
+        """
+        if path.isdir(savingPath):
+            today = str(date.today())
+            self.savingPath.clear() #Clear the QlineEdit widget
+            self.savingPath.insert(savingPath+'/'+today[2:4]+today[5:7]+today[8:10]+'/Default_folder_name')
         else:
-            event.ignore()
-        
-    def loadZyla(self):
-        self.DEVICE = camInit(self.mmc)
-        print 'Device ',self.DEVICE[0],' loaded'
-    
-    def triggerModeCheck(self, triggerMode):
-        print triggerMode
-        if self.mmc.getProperty(self.DEVICE[0], 'TriggerMode') != triggerMode:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Warning)
-            msg.setText("Set the trigger mode to : \n" + triggerMode)
-            msg.setWindowTitle("Trigger mode warning")
+            msg.setText(savingPath+" is not a folder")
+            msg.setWindowTitle("Saving folder selection")
             msg.exec_()
-            return False
-        else:
-            return True
-    
     
     
     ######################################
@@ -615,6 +648,12 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.saveImageSeq()
             
     def saveImageSeq(self):
+        """
+        Get all informations from the GUI needed for setting up an acquisition.
+        Then instanciate an object from the SequenceAcquisition class, and this
+        object will handle the actual sequence acquisition.
+        """
+        
         #Get experiment/acquisition settings from the GUI
         name = self.experimentName.text() #str
         duration = self.experimentDuration.value() # float (seconds)
@@ -677,39 +716,46 @@ class isoiWindow(QtWidgets.QMainWindow):
             # We have all the events we need connected we can start the thread 
             self.sequencAcq.start()
         else:
-            try :
-                interruptAIN = 1
-                startSignalState = True
-                waitToCheckSignal = 0.5
-                #Instanciate a SignalInterrupt object to listen to the labjack and detect interrupt
-                self.startInterrupt = SignalInterrupt(self.labjack, interruptAIN, waitToCheckSignal, startSignalState)
-                self.startInterrupt.stateReachedInterrupt.connect(self.sequencAcq.start)
-                print 'object started'
-                self.sequencAcq.isStarted.connect(self.startInterrupt.abort)
-                #Pop-up window to prevent user that we are waiting for a trigger pulse
-                self.startInterrupt.start()
-            except:
-                print 'error with interrupt signal class'
+            interruptAIN = 1
+            startSignalState = True
+            waitToCheckSignal = 0.5
+            #Instanciate a SignalInterrupt object to listen to the labjack and detect interrupt
+            self.startInterrupt = SignalInterrupt(self.labjack, interruptAIN, waitToCheckSignal, startSignalState)
+            self.startInterrupt.stateReachedInterrupt.connect(self.sequencAcq.start)
+            print 'object started'
+            self.sequencAcq.isStarted.connect(self.startInterrupt.abort)
+            #Pop-up window to prevent user that we are waiting for a trigger pulse
+            self.startInterrupt.start()
         
     
     ##### Methods in charge of communication with SequenceAcquisition class instance ####
     def initProgressBar(self,nbFrames):
-        #Initialize progressBar
+        """
+        Initialize the progress bar in function of the nb of frames of the acquisition.
+        """
         self.progressBar.setMaximum(nbFrames)
         
     def updateProgressBar(self,imageCount):
+        """
+        Update progress bar in function of the acquisition progress.
+        """
         self.progressBar.setValue(imageCount+1)
     
     def acquisitionDone(self):
-        print 'acquisition done'
-        #reset progressBar
+        """
+        Udpate the GUI when an acquisition is finished.
+        """
+        #Reset progressBar
         self.progressBar.reset()
         #Change button state
         self.abortBtn.setEnabled(False)
         self.runSaveBtn.setEnabled(True)
         
         
-    ##### HISTOGRAM FCT #### NOT USED ANY MORE
+    #########################################
+    #### Histogram using QThread section ####
+    #########################################
+    
     def launchHisto(self):
         try:
             self.liveHistogram = LiveHistogram(self.mmc, self.labjack)
@@ -870,7 +916,7 @@ class isoiWindow(QtWidgets.QMainWindow):
     
     
     #################################
-    #### common utility function ####
+    #### Common utility function ####
     #################################
     def reconnect(self, signal, newhandler=None, oldhandler=None):
         """
@@ -889,6 +935,23 @@ class isoiWindow(QtWidgets.QMainWindow):
         if newhandler is not None:
             signal.connect(newhandler)
             print 'new connection ok'
+    
+    def closeEvent(self, event):
+        """
+        Executed when close button of the main window is clicked.
+        Ask for closing and close properly the program.
+        """
+        # Close all before closing the main window
+        closingChoice = QMessageBox.question(self, 
+                                             'Close Confirmation',
+                                             "Exit ?",
+                                             QMessageBox.Yes | QMessageBox.No)
+        
+        if closingChoice == QMessageBox.Yes: # UNLOAD DEVICES before closing the program
+            self.unloadDevices()
+            event.accept() # let the window close
+        else:
+            event.ignore()
 
 
 ##Launching everything
