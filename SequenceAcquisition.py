@@ -26,6 +26,7 @@ class SequenceAcquisition(QThread):
     nbFramesSig = pyqtSignal(int)
     progressSig = pyqtSignal(int)
     isFinished = pyqtSignal()
+    isStarted = pyqtSignal()
     
 
     
@@ -268,8 +269,7 @@ class SequenceAcquisition(QThread):
         
     
     def run(self):
-        print 'run fct'
-        
+        self.isStarted.emit()
         #Calculation of the number of frames in function of the duration + LED list for the acquisition
         if self.seqMode == "rgbMode":
             self._rgbSequenceInit()

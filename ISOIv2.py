@@ -26,6 +26,7 @@ import threading
 from SequenceAcquisition import SequenceAcquisition
 from LiveHistogram import LiveHistogram
 from BrowseWindow import BrowseWindow
+from SignalInterrupt import SignalInterrupt 
 
 #Function import
 from histogram import histoInit, histoCalc
@@ -648,11 +649,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         elif self.rbMode.isChecked():
             self.sequencAcq.seqMode = "rbMode"
         
+        
         if not triggerStop :
-            # We have all the events we need connected we can start the thread
-            #print 'object connected'
-            self.sequencAcq.start()
-            print 'object started'
             # At this point we want to allow user to stop/terminate the thread
             # so we enable that button
             self.abortBtn.setEnabled(True)
@@ -663,15 +661,36 @@ class isoiWindow(QtWidgets.QMainWindow):
         else:
             #--> reading an while looping for the image acquisition
             # input and when the signal goes high
-            WAIT_TIME_SECONDS=1
-            ticker = threading.Event()
-            while not ticker.wait(WAIT_TIME_SECONDS):
-                print 'Check signal'
-                #check labjack input
+            interruptAIN = 1
+            stopSignalState = False
+            waitToCheckSignal = 0.5
+            #Instanciate a SignalInterrupt object to listen to the labjack and detect interrupt
+            self.stopInterrupt = SignalInterrupt(self.labjack, interruptAIN, waitToCheckSignal, stopSignalState)
+            self.stopInterrupt.stateReachedInterrupt.connect(self.sequencAcq.abort)
+            self.sequencAcq.isFinished.connect(self.stopInterrupt.abort)
+            self.stopInterrupt.start()
         
         # We don't want to enable user to start another thread while this one is
         # running so we disable the start button.
         self.runSaveBtn.setEnabled(False)
+        if not triggerStart:
+            # We have all the events we need connected we can start the thread 
+            self.sequencAcq.start()
+        else:
+            try :
+                interruptAIN = 1
+                startSignalState = True
+                waitToCheckSignal = 0.5
+                #Instanciate a SignalInterrupt object to listen to the labjack and detect interrupt
+                self.startInterrupt = SignalInterrupt(self.labjack, interruptAIN, waitToCheckSignal, startSignalState)
+                self.startInterrupt.stateReachedInterrupt.connect(self.sequencAcq.start)
+                print 'object started'
+                self.sequencAcq.isStarted.connect(self.startInterrupt.abort)
+                #Pop-up window to prevent user that we are waiting for a trigger pulse
+                self.startInterrupt.start()
+            except:
+                print 'error with interrupt signal class'
+        
     
     ##### Methods in charge of communication with SequenceAcquisition class instance ####
     def initProgressBar(self,nbFrames):

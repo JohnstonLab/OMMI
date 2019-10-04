@@ -10,18 +10,23 @@ from PyQt5.QtCore import QThread, pyqtSignal
 import threading
 
 ####functions import
-from labjack import readSignal
+from Labjack import readSignal
 
 class SignalInterrupt(QThread):
     """
     An instance of this class will listen to a designated signal and emit pyqtSignal to interrupt a running thread or task
     """
     interrupt = pyqtSignal(bool)
+    stateReachedInterrupt =pyqtSignal()
     
-    def __init__(self, labjack, channel, parent=None):
+    def __init__(self, labjack, channel, waitTimeSeconds=0.5, waitedState = None, parent=None):
         QThread.__init__(self,parent)
         self.labjack = labjack
         self.channel = channel
+        self.waitTimeSeconds = waitTimeSeconds
+        self.waitedState = waitedState
+        self.running = True
+        print 'S interrupt created with scan time : ', self.waitTimeSeconds
     
     def __del__(self):
         self.wait()
@@ -34,12 +39,21 @@ class SignalInterrupt(QThread):
         LOW (<0.8) > False
         """
         state = None
-        print'measure taken'
         if signalValue > 2.4:
             state = True
         if signalValue < 0.8:
             state = False
         return state
+    
+    def _checkWantedState(self, signalState):
+        """
+        Emit an interrupt signal if the state reached is the expected one.
+        """
+        if signalState == self.waitedState:
+            self.stateReachedInterrupt.emit()
+            print 'Interrupt accepted'
+        else:
+            print 'Interrupt rejected (non expected state)'
     
     def run(self):
         """
@@ -50,12 +64,21 @@ class SignalInterrupt(QThread):
         
         signalPrevState = self._signalState(readSignal(self.labjack, self.channel))
         
-        WAIT_TIME_SECONDS = 0.5
         ticker = threading.Event()
-        while not ticker.wait(WAIT_TIME_SECONDS):
+        while (not ticker.wait(self.waitTimeSeconds)) and (self.running):
             signalState = self._signalState(readSignal(self.labjack, self.channel))    
             if signalPrevState != signalState:
                     self.interrupt.emit(signalState)
+                    print 'interrupt detected'
+                    if self.waitedState != None:
+                        self._checkWantedState(signalState)
                     print 'interrupt'
-        print 'run fct done'
+            signalPrevState =self._signalState(readSignal(self.labjack, self.channel)) 
+        print 'run fct of Interrupt done'
+    
+    def abort(self):
+        """
+        Stop the main thread if no interrupt detected.
+        """
+        self.running = False
         
