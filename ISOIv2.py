@@ -689,23 +689,30 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.sequencAcq.seqMode = "rbMode"
         
         
-        if not triggerStop :
-            # At this point we want to allow user to stop/terminate the thread
-            # so we enable that button
-            self.abortBtn.setEnabled(True)
-            # And we connect the click of that button to the built in
-            # terminate method that all QThread instances have
-            self.abortBtn.clicked.connect(self.sequencAcq.abort)
+        # At this point we want to allow user to stop/terminate the thread
+        # so we enable that button
+        self.abortBtn.setEnabled(True)
+        # And we connect the click of that button to the built in
+        # terminate method that all QThread instances have
+        self.abortBtn.clicked.connect(self.sequencAcq.abort)
         
-        else:
+        if triggerStop:
             #--> reading an while looping for the image acquisition
             # input and when the signal goes high
             interruptAIN = 1
             stopSignalState = False
             waitToCheckSignal = 0.5
+            
+            stopTriggerMsg = QMessageBox()
+            stopTriggerMsg.setIcon(QMessageBox.Warning)
+            stopTriggerMsg.setText("Low SYNC signal detected")
+            stopTriggerMsg.setWindowTitle("Aborted acquisition")
+            
             #Instanciate a SignalInterrupt object to listen to the labjack and detect interrupt
             self.stopInterrupt = SignalInterrupt(self.labjack, interruptAIN, waitToCheckSignal, stopSignalState)
             self.stopInterrupt.stateReachedInterrupt.connect(self.sequencAcq.abort)
+            self.stopInterrupt.stateReachedInterrupt.connect(stopTriggerMsg.exec_)
+            self.abortBtn.clicked.connect(self.sequencAcq.abort)
             self.sequencAcq.isFinished.connect(self.stopInterrupt.abort)
             self.stopInterrupt.start()
         
@@ -719,14 +726,22 @@ class isoiWindow(QtWidgets.QMainWindow):
             interruptAIN = 1
             startSignalState = True
             waitToCheckSignal = 0.5
+            
+            startTriggerMsg = QMessageBox()
+            startTriggerMsg.setIcon(QMessageBox.Warning)
+            startTriggerMsg.setText("Labjack is ready to receive external signal")
+            startTriggerMsg.setWindowTitle("Waiting for a SYNC signal")
+            
             #Instanciate a SignalInterrupt object to listen to the labjack and detect interrupt
             self.startInterrupt = SignalInterrupt(self.labjack, interruptAIN, waitToCheckSignal, startSignalState)
             self.startInterrupt.stateReachedInterrupt.connect(self.sequencAcq.start)
-            print 'object started'
+            try:
+                self.startInterrupt.stateReachedInterrupt.connect(startTriggerMsg.close)
+            except:
+                print ' no way to connect close fct'
             self.sequencAcq.isStarted.connect(self.startInterrupt.abort)
-            #Pop-up window to prevent user that we are waiting for a trigger pulse
-            self.startInterrupt.start()
-        
+            self.startInterrupt.start() # start listening to the signal
+            startTriggerMsg.exec_() #Pop window to prevent listenning to trigger
     
     ##### Methods in charge of communication with SequenceAcquisition class instance ####
     def initProgressBar(self,nbFrames):
