@@ -148,6 +148,18 @@ class Arduino(object):
         Send a float to arduino through serial port.
         Optionally a report is printed if printR = True.
         """
+        try:
+            floatNb = float(floatNb)
+        except Exception as e:
+            print(e)
+        try:
+            dataToSend = str(floatNb)
+            for char in dataToSend :
+                self.sendChar(char)
+            if printR:
+                print("Sent the floatNb %s succesfully" %floatNb)
+        except Exception as e:
+            print("Some error occurred, here is the exception: ",e)
 
     
     def sendIntArray(self,array,delay=2,printR=False):
@@ -171,6 +183,31 @@ class Arduino(object):
             print("Some error occurred, here is the exception: ",e)
 
    
+    def sendIllumTime(self, illumTime):
+        """
+        Send the time within a LED ON from the beggining of an acquisition.
+        """
+        self.sendChar('E')
+        msIllumTime = int(illumTime)
+        usIllumTime = round((illumTime-msIllumTime),3)*1000 #Round and convert to us
+        #Sending ms component
+        for char in str(msIllumTime):
+            self.sendChar(char)
+        try:
+            intSent = self.readData(1)
+            print intSent
+        except:
+            print 'No data sent'
+        
+        #Sending us component
+        for char in str(usIllumTime):
+            self.sendChar(char)
+        try:
+            intSent = self.readData(1)
+            print intSent
+        except:
+            print 'No data sent'
+    
     def readData(self,nlines,printData=False,array=True,integers=False,Floaters=False):
         
         """
@@ -257,18 +294,16 @@ class Arduino(object):
 if __name__ == '__main__':
     
     print 'test'
-    blueArduino = Arduino(2)
-    if blueArduino:
-        blueArduino.blinkingLED(0.5)
-    print blueArduino
+#    blueArduino = Arduino(2)
+#    if blueArduino:
+#        blueArduino.blinkingLED(0.5)
+#    print blueArduino
     redArduino = Arduino(0)
-    if redArduino:
-        redArduino.blinkingLED(0.5)
     
-    try:
-        blueArduino.closeConn()
-    except:
-        print 'no way to close blueArduino'
+#    try:
+#        blueArduino.closeConn()
+#    except:
+#        print 'no way to close blueArduino'
     try:
         redArduino.closeConn()
     except:

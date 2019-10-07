@@ -2,7 +2,8 @@
 
 //dual LED triggering
 
-int timeDelay = 5 ; //ms
+int msIllumTime = 5 ; //ms component
+int usIllumTime = 0; //us component
 int incomingByte;      // a variable to read incoming serial data into
 
 // Create a single cyclops object. CH0 corresponds to a physical board with
@@ -26,7 +27,8 @@ void triggerEventRising()
   if((frameCounter%5)==0)
   {
     cyclops0.dac_load_voltage(voltage); //Turn green LED ON
-    delay(timeDelay);
+    delay(msIllumTime);
+    delayMicroseconds(usIllumTime);
     cyclops0.dac_load_voltage(0); //Turn green LED OF
   }
   //When cyclops detect a falling edge, call triggerEventFalling() method
@@ -62,6 +64,24 @@ void loop()
       incomingByte = Serial.read();
       if (incomingByte == 'C'){
         Serial.println(ledDriver);  
+      }
+
+      if (incomingByte == 'E') {
+        msIllumTime = Serial.parseInt();
+        delay(100); //Python must to have time to read the info
+        Serial.println(msIllumTime);
+        delay(100);
+
+        usIllumTime = Serial.parseInt();
+        delay(100); //Python must to have time to read the info
+        Serial.println(usIllumTime);
+        delay(100);
+        
+        //Turn on the LED to check the value sent
+        cyclops0.dac_load_voltage(voltage); //Turn green LED ON
+        delay(msIllumTime);
+        delayMicroseconds(usIllumTime);
+        cyclops0.dac_load_voltage(0); //Turn green LED OF
       }
       
       // if it's a capital H (ASCII 72), turn on the LED:
