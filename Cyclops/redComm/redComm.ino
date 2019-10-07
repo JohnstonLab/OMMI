@@ -12,6 +12,7 @@ Cyclops cyclops0(CH0, 1000);
                               
 bool rise = false; 
 bool fall = true;
+int ledDriver = 0; //This script will be uploaded on the BLUE LED DRIVER
 int frameCounter =0; 
 
 int voltage = 4095; //5V
@@ -59,6 +60,10 @@ void loop()
     if (Serial.available() > 0) {
       // read the oldest byte in the serial buffer:
       incomingByte = Serial.read();
+      if (incomingByte == 'C'){
+        Serial.println(ledDriver);  
+      }
+      
       // if it's a capital H (ASCII 72), turn on the LED:
       if (incomingByte == 'H') {
         cyclops0.dac_load_voltage(voltage);
