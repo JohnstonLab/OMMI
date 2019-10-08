@@ -67,15 +67,14 @@ class Arduino(object):
         """
         
         self.sendChar('C') #Send C char for Connection.
-        ledDriver = self.readData(1,True,True,True,False) #nlines,printData=False,array=True,integers=False,Floaters=False
-        print ledDriver
+        ledDriver = self.readData(1,printData=True,integers = True) #nlines,printData=False,array=True,integers=False,Floaters=False
         if ledDriver[0] == self.led:
             self.connected = True
             print 'Arduino connected'
         else:
-            print 'Wrong LED driver, connection aborted'
             self.ser.close()
             self.ser=None
+            print 'Wrong LED driver, connection aborted'
     
     def __repr__(self):
         """ 
@@ -107,14 +106,15 @@ class Arduino(object):
         valueToWrite = bytes(str(char).encode())
         
         try:
-            send = self.ser.write(valueToWrite)
-            print(
-            """
-            Data sent succesfully.
-            Data sent: %s
-            Immediate response: %s
-            """ 
-            %(char,send))
+            #send = 
+            self.ser.write(valueToWrite)
+#            print(
+#            """
+#            Data sent succesfully.
+#            Data sent: %s
+#            Immediate response: %s
+#            """ 
+#            %(char,send))
         except Exception as e:
             print("Some error occurred, here is the exception: ",e)
 
@@ -189,7 +189,7 @@ class Arduino(object):
         """
         self.sendChar('E')
         msIllumTime = int(illumTime)
-        usIllumTime = round((illumTime-msIllumTime),3)*1000 #Round and convert to us
+        usIllumTime = int(round((illumTime-msIllumTime),3)*1000) #Round and convert to us then to INT
         #Sending ms component
         for char in str(msIllumTime):
             self.sendChar(char)
@@ -207,6 +207,19 @@ class Arduino(object):
             print intSent
         except:
             print 'No data sent'
+    
+    def rbModeSettings(self, greenFrameInterval):
+        """
+        Change the LED alternation mode to rbMode and send necessary informations
+        to the LED DRIVER.
+        """
+        #Send M char to inform arduino the mode will be set
+        self.sendChar('M')
+        #Send G char to chose the rbMode
+        self.sendChar('G')
+        #Send the greenFrameInterval variable
+        for char in str(greenFrameInterval):
+            self.sendChar(char)
     
     def readData(self,nlines,printData=False,array=True,integers=False,Floaters=False):
         
@@ -248,7 +261,7 @@ class Arduino(object):
             try:
                 print 'trying to read'
                 value = self.ser.readline()
-                print 'read value : ', value
+                #print 'read value : ', value
                 data.append(value)
                 i += 1
             except Exception as e:
@@ -299,6 +312,10 @@ if __name__ == '__main__':
 #        blueArduino.blinkingLED(0.5)
 #    print blueArduino
     redArduino = Arduino(0)
+    exposure = 10.07
+    redArduino.sendIllumTime(exposure)
+    greenFrameInterval = 20
+    redArduino.rbModeSettings(greenFrameInterval)
     
 #    try:
 #        blueArduino.closeConn()
