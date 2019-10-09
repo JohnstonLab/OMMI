@@ -300,6 +300,7 @@ class SequenceAcquisition(QThread):
                                       self.greenFrameInterval,
                                       round(1/self.cycleTime,2), #framerate
                                       self.folderPath,
+                                      self.colorMode,
                                       self.mmc, 
                                       'Zyla') #WARNING > modulabilty
         

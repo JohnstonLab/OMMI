@@ -527,6 +527,7 @@ class isoiWindow(QtWidgets.QMainWindow):
                 self.rgbMode.setChecked(False)
                 self.rbMode.setChecked(True)
                 self.gInterval.setValue(acqSettings["(RB) Green frames interval"])
+                self.rbColorBox.setCurrentText(acqSettings["(RB) Color(s)"])
         except:
             print 'Acquisition settings dictionary is not accessible'
         try:
@@ -978,6 +979,7 @@ class isoiWindow(QtWidgets.QMainWindow):
                                              QMessageBox.Yes | QMessageBox.No)
         
         if closingChoice == QMessageBox.Yes: # UNLOAD DEVICES before closing the program
+            
             self.unloadDevices()
             event.accept() # let the window close
         else:
