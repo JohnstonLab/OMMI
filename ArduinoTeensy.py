@@ -19,12 +19,13 @@ class Arduino(object):
     Inspired from : https://github.com/mick001/Arduino-Comm-Class/blob/master/ArduinoUnoClass.py
     """
 
-    def __init__(self, led,speed=9600):
+    def __init__(self, led,speed=9600, timeout=1):
 
         """ CLASS CONSTRUCTOR """
         
         self.led = led
         self.speed = speed
+        self.timeout = timeout
         
         self.connected = False
         self.ser = None
@@ -50,7 +51,7 @@ class Arduino(object):
             try:
                 print "Trying...",portsList[i][0]
                 if ('Teensy' in portsList[i][1]) and (not self.connected):
-                    self.ser = serial.Serial(portsList[i][0], self.speed)
+                    self.ser = serial.Serial(portsList[i][0], self.speed, timeout=self.timeout)
                     self.port=portsList[i][0]
                     self._ledHandshake()
                 else:
@@ -106,15 +107,14 @@ class Arduino(object):
         valueToWrite = bytes(str(char).encode())
         
         try:
-            #send = 
-            self.ser.write(valueToWrite)
-#            print(
-#            """
-#            Data sent succesfully.
-#            Data sent: %s
-#            Immediate response: %s
-#            """ 
-#            %(char,send))
+            send = self.ser.write(valueToWrite)
+            print(
+            """
+            Data sent succesfully.
+            Data sent: %s
+            Immediate response: %s
+            """ 
+            %(char,send))
         except Exception as e:
             print("Some error occurred, here is the exception: ",e)
 
@@ -193,6 +193,7 @@ class Arduino(object):
         #Sending ms component
         for char in str(msIllumTime):
             self.sendChar(char)
+        time.sleep(0.8) # time for parse INT
         try:
             intSent = self.readData(1)
             print intSent
@@ -202,6 +203,7 @@ class Arduino(object):
         #Sending us component
         for char in str(usIllumTime):
             self.sendChar(char)
+        time.sleep(0.8)
         try:
             intSent = self.readData(1)
             print intSent
@@ -210,8 +212,8 @@ class Arduino(object):
     
     def rbModeSettings(self, greenFrameInterval):
         """
-        Change the LED alternation mode to rbMode and send necessary informations
-        to the LED DRIVER.
+        Change the LED alternation mode to rbMode and send the interval between
+        green frames to the LED driver.
         """
         #Send M char to inform arduino the mode will be set
         self.sendChar('M')
@@ -220,6 +222,51 @@ class Arduino(object):
         #Send the greenFrameInterval variable
         for char in str(greenFrameInterval):
             self.sendChar(char)
+    
+    def rgbModeSettings(self, ledRatio):
+        """
+        Change the LED alternation mode to rgbMode and send the LED alternation 
+        sequence to the LED driver.
+        """
+        ledSeq = [0]*ledRatio[0]+[1]*ledRatio[1]+[2]*ledRatio[2]
+        #Send M char to inform arduino the mode will be set
+        self.sendChar('M')
+        #Send L char to chose the rgbMode and send the List
+        self.sendChar('L')
+        #Send the LED alternation sequence
+        #time.sleep(0.5)
+        for char in str(int(len(ledSeq))):
+            dataToSend = str(len(ledSeq))
+            self.sendChar(dataToSend)
+        time.sleep(0.8) #Wait that ParseInt() fct of the arduino timed out
+        try:
+            intSent = self.readData(1)
+            print intSent
+        except:
+            print 'No data sent'
+        time.sleep(0.1)
+        for ledInt in ledSeq:
+            self.sendChar(str(ledInt))
+            time.sleep(0.8)
+            try:
+                intSent = self.readData(1)
+                print intSent
+            except:
+                print 'No data sent'
+         
+    def redOnlyModeSettings(self):
+        """
+        Change the LED alternation mode to red only mode and send the interval 
+        between green frames to the LED driver.
+        """
+        
+    def blueOnlyModeSettings(self):
+        """
+        Change the LED alternation mode to blue only mode and send the interval 
+        between green frames to the LED driver
+        """
+        
+        
     
     def readData(self,nlines,printData=False,array=True,integers=False,Floaters=False):
         

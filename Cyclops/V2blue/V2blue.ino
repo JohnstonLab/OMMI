@@ -12,7 +12,7 @@ int voltage = 4095; //5V set at Cyclops DAC output
 //Initialization of variables for a specific mode
 bool rgbMode = false;
 std::vector<int> ledList; // initialize a int vector of non-determinated size
-int listSize =0; 
+int listSize =0;  
 
 bool rbMode = false;
 int greenFrameInterval;
@@ -20,7 +20,7 @@ int greenFrameInterval;
 bool redMode = false;
 bool blueMode = false;
 
-//Acquisition always begin with a red LED ON
+//RB mode : acquisition always begin with a red LED ON
 bool red=true;
 bool blue=false;
 
@@ -59,49 +59,45 @@ void loop()
       // if it's a capital E, it recepts the exposure
       else if (incomingByte == 'E') {
         msIllumTime = Serial.parseInt();
-        delay(100); //Python must to have time to read the info
+        //delay(100);//ensure that python software is ready to receive the information
         Serial.println(msIllumTime);
-        delay(100);
 
         usIllumTime = Serial.parseInt();
-        delay(100); //Python must to have time to read the info
+        //delay(100);//ensure that python software is ready to receive the information
         Serial.println(usIllumTime);
-        delay(100);
       }
 
       else if(incomingByte == 'M'){
         // Setting the alternation mode of the LED
         frameCounter=0; red = true; blue = false; //Reset default parameters
         rgbMode = false; rbMode = false; redMode = false; blueMode = false;
+        delay(100);//ensure that python software has send the inforomation
         incomingByte = Serial.read();
 
         
       
         // if it's an L (ASCII 76), it recepts the LED list
-        if (incomingByte == 'L') {
+        if(incomingByte == 'L'){
           //Clear the old LED list and sets the alternation mode
-          ledList.clear(); rgbMode = true;
+          if(!ledList.empty()){ledList.clear();}
+          rgbMode = true;
           
           //Append the ledList
           listSize = Serial.parseInt();
+          //delay(100); //Python must to have time to read the info
           Serial.println(listSize);
           for(int i = 0; i < listSize; ++i){
-              delay(100); //ensure that python software has send the inforomation
-              incomingByte = Serial.read();
+              //delay(100); //ensure that python software has send the inforomation
+              incomingByte = Serial.parseInt();
               ledList.push_back(incomingByte);
               Serial.println(ledList[i]);
           }
-          /*ledList = tempLedList;
-          for(int i = 0; i < listSize; ++i){
-              Serial.print("Element nb ");Serial.print(i);Serial.print(" : ");
-              Serial.println(ledList[i]);
-          }*/
         }
         else if(incomingByte =='G'){
           //Set to rb mode
           rbMode = true;
-          greenFrameInterval = Serial.parseInt();
           //receive green frames interval
+          greenFrameInterval = Serial.parseInt();
         }
         else if(incomingByte =='R'){
           //Set to redOnly mode
@@ -113,7 +109,6 @@ void loop()
           blueMode = true;
           //receive green frames interval
         }
-        
       }
     }
 }
