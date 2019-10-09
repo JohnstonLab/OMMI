@@ -76,6 +76,12 @@ class isoiWindow(QtWidgets.QMainWindow):
     #Binning (cam properties)
     binn=['1x1','2x2','4x4','8x8']
     
+    #Color mode in R-B acquisition
+    rbColorModes = ['Red and Blue', 'Red only', 'Blue only']
+    
+    #LED trigger modes 
+    ledTriggerModes = ['Labjack', 'Cyclops']
+    
     def __init__(self, mmc, DEVICE, labjack,parent=None):
         QtWidgets.QMainWindow.__init__(self, parent)
         uic.loadUi('isoi_window_V2.ui', self)
@@ -140,17 +146,24 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.triggerBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'TriggerMode'))
         self.triggerBox.currentTextChanged.connect(self.triggerChange)
         
-        #LEDs trigger mode selection
-        #self.ledTrigBox.addItem('Cyclops')
-        self.ledTrigBox.addItem('Labjack')
-        self.ledTrigBox.setCurrentText('Labjack')
-        self.ledTrigBox.currentTextChanged.connect(self.ledTrigChange)
-        
         #Overlap Mode
         self.overlapBox.addItem('On')
         self.overlapBox.addItem('Off')
         self.overlapBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'Overlap'))
         self.overlapBox.currentTextChanged.connect(self.overlapChange)
+
+        
+        #LEDs trigger mode selection
+        #self.ledTrigBox.addItem(isoiWindow.ledTriggerModes[1])
+        self.ledTrigBox.addItem(isoiWindow.ledTriggerModes[0])
+        self.ledTrigBox.setCurrentText(isoiWindow.ledTriggerModes[0])
+        self.ledTrigBox.currentTextChanged.connect(self.ledTrigChange)
+        
+        #Color mode of rb alternance box
+        self.rbColorBox.addItem(isoiWindow.rbColorModes[0])
+        self.rbColorBox.addItem(isoiWindow.rbColorModes[1])
+        self.rbColorBox.addItem(isoiWindow.rbColorModes[2])
+        self.rbColorBox.setCurrentText(isoiWindow.rbColorModes[0])
         
         ####### Slider #####
         self.expSlider.setMinimum(isoiWindow.expMin)
@@ -498,7 +511,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         except:
             print 'Camera settings dictionary is not accessible'
             
-        ### Load acquisiiton settings
+        ### Load acquisiton settings
         try:
             acqSettings = cfgDict["Acquisition settings"]
             self.expRatio.setValue(acqSettings['LED illumination time (% of exposure)'])
@@ -663,6 +676,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         expRatio = self.expRatio.value() #int
         rbGreenRatio = self.gInterval.value() #int
         savingPath = self.savingPath.text() #str
+        colorMode = self.rbColorBox.currentText() #str
         triggerStart = self.startTriggerBox.isChecked()
         triggerStop = self.stopTriggerBox.isChecked()
         
@@ -676,6 +690,7 @@ class isoiWindow(QtWidgets.QMainWindow):
                                          maxFrames,
                                          expRatio,
                                          savingPath,
+                                         colorMode,
                                          self.mmc,
                                          self.labjack)
         print 'object initialized'

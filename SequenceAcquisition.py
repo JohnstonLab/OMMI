@@ -28,9 +28,10 @@ class SequenceAcquisition(QThread):
     isFinished = pyqtSignal()
     isStarted = pyqtSignal()
     
-
+    #Color mode in R-B acquisition
+    rbColorModes = ['Red and Blue', 'Red only', 'Blue only']
     
-    def __init__(self, experimentName, duration, cycleTime, rgbLedRatio, greenFrameInterval, maxFrames, expRatio, folderPath, mmc, labjack, parent=None):
+    def __init__(self, experimentName, duration, cycleTime, rgbLedRatio, greenFrameInterval, maxFrames, expRatio, folderPath, colorMode, mmc, labjack, parent=None):
         QThread.__init__(self,parent)
         
         #Set instance attributes
@@ -41,6 +42,7 @@ class SequenceAcquisition(QThread):
         self.greenFrameInterval = greenFrameInterval
         self.maxFrames = maxFrames
         self.expRatio = expRatio
+        self.colorMode = colorMode
         self.mmc = mmc
         self.labjack = labjack
         self.acqRunning = True
@@ -87,7 +89,14 @@ class SequenceAcquisition(QThread):
         print 'Nb of green frames : ', nbGreenSequence
         nbGreenSequence = int(round(nbGreenSequence))
         print 'Nb of green frames : ', nbGreenSequence
-        self.ledList = [0,2]*int(round(float(self.nbFrames-nbGreenSequence)/2)) #Initiate a whole list of R-B alternance
+        #if self.colorMode == SequenceAcquisition.rbColorModes[0]:
+        colorSeq=[0,2] #R & B alternation by default
+        if self.colorMode == SequenceAcquisition.rbColorModes[1]:
+            colorSeq = [0] #Red only mode
+        elif self.colorMode == SequenceAcquisition.rbColorModes[2]:
+            colorSeq = [2] #Blue only mode
+        
+        self.ledList = colorSeq*int(round(float(self.nbFrames-nbGreenSequence)/len(colorSeq))) #Initiate a whole list of R-B alternance
         #list.insert(index, elem) -- inserts the element at the given index, shifting elements to the right
         greenSeqIdx = 0
         while greenSeqIdx <= self.nbFrames :
