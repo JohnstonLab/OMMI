@@ -979,7 +979,10 @@ class isoiWindow(QtWidgets.QMainWindow):
                                              QMessageBox.Yes | QMessageBox.No)
         
         if closingChoice == QMessageBox.Yes: # UNLOAD DEVICES before closing the program
-            
+            try:
+                self.sequencAcq.abort()
+            except:
+                print('No sequenceAcqu running or impossible to abort it')
             self.unloadDevices()
             event.accept() # let the window close
         else:
