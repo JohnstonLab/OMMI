@@ -410,7 +410,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "ISOI Software"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "OMMI"))
         self.groupBox.setTitle(_translate("MainWindow", "Camera Settings"))
         self.expLabel.setText(_translate("MainWindow", "Exposure :"))
         self.approxFramerateBtn.setText(_translate("MainWindow", "Approx Framerate"))

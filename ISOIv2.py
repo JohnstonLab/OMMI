@@ -15,12 +15,12 @@ import MMCorePy
 import cv2
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QFileDialog
 from time import time
 from os import path
 from datetime import date
-import numpy as np
-import threading
+
+
 
 #Class import
 from SequenceAcquisition import SequenceAcquisition
@@ -31,7 +31,6 @@ from SignalInterrupt import SignalInterrupt
 #Function import
 from histogram import histoInit, histoCalc
 from crop import crop_w_mouse
-from continousAcq import grayLive
 from camInit import camInit, defaultCameraSettings
 from saveFcts import fileSizeCalculation, cfgFileLoading
 from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, trigImage
@@ -105,7 +104,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.approxFramerateBtn.clicked.connect(self.approxFramerate)
         self.testFramerateBtn.clicked.connect(self.testFramerate)
         self.loadSettingsFileBtn.clicked.connect(self.browseSettingsFile)
-        self.defaultSettingsBtn.clicked.connect(self.defaultSettings)
+        #self.defaultSettingsBtn.clicked.connect(self.defaultSettings) 
+        self.defaultSettingsBtn.clicked.connect(self.loadjsonFile)
         self.savingPathBtn.clicked.connect(self.browseSavingFolder)
         
         self.loadFileBtn.clicked.connect(self.loadFolder)
@@ -488,6 +488,23 @@ class isoiWindow(QtWidgets.QMainWindow):
             msg.setText(settingsPath+" is not a .json file")
             msg.setWindowTitle("Settings file selection")
             msg.exec_()
+    
+    def loadjsonFile(self):
+        """
+        Use QFileDialog to display a window and ask for a file to load.
+        """
+        fnList = None
+        try:
+            fileDialogWindow = QFileDialog(self, 'Open configuration file', filter=('JSON configuration file (*.json)'))
+            if fileDialogWindow.exec_():
+                fnList = fileDialogWindow.selectedFiles()
+        except:
+            print 'Non working file dialog'
+        if fnList != None and len(fnList) == 1:
+            self.loadSettings(fnList[0])
+        else:
+            print('No file or more than one file selected')
+        
     
     def loadSettings(self, settingsPath):
         """
@@ -884,6 +901,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.reconnect(self.browseWindow.filePathSig, self.setAnalysisPath)
         self.reconnect(self.browseWindow.fileNameSig, self.updateAnalysisFolder)
         self.browseWindow.show()
+        
         
     def setAnalysisPath(self, path):
         """
