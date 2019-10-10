@@ -24,7 +24,6 @@ from os import path
 #Class import
 from SequenceAcquisition import SequenceAcquisition
 from LiveHistogram import LiveHistogram
-from BrowseWindow import BrowseWindow
 from SignalInterrupt import SignalInterrupt 
 
 #Function import
@@ -207,7 +206,6 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.experimentName.insert("DefaultName")
         
         #Initialize frames per files text label
-        #self.framesPerFileLabel.setText('1146') #nb frames per file (1GB) for uncropped frame with 16 bits per pixels
         self.fileSizeSetting()
         
         #Initialize exposure label
@@ -850,17 +848,6 @@ class isoiWindow(QtWidgets.QMainWindow):
     #######################    
     #### Analysis part ####
     #######################
-    
-#    def loadFolder(self):
-#        """
-#        Load a folder containing experiments.
-#        """
-#        self.browseWindow = BrowseWindow(self)
-#        self.browseWindow.resize(666, 333)
-#        self.reconnect(self.browseWindow.filePathSig, self.setAnalysisPath)
-#        self.reconnect(self.browseWindow.fileNameSig, self.updateAnalysisFolder)
-#        self.browseWindow.show()
-#        
         
     def loadFolder(self):
         """
@@ -876,25 +863,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         else:
             print('No folder selected')
         
-        
-#    def setAnalysisPath(self, path):
-#        """
-#        Update the path of analysis
-#        """
-#        print 'Analysis path update'
-#        ### Add a verification that is a folder
-#        self.analysisPath = path
-#        subDirectories = get_immediate_subdirectories(self.analysisPath)
-#        self.subDirList.clear()
-#        self.subDirList.addItems(subDirectories)
-#        #self.subDirList.itemDoubleClicked.connect(self.splitChannels)
-#    
-#    def updateAnalysisFolder(self, folderName):
-#        """
-#        Display the folder name.
-#        """
-#        print 'Analysis path display'
-#        self.folderName.setText(folderName)
+
         
     def splitChannels(self, experimentFolderName=None):
         """
