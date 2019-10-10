@@ -172,14 +172,14 @@ class SequenceAcquisition(QThread):
         
         
         
+        #Stop camera acquisition #Ensure that no more frames are taken
+        self.mmc.stopSequenceAcquisition()
         
         #### IF ABORTED acquisition #####
         self._circularBufferCleaning(imageCount)
         
         #Close tiff file open
         tiffWritersClose(self.tiffWriterList)
-        #Stop camera acquisition
-        self.mmc.stopSequenceAcquisition()
         print 'end of the _frameSavingThread'
         return imageCount
     
@@ -287,6 +287,8 @@ class SequenceAcquisition(QThread):
         
         
         
+        #Stop camera acquisition #Ensure that no more frames are taken
+        self.mmc.stopSequenceAcquisition()
         
         #### IF ABORTED acquisition #####
         self._circularBufferCleaning(imageCount)
@@ -295,8 +297,6 @@ class SequenceAcquisition(QThread):
         self.textFile.close()
         #Close tiff file open
         tiffWritersClose(self.tiffWriterList)
-        #Stop camera acquisition
-        self.mmc.stopSequenceAcquisition()
 
         return imageCount
         
