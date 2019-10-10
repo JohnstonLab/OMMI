@@ -14,11 +14,10 @@ import sys
 import MMCorePy
 import cv2
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import pyqtSignal, QDir
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, QFileDialog
 from time import time
 from os import path
-from datetime import date
 
 
 
@@ -462,31 +461,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         # Reset Camera Settings 
         defaultCameraSettings(self)
         # Reset Acquisition Settings #TO DO ?
-    
-#    def browseSettingsFile(self):
-#        """
-#        Create and display a browse window to select a file to load.
-#        """
-#        self.browseWindow = BrowseWindow(self)
-#        self.browseWindow.resize(666, 333)
-#        #self.browseWindow.filePathSig.connect(self.updateSettingsPath)
-#        self.reconnect(self.browseWindow.filePathSig, self.checkSettingsPath)
-#        #self.browseWindow.fileNameSig.connect(self.updateSettingsName)
-#        #self.reconnect(self.browseWindow.fileNameSig, self.updateSettingsName)
-#        self.browseWindow.show()
-#    
-#    def checkSettingsPath(self, settingsPath):
-#        """
-#        Update the instance attribute settingsFilePath used to load a CFG file.
-#        """
-#        if path.isfile(settingsPath) and settingsPath[-5:]=='.json':
-#            self.loadSettings(settingsPath)
-#        else:
-#            msg = QMessageBox()
-#            msg.setIcon(QMessageBox.Warning)
-#            msg.setText(settingsPath+" is not a .json file")
-#            msg.setWindowTitle("Settings file selection")
-#            msg.exec_()
+
     
     def loadjsonFile(self):
         """
@@ -623,7 +598,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         """
         
         folderName = str(QFileDialog.getExistingDirectory(self, "Select Folder"))
-        if len(folderName) > 2:
+        if path.isdir(folderName):
             self.savingPath.clear()
             self.savingPath.insert(folderName)
         else:
@@ -876,35 +851,50 @@ class isoiWindow(QtWidgets.QMainWindow):
     #### Analysis part ####
     #######################
     
+#    def loadFolder(self):
+#        """
+#        Load a folder containing experiments.
+#        """
+#        self.browseWindow = BrowseWindow(self)
+#        self.browseWindow.resize(666, 333)
+#        self.reconnect(self.browseWindow.filePathSig, self.setAnalysisPath)
+#        self.reconnect(self.browseWindow.fileNameSig, self.updateAnalysisFolder)
+#        self.browseWindow.show()
+#        
+        
     def loadFolder(self):
         """
         Load a folder containing experiments.
-        """
-        self.browseWindow = BrowseWindow(self)
-        self.browseWindow.resize(666, 333)
-        self.reconnect(self.browseWindow.filePathSig, self.setAnalysisPath)
-        self.reconnect(self.browseWindow.fileNameSig, self.updateAnalysisFolder)
-        self.browseWindow.show()
+        """    
+        folderName = str(QFileDialog.getExistingDirectory(self, "Select a valid experiment folder"))
+        if path.isdir(folderName):
+            self.folderName.setText(folderName)
+            self.analysisPath = folderName
+            subDirectories = get_immediate_subdirectories(self.analysisPath)
+            self.subDirList.clear()
+            self.subDirList.addItems(subDirectories)
+        else:
+            print('No folder selected')
         
         
-    def setAnalysisPath(self, path):
-        """
-        Update the path of analysis
-        """
-        print 'Analysis path update'
-        ### Add a verification that is a folder
-        self.analysisPath = path
-        subDirectories = get_immediate_subdirectories(self.analysisPath)
-        self.subDirList.clear()
-        self.subDirList.addItems(subDirectories)
-        #self.subDirList.itemDoubleClicked.connect(self.splitChannels)
-    
-    def updateAnalysisFolder(self, folderName):
-        """
-        Display the folder name.
-        """
-        print 'Analysis path display'
-        self.folderName.setText(folderName)
+#    def setAnalysisPath(self, path):
+#        """
+#        Update the path of analysis
+#        """
+#        print 'Analysis path update'
+#        ### Add a verification that is a folder
+#        self.analysisPath = path
+#        subDirectories = get_immediate_subdirectories(self.analysisPath)
+#        self.subDirList.clear()
+#        self.subDirList.addItems(subDirectories)
+#        #self.subDirList.itemDoubleClicked.connect(self.splitChannels)
+#    
+#    def updateAnalysisFolder(self, folderName):
+#        """
+#        Display the folder name.
+#        """
+#        print 'Analysis path display'
+#        self.folderName.setText(folderName)
         
     def splitChannels(self, experimentFolderName=None):
         """
@@ -944,7 +934,7 @@ class isoiWindow(QtWidgets.QMainWindow):
             
             
         else:
-            print 'Please, select a folder'
+            print 'Please, select a valid experiment folder'
 
     
     
