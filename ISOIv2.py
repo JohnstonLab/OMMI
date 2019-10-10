@@ -712,6 +712,7 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.stopInterrupt.stateReachedInterrupt.connect(stopTriggerMsg.exec_)
             self.abortBtn.clicked.connect(self.sequencAcq.abort)
             self.sequencAcq.isFinished.connect(self.stopInterrupt.abort)
+            self.abortBtn.clicked.connect(self.stopInterrupt.abort)
             self.stopInterrupt.start()
         
         # We don't want to enable user to start another thread while this one is
