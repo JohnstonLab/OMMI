@@ -11,6 +11,10 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from time import time, sleep, clock
 from multiprocessing.pool import ThreadPool
 
+
+#Class Import
+from ArduinoTeensy import Arduino
+
 #Function import
 from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, readSignal, readOdourValve
 from saveFcts import filesInit, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata, cfgFileSaving
@@ -67,12 +71,12 @@ class SequenceAcquisition(QThread):
         """
         ## send all of this to sequence acq
         self.nbFrames = int(self.duration/self.cycleTime)+1  ## Determine number of frames. (+1) because int round at the lower int
-        ledSeq = [0]*self.rgbLedRatio[0]+[1]*self.rgbLedRatio[1]+[2]*self.rgbLedRatio[2] #Sequence of LED lighting in function of the ratio
+        self.ledSeq = [0]*self.rgbLedRatio[0]+[1]*self.rgbLedRatio[1]+[2]*self.rgbLedRatio[2] #Sequence of LED lighting in function of the ratio
                                                                                 #RED = 0
                                                                                 #GREEN = 1
                                                                                 #BLUE = 2
-        print 'LED sequence : ', ledSeq
-        self.ledList = ledSeq*(int(self.nbFrames/(len(ledSeq)))+1) ## schedule LED lighting
+        print 'LED sequence : ', self.ledSeq
+        self.ledList = self.ledSeq*(int(self.nbFrames/(len(self.ledSeq)))+1) ## schedule LED lighting
         #NB : no return needed because each ledList and nbFrames are instance attribute
         
     def _rbSequenceInit(self):
@@ -152,7 +156,9 @@ class SequenceAcquisition(QThread):
         return imageCount
         
     def _frameSaving(self):
-        "In charge of saving frames and actualize the GUI"
+        """
+        In charge of saving frames
+        """
         self.mmc.clearCircularBuffer() 
         imageCount=0
         self.mmc.startContinuousSequenceAcquisition(1)
@@ -168,9 +174,21 @@ class SequenceAcquisition(QThread):
         
         
         #### IF ABORTED acquisition #####
-        if (not self.acqRunning):
-            #Get the last images in the circular buffer
-            #This step ensure that there are the same amount of metadata than frames
+        self._circularBufferCleaning(imageCount)
+        
+        #Close tiff file open
+        tiffWritersClose(self.tiffWriterList)
+        #Stop camera acquisition
+        self.mmc.stopSequenceAcquisition()
+        print 'end of the _frameSavingThread'
+        return imageCount
+    
+    def _circularBufferCleaning(self, imageCount):
+        """
+        Get the last images in the circular buffer if the acquisition was aborted.
+        This step ensure that there is the same amount of metadata than frames saved.
+        """
+        if (not self.acqRunning): #Check if sequence acquisition was aborted.
             print('cycleTime :',self.cycleTime)
             sleep(self.cycleTime)
             print ('remaining images in the circular buffer :',self.mmc.getRemainingImageCount())
@@ -189,14 +207,6 @@ class SequenceAcquisition(QThread):
                               imageCount, 
                               self.maxFrames, 
                               self.tiffWriterList)
-        
-        #Close tiff file open
-        tiffWritersClose(self.tiffWriterList)
-        #Stop camera acquisition
-        self.mmc.stopSequenceAcquisition()
-        print 'end of the _frameSavingThread'
-        return imageCount
-    
     
     def _sequenceAcqu(self):
         """
@@ -213,7 +223,7 @@ class SequenceAcquisition(QThread):
         Doc for multithreading : https://docs.python.org/2/library/multiprocessing.html
         """
         print 'New-Seq_acq'
-        exp = (self.mmc.getExposure())*0.001 #converted in ms
+        exp = (self.mmc.getExposure())*0.001 #converted in s
         ledOnDuration = exp*self.expRatio
         print 'time LED ON (s) : ', ledOnDuration
         
@@ -236,46 +246,87 @@ class SequenceAcquisition(QThread):
         return imageCount
 
     def _seqAcqCyclops(self):
+        """
+        Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition. 
+        This function use the labjack to detect a camera trigger.
+        --> Inputs and outputs :
+            - Camera.ARM > Labjack.AIN0
+            - Camera.TRIGGER > Labjack.FIO7
+            - Labjack.FIO4 > blue
+            - Labjack.FIO5 > red
+            - Labjack.FIO6 > green
+        """
         print 'Cyclops running'
+        
         print "Nb of frames : ", self.nbFrames
         imageCount = 0
         
+        self.mmc.clearCircularBuffer() 
+        imageCount=0
         self.mmc.startContinuousSequenceAcquisition(1)
-
-        while(imageCount<(self.nbFrames) and self.acqRunning): #Loop stops if we have the number of frames wanted OR if abort button is press (see abortFunc)
-            
-            #Saving frame coming in the circular buffer
-            if self.mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished #Enter this loop BETWEEN acquisition
-                #trigImage(self.labjack) #Generate a pulse, which allows to flag the entry in this code statement with the oscilloscope
-                #Lighting good LED for next acquisition
-#                if self.ledList[imageCount] == 'r':
-#                    #print "Blue off"
-#                    greenOff(self.labjack)
-#                    redOn(labjack)
-#                elif ledList[imageCount] == 'g':
-#                    redOff(labjack)
-#                    greenOn(labjack)
-#                else:
-#                    redOff(labjack)
-#                    greenOff(labjack)
-                #sleep(0.005) #Wait 5ms to ensure LEDS are on
-                t = clock()
-                img = self.mmc.popNextImage() #Gets and removes the next image from the circular buffer
-                ##read input from labjack
-                valveValue = readOdourValve(self.labjack, 2)
-                saveMetadata(self.textFile, str(t),self.ledList[imageCount], str(imageCount), str(valveValue()))
-                saveFrame(img, self.tiffWriterList, imageCount, self.maxFrames) # saving frame of previous acquisition
-                imageCount +=1
+        #Timestamp to flag the beginning of acquisition 
+        startAcquisitionTime = time()
         
+        while(imageCount<(self.nbFrames) and self.acqRunning):
+            if self.mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
+                imgSavingTime = time()
+                img = self.mmc.popNextImage() #Gets and removes the next image from the circular buffer
+                saveFrame(img, self.tiffWriterList, (imageCount), self.maxFrames) # saving frame of previous acquisition
+                frameTime = imgSavingTime - startAcquisitionTime #Taking the off time to be synchronized with metadata
+                odourValveSig = readOdourValve(self.labjack, 2)
+                respirationSig = readSignal(self.labjack, 3)
+                saveMetadata(	self.textFile, 
+								str(frameTime),
+								str(self.ledList[imageCount]), 
+								str(imageCount), 
+								str(odourValveSig), 
+								str(respirationSig), 
+								str(0)) #Maybe not the best practice
+                imageCount +=1
+                self.progressSig.emit(imageCount)
+        
+        
+        
+        
+        #### IF ABORTED acquisition #####
+        self._circularBufferCleaning(imageCount)
+        
+        #Close the metadata .txt file
+        self.textFile.close()
         #Close tiff file open
         tiffWritersClose(self.tiffWriterList)
-        
-        
         #Stop camera acquisition
         self.mmc.stopSequenceAcquisition()
-        self.mmc.clearCircularBuffer() 
+
         return imageCount
         
+    
+    def arduinoSync(self):
+        """
+        Send informations about the coming sequence acquisition to the arduino
+        inside each LED drivers
+        """
+        #Calculation of the time LED must be on
+        exp = (self.mmc.getExposure()) # in ms
+        ledOnDurationMs = round(exp*self.expRatio,3)
+        print 'time LED ON (ms) : ', ledOnDurationMs
+        
+        #ARDUINO object initialization
+        ledDriverNb=[0,2] #[Red, Green, Blue]
+        for driverNb in ledDriverNb:
+            driver = Arduino(driverNb)
+            if driver.isConnected():
+                print('Driver num ',driverNb,' is connected')
+                driver.sendIllumTime(ledOnDurationMs)
+                if self.seqMode == "rgbMode":
+                    driver.rgbModeSettings(self.rgbLedRatio)
+                elif self.seqMode == 'rbMode':
+                    driver.rbModeSettings(self.greenFrameInterval,self.colorMode)#TO DO : add the checking of color mode here
+                driver.closeConn()
+            else:
+                print('Driver num ',driverNb,' is NOT connected')
+                
+                
     
     def run(self):
         self.isStarted.emit()
@@ -302,7 +353,7 @@ class SequenceAcquisition(QThread):
                                       self.folderPath,
                                       self.colorMode,
                                       self.mmc, 
-                                      'Zyla') #WARNING > modulabilty
+                                      'Zyla') #WARNING > modulabilty (there is a way to get device label but it's not so easy)
         
         #initialization of the acquisition saving files : .tif (frames) and .txt (metadata)
         (self.tiffWriterList, self.textFile) = filesInit(   self.savePath,
@@ -315,6 +366,7 @@ class SequenceAcquisition(QThread):
             self.imageCount = self._sequenceAcqu()
             print'run fct done'
         elif self.acquMode == "Cyclops":
+            self.arduinoSync()
             self.imageCount = self._seqAcqCyclops()
         else:
             print 'Please select a valid mode of triggering the LED'

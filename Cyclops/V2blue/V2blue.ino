@@ -115,9 +115,8 @@ void loop()
 
 void triggerEventRising()
 {
-  Serial.println("trigger event detected");
   if(rgbMode){rgbModeFct();}
-  else if(rbMode){rbModeFct();Serial.println("rbModeFct done");Serial.println(rbMode);}
+  else if(rbMode){rbModeFct();}
   
   frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
 }

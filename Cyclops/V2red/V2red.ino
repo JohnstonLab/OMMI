@@ -89,6 +89,7 @@ void loop()
               incomingByte = Serial.parseInt();
               ledList.push_back(incomingByte);
               Serial.println(ledList[i]);
+          cyclops0.set_trigger( rgbModeFct, RISING); // cyclops trigger on rising edges
           }
         }
         else if(incomingByte =='G'){
@@ -96,16 +97,21 @@ void loop()
           rbMode = true;
           //receive green frames interval
           greenFrameInterval = Serial.parseInt();
+          cyclops0.set_trigger( rbModeFct, RISING); // cyclops trigger on rising edges
         }
         else if(incomingByte =='R'){
           //Set to redOnly mode
           redMode = true;
           //receive green frames interval
+          greenFrameInterval = Serial.parseInt();
+          cyclops0.set_trigger( redModeFct, RISING); // cyclops trigger on rising edges
         }
         else if(incomingByte =='B'){
           //Set to blueOnly mode
           blueMode = true;
           //receive green frames interval
+          greenFrameInterval = Serial.parseInt();
+          cyclops0.set_trigger( blueModeFct, RISING); // cyclops trigger on rising edges
         }
         
       }
@@ -115,8 +121,9 @@ void loop()
 void triggerEventRising()
 {
   
-  if(rgbMode){rgbModeFct();Serial.println("rgbFct called");}
-  else if(rbMode){rbModeFct();Serial.println("rbFct called");}
+  Serial.println("Rising edge detected");
+//  if(rgbMode){rgbModeFct();}
+//  else if(rbMode){rbModeFct();}
   
   frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
 }
@@ -128,8 +135,9 @@ void rgbModeFct()
     cyclops0.dac_load_voltage(voltage); //Turn green LED ON
     delay(msIllumTime);
     delayMicroseconds(usIllumTime);
-    cyclops0.dac_load_voltage(0); //Turn green LED OF
+    cyclops0.dac_load_voltage(0); //Turn green LED OFF
   }
+  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
 }
 
 void rbModeFct()
@@ -150,6 +158,27 @@ void rbModeFct()
       red=!red;
     }
   }
+  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
+}
+
+void redModeFct()
+{
+  if(frameCounter%greenFrameInterval == 0){
+    //turn green LED ON and OFF 
+  }
+  else{
+    cyclops0.dac_load_voltage(voltage); //Turn red LED ON
+    delay(msIllumTime);
+    delayMicroseconds(usIllumTime);
+    cyclops0.dac_load_voltage(0); //Turn red LED OFF
+  }
+  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
+}
+
+void blueModeFct()
+{
+  //Nothing to do
+  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
 }
 
 

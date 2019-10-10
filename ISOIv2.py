@@ -151,7 +151,7 @@ class isoiWindow(QtWidgets.QMainWindow):
 
         
         #LEDs trigger mode selection
-        #self.ledTrigBox.addItem(isoiWindow.ledTriggerModes[1])
+        self.ledTrigBox.addItem(isoiWindow.ledTriggerModes[1])
         self.ledTrigBox.addItem(isoiWindow.ledTriggerModes[0])
         self.ledTrigBox.setCurrentText(isoiWindow.ledTriggerModes[0])
         self.ledTrigBox.currentTextChanged.connect(self.ledTrigChange)
@@ -304,8 +304,10 @@ class isoiWindow(QtWidgets.QMainWindow):
         trigger and mesure the cycle time.
         """
         cycleTime = None
+        previousTriggerMode = self.mmc.getProperty(self.DEVICE[0], 'TriggerMode')
         triggerMode = 'External'
         print('test of the framerate')
+        self.triggerChange(triggerMode)
         if self.triggerModeCheck(triggerMode):
             self.mmc.startContinuousSequenceAcquisition(1)
             print('acquisition start')
@@ -320,6 +322,7 @@ class isoiWindow(QtWidgets.QMainWindow):
             cycleTime = end-start
             print(cycleTime)
             self.testFramerateLabel.setText(str(round(1/cycleTime,2)))
+        self.triggerChange(previousTriggerMode)
         return cycleTime
     
     
@@ -627,8 +630,13 @@ class isoiWindow(QtWidgets.QMainWindow):
                 
                 
         #Trigger mode check
-        if(self.ledTrigBox.currentText() == 'Labjack') and run:
+        if run and (self.ledTrigBox.currentText() == 'Labjack'):
             if (self.triggerModeCheck('External')):
+                run = True
+            else:
+                run = False
+        if run and (self.ledTrigBox.currentText() == 'Cyclops'):
+            if(self.triggerModeCheck('Internal (Recommended for fast acquisitions)')):
                 run = True
             else:
                 run = False
@@ -672,7 +680,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.sequencAcq.isFinished.connect(self.acquisitionDone)
         self.sequencAcq.nbFramesSig.connect(self.initProgressBar)
         self.sequencAcq.progressSig.connect(self.updateProgressBar)
-        self.sequencAcq.acquMode = self.ledTrigBox.currentText()
+        self.sequencAcq.acquMode = self.ledTrigBox.currentText() #TO DO : set all the parameters like this
         if self.rgbMode.isChecked():
             self.sequencAcq.seqMode = "rgbMode"
         elif self.rbMode.isChecked():

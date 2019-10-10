@@ -19,6 +19,10 @@ class Arduino(object):
     Inspired from : https://github.com/mick001/Arduino-Comm-Class/blob/master/ArduinoUnoClass.py
     """
 
+
+    #Color mode in R-B acquisition
+    rbColorModes = ['Red and Blue', 'Red only', 'Blue only']
+
     def __init__(self, led,speed=9600, timeout=1):
 
         """ CLASS CONSTRUCTOR """
@@ -210,7 +214,7 @@ class Arduino(object):
         except:
             print 'No data sent'
     
-    def rbModeSettings(self, greenFrameInterval):
+    def rbModeSettings(self, greenFrameInterval, colorMode):
         """
         Change the LED alternation mode to rbMode and send the interval between
         green frames to the LED driver.
@@ -218,10 +222,21 @@ class Arduino(object):
         #Send M char to inform arduino the mode will be set
         self.sendChar('M')
         #Send G char to chose the rbMode
-        self.sendChar('G')
-        #Send the greenFrameInterval variable
-        for char in str(greenFrameInterval):
-            self.sendChar(char)
+        if colorMode == Arduino.rbColorModes[0] :
+            self.sendChar('G')
+            #Send the greenFrameInterval variable
+            for char in str(greenFrameInterval):
+                self.sendChar(char)
+        elif colorMode == Arduino.rbColorModes[1]:
+            self.sendChar('R')
+            #Send the greenFrameInterval variable
+            for char in str(greenFrameInterval):
+                self.sendChar(char)
+        elif colorMode == Arduino.rbColorModes[2]:
+            self.sendChar('B')
+            #Send the greenFrameInterval variable
+            for char in str(greenFrameInterval):
+                self.sendChar(char)
     
     def rgbModeSettings(self, ledRatio):
         """
@@ -341,12 +356,19 @@ class Arduino(object):
             print("Nothing to return since array = False")
     
     
+    def isConnected(self):
+        """
+        This function return True if the serial communication is open, False if not
+        """
+        return self.connected
+    
     def closeConn(self):
         """ 
         CLOSE THE USB CONNECTION
         """
         
         self.ser.close()
+        self.connected = False
         print("Arduino connection to "+str(self.port)+" closed!")
         
 ###TEST SECTION :
