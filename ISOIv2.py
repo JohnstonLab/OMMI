@@ -14,7 +14,7 @@ import sys
 import MMCorePy
 import cv2
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QDir
 from PyQt5.QtWidgets import QMessageBox, QFileDialog
 from time import time
 from os import path
@@ -103,9 +103,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.unloadBtn.clicked.connect(self.unloadDevices)
         self.approxFramerateBtn.clicked.connect(self.approxFramerate)
         self.testFramerateBtn.clicked.connect(self.testFramerate)
-        self.loadSettingsFileBtn.clicked.connect(self.browseSettingsFile)
-        #self.defaultSettingsBtn.clicked.connect(self.defaultSettings) 
-        self.defaultSettingsBtn.clicked.connect(self.loadjsonFile)
+        self.loadSettingsFileBtn.clicked.connect(self.loadjsonFile)
+        self.defaultSettingsBtn.clicked.connect(self.defaultSettings)
         self.savingPathBtn.clicked.connect(self.browseSavingFolder)
         
         self.loadFileBtn.clicked.connect(self.loadFolder)
@@ -464,51 +463,49 @@ class isoiWindow(QtWidgets.QMainWindow):
         defaultCameraSettings(self)
         # Reset Acquisition Settings #TO DO ?
     
-    def browseSettingsFile(self):
-        """
-        Create and display a browse window to select a file to load.
-        """
-        self.browseWindow = BrowseWindow(self)
-        self.browseWindow.resize(666, 333)
-        #self.browseWindow.filePathSig.connect(self.updateSettingsPath)
-        self.reconnect(self.browseWindow.filePathSig, self.checkSettingsPath)
-        #self.browseWindow.fileNameSig.connect(self.updateSettingsName)
-        #self.reconnect(self.browseWindow.fileNameSig, self.updateSettingsName)
-        self.browseWindow.show()
-    
-    def checkSettingsPath(self, settingsPath):
-        """
-        Update the instance attribute settingsFilePath used to load a CFG file.
-        """
-        if path.isfile(settingsPath) and settingsPath[-5:]=='.json':
-            self.loadSettings(settingsPath)
-        else:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText(settingsPath+" is not a .json file")
-            msg.setWindowTitle("Settings file selection")
-            msg.exec_()
+#    def browseSettingsFile(self):
+#        """
+#        Create and display a browse window to select a file to load.
+#        """
+#        self.browseWindow = BrowseWindow(self)
+#        self.browseWindow.resize(666, 333)
+#        #self.browseWindow.filePathSig.connect(self.updateSettingsPath)
+#        self.reconnect(self.browseWindow.filePathSig, self.checkSettingsPath)
+#        #self.browseWindow.fileNameSig.connect(self.updateSettingsName)
+#        #self.reconnect(self.browseWindow.fileNameSig, self.updateSettingsName)
+#        self.browseWindow.show()
+#    
+#    def checkSettingsPath(self, settingsPath):
+#        """
+#        Update the instance attribute settingsFilePath used to load a CFG file.
+#        """
+#        if path.isfile(settingsPath) and settingsPath[-5:]=='.json':
+#            self.loadSettings(settingsPath)
+#        else:
+#            msg = QMessageBox()
+#            msg.setIcon(QMessageBox.Warning)
+#            msg.setText(settingsPath+" is not a .json file")
+#            msg.setWindowTitle("Settings file selection")
+#            msg.exec_()
     
     def loadjsonFile(self):
         """
-        Use QFileDialog to display a window and ask for a file to load.
+        Use QFileDialog to display a window and ask for a file to load with
+        a filter on .json file.
         """
-        fnList = None
-        try:
-            fileDialogWindow = QFileDialog(self, 'Open configuration file', filter=('JSON configuration file (*.json)'))
-            if fileDialogWindow.exec_():
-                fnList = fileDialogWindow.selectedFiles()
-        except:
-            print 'Non working file dialog'
-        if fnList != None and len(fnList) == 1:
-            self.loadSettings(fnList[0])
+            
+        selectedFile = QFileDialog.getOpenFileName(self, 'Open configuration file', filter=('JSON configuration file (*.json)'))
+        #FileName contains the file name and the filter so we select only first component
+        fileName=selectedFile[0]
+        if path.isfile(fileName):
+            self.loadSettings(fileName)
         else:
-            print('No file or more than one file selected')
+            print('No file selected')
         
     
     def loadSettings(self, settingsPath):
         """
-        Load the CFG file, update all the experiment 'settings with infos from the file.
+        Load the CFG file, update all the experiment settings with infos from the file.
         """
         print 'Loading : ',settingsPath
         #POP UP window to avoid none path calling
@@ -619,32 +616,19 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.sizePerFileLabel.setText(str(sizeMax))
     
     ### SAVING FOLDER CHOICE ###
+    
     def browseSavingFolder(self):
         """
-        Create and display a browse window to select a folder where 
-        the experiment data will be save.
+        Use QFileDialog to display a window and ask for a folder selection.
         """
-        self.browseWindow = BrowseWindow()
-        self.reconnect(self.browseWindow.filePathSig, self.updateSavingPath)
-        #self.browseFolderWindow.fileNameSig.connect()
-        self.browseWindow.show()
-     
         
-    def updateSavingPath(self, savingPath):
-        """
-        Update the GUI field with the saving folder path name.
-        """
-        if path.isdir(savingPath):
-            today = str(date.today())
-            self.savingPath.clear() #Clear the QlineEdit widget
-            self.savingPath.insert(savingPath+'/'+today[2:4]+today[5:7]+today[8:10]+'/Default_folder_name')
+        folderName = str(QFileDialog.getExistingDirectory(self, "Select Folder"))
+        if len(folderName) > 2:
+            self.savingPath.clear()
+            self.savingPath.insert(folderName)
         else:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText(savingPath+" is not a folder")
-            msg.setWindowTitle("Saving folder selection")
-            msg.exec_()
-    
+            print('No folder selected')
+
     
     ######################################
     #### Sequence acquisition section ####
@@ -967,6 +951,7 @@ class isoiWindow(QtWidgets.QMainWindow):
     #################################
     #### Common utility function ####
     #################################
+    
     def reconnect(self, signal, newhandler=None, oldhandler=None):
         """
         Deconnect a signal and reconnect it to another handler function.
