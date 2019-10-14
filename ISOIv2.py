@@ -601,7 +601,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         """
         
         folderName = str(QFileDialog.getExistingDirectory(self, "Select Folder"))
-        if path.isdir(folderName):
+        if path.isdir(folderName): #check that a directory was selected
             self.savingPath.clear()
             self.savingPath.insert(folderName)
         else:
@@ -642,6 +642,22 @@ class isoiWindow(QtWidgets.QMainWindow):
                 run = True
             else:
                 run = False
+                
+        #Check that a directory was selected
+        folderName=self.savingPath.text()        
+        if run and (path.isdir(folderName)):
+            print (folderName+'/'+self.experimentName.text())
+            if path.exists(folderName+'/'+self.experimentName.text()):
+                choice = QMessageBox.question(self, 'Overwriting',
+                                                "This experiment folder already exist, do you want to overwrite it ?",
+                                                QMessageBox.Yes | QMessageBox.No)
+                if choice == QMessageBox.Yes:
+                    print("Overwriting")
+                    run = True
+                else:
+                    print('Change the experiment name')
+                    run = False
+        
         if run:
             self.saveImageSeq()
             
