@@ -16,7 +16,7 @@ from multiprocessing.pool import ThreadPool
 from ArduinoTeensy import Arduino
 
 #Function import
-from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, readSignal, readOdourValve, trigImage
+from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, readSignal, readOdourValve, trigImage, risingEdge
 from saveFcts import filesInit, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata, cfgFileSaving
 
 
@@ -110,7 +110,9 @@ class SequenceAcquisition(QThread):
 
 
     def _ledSwitching(self, ledOnDuration):
-        "In charge of switching LED and saving metadata in a .txt file"
+        """
+        In charge of switching LED and saving metadata in a .txt file
+        """
         imageCount=0
         print 'Transmitted ledOnDuration value : ',ledOnDuration
         
@@ -245,6 +247,38 @@ class SequenceAcquisition(QThread):
         print 'sequ acq done'
         return imageCount
 
+    def _metadataSaving(self):
+        """
+        Listening to the FIRE signal and save each metadat when a rising edge
+        is detected.
+        """
+        imageCount=0
+        
+        #Timestamp to flag the beginning of acquisition 
+        startAcquisitionTime = time()
+        print 'timestamp got'
+        while(imageCount<(self.nbFrames) and self.acqRunning):
+            if risingEdge(self.labjack, 3): #Labjack, channel, timeout(s)
+                startTime = time()	
+                trigImage(self.labjack)	#flag the begining of an exposure
+                frameTime = startTime - startAcquisitionTime #Taking the off time to be synchronized with metadata
+                odourValveSig = readOdourValve(self.labjack, 2)
+                respirationSig = readSignal(self.labjack, 3)
+                saveMetadata(	self.textFile, 
+								str(frameTime),
+								str(self.ledList[imageCount]), 
+								str(imageCount), 
+								str(odourValveSig), 
+								str(respirationSig), 
+								str(0)) #Maybe not the best practice
+                imageCount+=1
+        
+        #close the metadata .txt file
+        self.textFile.close()
+        print 'end of the ledSwitchingThread'
+        return imageCount
+    
+    
     def _seqAcqCyclops(self):
         """
         Prepare and start the sequence acquisition. Write frame in an tiff file 
@@ -255,53 +289,98 @@ class SequenceAcquisition(QThread):
         --> Inputs and outputs :
             - USB connection to each LED driver (arduino Teensy port)
             - INPUT SELECT from each LED driver on DAC
+            - Camera.FIRE > Labjack.AIN3
+            - Camera.ARM > Labjack.AIN0
         """
         print 'Cyclops running'
         
-        print "Nb of frames : ", self.nbFrames
-        imageCount = 0
+        pool = ThreadPool(processes=2)
+        print 'Pool initialized'
         
-        self.mmc.clearCircularBuffer() 
-        imageCount=0
-        self.mmc.startContinuousSequenceAcquisition(1)
-        #Timestamp to flag the beginning of acquisition 
-        startAcquisitionTime = time()
-        
-        #trigImage(self.labjack) ## just to flag the reception of an image in the circular buffer
-        
-        while(imageCount<(self.nbFrames) and self.acqRunning):
-            if self.mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
-                #trigImage(self.labjack) ## just to flag the reception of an image in the circular buffer
-                imgSavingTime = time()
-                img = self.mmc.popNextImage() #Gets and removes the next image from the circular buffer
-                saveFrame(img, self.tiffWriterList, (imageCount), self.maxFrames) # saving frame of previous acquisition
-                frameTime = imgSavingTime - startAcquisitionTime #Taking the off time to be synchronized with metadata
-                odourValveSig = readOdourValve(self.labjack, 2)
-                respirationSig = readSignal(self.labjack, 3)
-                saveMetadata(	self.textFile, 
-								str(frameTime),
-								str(self.ledList[imageCount]), 
-								str(imageCount), 
-								str(odourValveSig), 
-								str(respirationSig), 
-								str(0)) #Maybe not the best practice
-                imageCount +=1
-                self.progressSig.emit(imageCount)
-        
-        
-        
-        #Stop camera acquisition #Ensure that no more frames are taken
-        self.mmc.stopSequenceAcquisition()
-        
-        #### IF ABORTED acquisition #####
-        self._circularBufferCleaning(imageCount)
-        
-        #Close the metadata .txt file
-        self.textFile.close()
-        #Close tiff file open
-        tiffWritersClose(self.tiffWriterList)
-
+        ledSwitchingThread = pool.apply_async(self._metadataSaving,())
+        sleep(0.001) ## WAIT FOR INITIALIZATION AND WAITFORSIGNAL FCT
+        frameSavingThread = pool.apply_async(self._frameSaving,())
+        imageCount = ledSwitchingThread.get()
+        print 'Saving process counter : ', frameSavingThread.get()
+        print 'LED process counter : ', imageCount
+        #close the pool and wait for the work to finish
+        pool.close()
+        pool.join()
+        print 'sequ acq done'
         return imageCount
+    
+#    def _seqAcqCyclops(self):
+#        """
+#        Prepare and start the sequence acquisition. Write frame in an tiff file 
+#        during acquisition. 
+#        This function use the onboard arduino of the led driver to alternate the
+#        LEDs.
+#        Sequence acquisition is triggered internally using the command from MMC API.
+#        --> Inputs and outputs :
+#            - USB connection to each LED driver (arduino Teensy port)
+#            - INPUT SELECT from each LED driver on DAC
+#            - Camera.FIRE > Labjack.AIN3
+#            - Camera.ARM > Labjack.AIN0
+#        """
+#        print 'Cyclops running'
+#        
+#        print "Nb of frames : ", self.nbFrames
+#        imageCount = 0
+#        
+#        self.mmc.clearCircularBuffer() 
+#        imageCount=0
+#        self.mmc.startContinuousSequenceAcquisition(1)
+#        #Timestamp to flag the beginning of acquisition 
+#        startAcquisitionTime = time()
+#        
+#        #trigImage(self.labjack) ## just to flag the reception of an image in the circular buffer
+#        
+#        while(imageCount<(self.nbFrames) and self.acqRunning):
+#            if waitForSignal(self.labjack, "TTL", "AIN", 0): 	#WaitForSignal return TRUE when AIN0 input is HIGH (>3V),
+#                trigImage(self.labjack)
+#                startTime = time()		#flag the begining of an exposure
+#                frameTime = startTime - startAcquisitionTime #Taking the off time to be synchronized with metadata
+#                odourValveSig = readOdourValve(self.labjack, 2)
+#                respirationSig = readSignal(self.labjack, 3)
+#                saveMetadata(	self.textFile, 
+#								str(frameTime),
+#								str(self.ledList[imageCount]), 
+#								str(imageCount), 
+#								str(odourValveSig), 
+#								str(respirationSig), 
+#								str(0)) #Maybe not the best practice
+#            if self.mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
+#                #trigImage(self.labjack) ## just to flag the reception of an image in the circular buffer
+#                #imgSavingTime = time()
+#                img = self.mmc.popNextImage() #Gets and removes the next image from the circular buffer
+#                saveFrame(img, self.tiffWriterList, (imageCount), self.maxFrames) # saving frame of previous acquisition
+##                frameTime = imgSavingTime - startAcquisitionTime #Taking the off time to be synchronized with metadata
+##                odourValveSig = readOdourValve(self.labjack, 2)
+##                respirationSig = readSignal(self.labjack, 3)
+##                saveMetadata(	self.textFile, 
+##								str(frameTime),
+##								str(self.ledList[imageCount]), 
+##								str(imageCount), 
+##								str(odourValveSig), 
+##								str(respirationSig), 
+##								str(0)) #Maybe not the best practice
+#                imageCount +=1
+#                self.progressSig.emit(imageCount)
+#        
+#        
+#        
+#        #Stop camera acquisition #Ensure that no more frames are taken
+#        self.mmc.stopSequenceAcquisition()
+#        
+#        #### IF ABORTED acquisition #####
+#        self._circularBufferCleaning(imageCount)
+#        
+#        #Close the metadata .txt file
+#        self.textFile.close()
+#        #Close tiff file open
+#        tiffWritersClose(self.tiffWriterList)
+#
+#        return imageCount
         
     
     def arduinoSync(self):

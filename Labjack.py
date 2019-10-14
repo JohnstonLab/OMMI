@@ -148,7 +148,7 @@ def readOdourValve(device, channel):
 
 
     
-def risingEdge(device):
+def risingEdge(device, lj_channel, timeout=0.5):
     """
     Wait for a rising edge (minimum %trigLevel V) into the LabJack AIN0 port (cameraTrig_lj variable)
     
@@ -159,15 +159,17 @@ def risingEdge(device):
     
     #if (device.getAIN(cameraTrig_lj) > trigLevel):
         #print 'High state, cant wait for rising'
-    if(device.getAIN(cameraTrig_lj) < trigLevel): # Check that the signal is in low state    
-        while (device.getAIN(cameraTrig_lj) < trigLevel): #get out of this loop only when a high state is detected
-            continue
-        #print 'falling Edge detected'
+    if(device.getAIN(lj_channel) < trigLevel): # Check that the signal is in low state  
+        timeoutCounter=time.time()
         rEdge = True
+        while (device.getAIN(lj_channel) < trigLevel) and rEdge: #get out of this loop only when a high state is detected
+            if ((time.time()-timeoutCounter)>timeout):
+                print 'rising edge detection timed out'
+                rEdge=False
     
     return rEdge
     
-def fallingEdge(device):
+def fallingEdge(device, lj_channel):
     """
     Wait for a falling edge (maximum %trigLevel V) into the LabJack AIN0 port (cameraTrig_lj variable)
     
@@ -178,8 +180,8 @@ def fallingEdge(device):
     
 #    if (device.getAIN(cameraTrig_lj) < trigLevel):
 #        print 'Low state, cant wait for falling'
-    if(device.getAIN(cameraTrig_lj) > trigLevel): # Check that the signal is in high state    
-        while (device.getAIN(cameraTrig_lj) > trigLevel): #get out of this loop only when a low state is detected
+    if(device.getAIN(lj_channel) > trigLevel): # Check that the signal is in high state    
+        while (device.getAIN(lj_channel) > trigLevel): #get out of this loop only when a low state is detected
             continue
         #print 'falling Edge detected'
         fEdge = True
