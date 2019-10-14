@@ -8,7 +8,7 @@ Class of Sequence Acquisition
 """
 #Packages import
 from PyQt5.QtCore import QThread, pyqtSignal
-from time import time, sleep, clock
+from time import time, sleep
 from multiprocessing.pool import ThreadPool
 
 
@@ -16,7 +16,7 @@ from multiprocessing.pool import ThreadPool
 from ArduinoTeensy import Arduino
 
 #Function import
-from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, readSignal, readOdourValve
+from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, readSignal, readOdourValve, trigImage
 from saveFcts import filesInit, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata, cfgFileSaving
 
 
@@ -247,14 +247,14 @@ class SequenceAcquisition(QThread):
 
     def _seqAcqCyclops(self):
         """
-        Prepare and start the sequence acquisition. Write frame in an tiff file during acquisition. 
-        This function use the labjack to detect a camera trigger.
+        Prepare and start the sequence acquisition. Write frame in an tiff file 
+        during acquisition. 
+        This function use the onboard arduino of the led driver to alternate the
+        LEDs.
+        Sequence acquisition is triggered internally using the command from MMC API.
         --> Inputs and outputs :
-            - Camera.ARM > Labjack.AIN0
-            - Camera.TRIGGER > Labjack.FIO7
-            - Labjack.FIO4 > blue
-            - Labjack.FIO5 > red
-            - Labjack.FIO6 > green
+            - USB connection to each LED driver (arduino Teensy port)
+            - INPUT SELECT from each LED driver on DAC
         """
         print 'Cyclops running'
         
@@ -267,8 +267,11 @@ class SequenceAcquisition(QThread):
         #Timestamp to flag the beginning of acquisition 
         startAcquisitionTime = time()
         
+        #trigImage(self.labjack) ## just to flag the reception of an image in the circular buffer
+        
         while(imageCount<(self.nbFrames) and self.acqRunning):
             if self.mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished
+                #trigImage(self.labjack) ## just to flag the reception of an image in the circular buffer
                 imgSavingTime = time()
                 img = self.mmc.popNextImage() #Gets and removes the next image from the circular buffer
                 saveFrame(img, self.tiffWriterList, (imageCount), self.maxFrames) # saving frame of previous acquisition

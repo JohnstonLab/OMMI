@@ -251,8 +251,7 @@ class Arduino(object):
         #Send the LED alternation sequence
         #time.sleep(0.5)
         for char in str(int(len(ledSeq))):
-            dataToSend = str(len(ledSeq))
-            self.sendChar(dataToSend)
+            self.sendChar(char)
         time.sleep(0.8) #Wait that ParseInt() fct of the arduino timed out
         try:
             intSent = self.readData(1)

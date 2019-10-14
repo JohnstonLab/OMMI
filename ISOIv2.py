@@ -106,7 +106,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.savingPathBtn.clicked.connect(self.browseSavingFolder)
         
         self.loadFileBtn.clicked.connect(self.loadFolder)
-        self.splitBtn.clicked.connect(self.splitChannels)
+        self.splitBtn.clicked.connect(self.processExperiment)
+        self.splitAllBtn.clicked.connect(self.processAllExperiments)
         
         #Connect Signals
         self.updateFramesPerFile.connect(self.fileSizeSetting)
@@ -873,8 +874,38 @@ class isoiWindow(QtWidgets.QMainWindow):
             print('No folder selected')
         
 
-        
-    def splitChannels(self, experimentFolderName=None):
+    def processExperiment(self):
+        """
+        Get the experiment folder name from the gui and call the split fction.
+        Called when split channels button is pressed.
+        """
+        experimentFolder = self.subDirList.currentItem() 
+        if experimentFolder :
+            print 'item well selected'
+            experimentFolderName = experimentFolder.text()
+            self.splitChannels(experimentFolderName)
+        else:
+            print 'Please, select a valid experiment folder' #TO DO : add window
+    
+    def processAllExperiments(self):
+        """
+        Get all the experiment names and call slit fct for each one
+        """
+        try:
+            experimentsList = []
+            for index in xrange(self.subDirList.count()):
+                experimentsList.append(self.subDirList.item(index))
+        except:
+            print('cannot call this protected function')
+        try:
+            for experiment in experimentsList:
+                experimentFolderName = experiment.text()
+                self.splitChannels(experimentFolderName)
+        except:
+            print('Empty list of experiments')
+    
+    
+    def splitChannels(self, experimentFolderName):
         """
         Concatenate all the .tif to segment them in blue, red and green channels.
         Create new .txt files for each channels containing the timestamps.
@@ -883,36 +914,36 @@ class isoiWindow(QtWidgets.QMainWindow):
         
         #If method called witout argument, trie
         print experimentFolderName
-        if not experimentFolderName : #experimentFolderName = False or None will enter the statement
-            experimentFolder = self.subDirList.currentItem() 
-            print 'item well selected'
-            experimentFolderName = experimentFolder.text()
-            print str(experimentFolderName)
-        if experimentFolderName : #experimentFolderName = something will enter this statement
-            print self.analysisPath
-            print str(experimentFolderName)
-            experimentFolderPath = self.analysisPath+'/'+experimentFolderName
-            print experimentFolderPath
-            filePath =self.analysisPath+'/'+experimentFolderName+'/'+experimentFolderName
-            print filePath
-            txtFile=filePath+'.txt'
-            try:
-                txtArray = load2DArrayFromTxt(txtFile,"\t")
-            except:
-                print 'error to convert txt to array'
-            try:
-                tifsPathList = getTifLists(experimentFolderPath)
-                print tifsPathList
-            except:
-                print 'error to convert txt to array'
-            try:
-                splitColorChannel(experimentFolderPath, txtArray, tifsPathList)
-            except:
-                print 'error to split channels'   
+#        if not experimentFolderName : #experimentFolderName = False or None will enter the statement
+#            experimentFolder = self.subDirList.currentItem() 
+#            print 'item well selected'
+#            experimentFolderName = experimentFolder.text()
+#            print str(experimentFolderName)
+        #if experimentFolderName : #experimentFolderName = something will enter this statement
+        print self.analysisPath
+        print str(experimentFolderName)
+        experimentFolderPath = self.analysisPath+'/'+experimentFolderName
+        print experimentFolderPath
+        filePath =self.analysisPath+'/'+experimentFolderName+'/'+experimentFolderName
+        print filePath
+        txtFile=filePath+'.txt'
+        try:
+            txtArray = load2DArrayFromTxt(txtFile,"\t")
+        except:
+            print 'error to convert txt to array'
+        try:
+            tifsPathList = getTifLists(experimentFolderPath)
+            print tifsPathList
+        except:
+            print 'error to convert txt to array'
+        try:
+            splitColorChannel(experimentFolderPath, txtArray, tifsPathList)
+        except:
+            print 'error to split channels'   
             
             
-        else:
-            print 'Please, select a valid experiment folder'
+#        else:
+#            print 'Please, select a valid experiment folder'
 
     
     
