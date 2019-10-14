@@ -13,11 +13,12 @@ v2 - using thread to launch an acquisition.
 import sys
 import MMCorePy
 import cv2
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, QFileDialog
 from time import time
 from os import path
+import ctypes
 
 
 
@@ -1005,6 +1006,10 @@ if __name__ == '__main__':
     labjack = labjackInit()
     #Launch GUI
     app = QtWidgets.QApplication(sys.argv)
+    #Change the window Icon and
+    app.setWindowIcon(QtGui.QIcon('OMMI.png'))
+    myappid = u'johnstonlab.OMMI.V2' # arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     window = isoiWindow(mmc, DEVICE, labjack)
     window.show()
     sys.exit(app.exec_())
