@@ -1006,8 +1006,10 @@ if __name__ == '__main__':
     labjack = labjackInit()
     #Launch GUI
     app = QtWidgets.QApplication(sys.argv)
-    #Change the window Icon and
+    #Change the window Icon
     app.setWindowIcon(QtGui.QIcon('OMMI.png'))
+    #Give an ID to the running application to separate it from python and show a different icon in the taskbar
+    #source:https://stackoverflow.com/questions/1551605/how-to-set-applications-taskbar-icon-in-windows-7/1552105
     myappid = u'johnstonlab.OMMI.V2' # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     window = isoiWindow(mmc, DEVICE, labjack)
