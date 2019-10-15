@@ -16,7 +16,7 @@ import cv2
 from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, QFileDialog
-from time import time
+from time import time, sleep
 from os import path
 import ctypes
 
@@ -441,17 +441,27 @@ class isoiWindow(QtWidgets.QMainWindow):
         If a ROI is mouse drawn on the screen > this ROI is selected.
         Else the ROI is reset() to the default one. 
         """
-        triggerMode = 'Internal (Recommended for fast acquisitions)'
-        if self.triggerModeCheck(triggerMode):
-            self.mmc.clearROI()
-            self.mmc.snapImage()
-            img = self.mmc.getImage()
-            (x,y,w,h) = crop_w_mouse(img,self.mmc.getROI())
-            self.mmc.setROI(x,y,w,h)
-            print "image width: "+str(self.mmc.getImageWidth())
-            print "image height: "+str(self.mmc.getImageHeight())
-            cv2.destroyAllWindows()
-            self.updateFramesPerFile.emit()
+        choice = QMessageBox.question(self, 'ROI reset',
+                                            "This action will reset the ROI, do you want to continue ?",
+                                            QMessageBox.Yes | QMessageBox.No)
+        if choice == QMessageBox.Yes:
+            print("Running in Rolling mode")
+            triggerMode = 'Internal (Recommended for fast acquisitions)'
+            if self.triggerModeCheck(triggerMode):
+                greenOn(self.labjack)
+                sleep(0.5)
+                self.mmc.clearROI()
+                self.mmc.snapImage()
+                img = self.mmc.getImage()
+                greenOff(self.labjack)
+                (x,y,w,h) = crop_w_mouse(img,self.mmc.getROI())
+                self.mmc.setROI(x,y,w,h)
+                print "image width: "+str(self.mmc.getImageWidth())
+                print "image height: "+str(self.mmc.getImageHeight())
+                cv2.destroyAllWindows()
+                self.updateFramesPerFile.emit()
+        else:
+            print('Cropping aborted')
     
     ### LOADING EXPERIMENT SETTINGS ###    
     
