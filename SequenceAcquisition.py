@@ -260,7 +260,6 @@ class SequenceAcquisition(QThread):
         while(imageCount<(self.nbFrames) and self.acqRunning):
             if risingEdge(self.labjack, 3): #Labjack, channel, timeout(s)
                 startTime = time()	
-                trigImage(self.labjack)	#flag the begining of an exposure
                 frameTime = startTime - startAcquisitionTime #Taking the off time to be synchronized with metadata
                 odourValveSig = readOdourValve(self.labjack, 2)
                 respirationSig = readSignal(self.labjack, 3)
