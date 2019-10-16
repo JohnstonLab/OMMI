@@ -2,7 +2,7 @@
 """
 Created on Fri Aug 16 16:27:27 2019
 
-@author: johnstonlab
+@author: Louis Vande Perre
 To describe
 """
 import numpy as np

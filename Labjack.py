@@ -2,7 +2,7 @@
 """
 Created on Tue Aug 20 16:48:18 2019
 
-@author: johnstonlab
+@author: Louis Vande Perre
 """
 
 import u3
