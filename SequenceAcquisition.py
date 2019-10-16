@@ -322,7 +322,7 @@ class SequenceAcquisition(QThread):
         print 'time LED ON (ms) : ', ledOnDurationMs
         
         #ARDUINO object initialization
-        ledDriverNb=[0,2] #[Red, Green, Blue]
+        ledDriverNb=[0,1,2] #[Red, Green, Blue]
         for driverNb in ledDriverNb:
             driver = Arduino(driverNb)
             if driver.isConnected():

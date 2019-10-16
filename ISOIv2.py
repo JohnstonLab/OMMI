@@ -453,12 +453,12 @@ class isoiWindow(QtWidgets.QMainWindow):
                 self.mmc.clearROI()
                 self.mmc.snapImage()
                 img = self.mmc.getImage()
-                greenOff(self.labjack)
                 (x,y,w,h) = crop_w_mouse(img,self.mmc.getROI())
                 self.mmc.setROI(x,y,w,h)
                 print "image width: "+str(self.mmc.getImageWidth())
                 print "image height: "+str(self.mmc.getImageHeight())
                 cv2.destroyAllWindows()
+                greenOff(self.labjack)
                 self.updateFramesPerFile.emit()
         else:
             print('Cropping aborted')

@@ -27,8 +27,9 @@ bool blue=false;
 
 // Create a single cyclops object. CH0 corresponds to a physical board with
 // jumper pads soldered so that OC0, CS0, TRIG0, and A0 are used.
-// And limit current 1000 mA
-Cyclops cyclops0(CH0, 1000);
+// And limit current 500 mA
+// Because LED is limited to 500 mA : https://www.thorlabs.com/thorproduct.cfm?partnumber=M810L3
+Cyclops cyclops0(CH0, 500);
 
 
 void setup()
@@ -130,10 +131,10 @@ void rgbModeFct()
 {
   if((ledList[frameCounter%listSize])== ledDriver)   //ONLY DIFF WITH green.ino (and blue.ino), READING THE GOOD CHAR IN LIST
   {
-    cyclops0.dac_load_voltage(voltage); //Turn green LED ON
+    cyclops0.dac_load_voltage(voltage); //Turn red LED ON
     delay(msIllumTime);
     delayMicroseconds(usIllumTime);
-    cyclops0.dac_load_voltage(0); //Turn green LED OFF
+    cyclops0.dac_load_voltage(0); //Turn red LED OFF
   }
   frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
 }

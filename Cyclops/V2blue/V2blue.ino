@@ -28,6 +28,7 @@ bool blue=false;
 // Create a single cyclops object. CH0 corresponds to a physical board with
 // jumper pads soldered so that OC0, CS0, TRIG0, and A0 are used.
 // And limit current 1000 mA
+// LED datasheet : https://www.thorlabs.com/thorproduct.cfm?partnumber=M470L3
 Cyclops cyclops0(CH0, 1000);
 
 
