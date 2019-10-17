@@ -26,6 +26,7 @@ import ctypes
 from SequenceAcquisition import SequenceAcquisition
 from LiveHistogram import LiveHistogram
 from SignalInterrupt import SignalInterrupt 
+from ArduinoTeensy import Arduino
 
 #Function import
 from histogram import histoInit, histoCalc
@@ -97,7 +98,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         #self.trigBtn.clicked.connect(self.launchHisto)
         self.abortBtn.setEnabled(False)
         self.arduinoBtn.setEnabled(False)
-        #self.arduinoBtn.clicked.connect(self.arduinoSync)
+        self.arduinoBtn.clicked.connect(self.arduinoSync)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
         self.approxFramerateBtn.clicked.connect(self.approxFramerate)
@@ -576,14 +577,18 @@ class isoiWindow(QtWidgets.QMainWindow):
         mode = None
         if self.rgbMode.isChecked() and self.rbMode.isChecked() :
             self.runSaveBtn.setEnabled(False)
+            self.arduinoBtn.setEnabled(False)
         elif self.rgbMode.isChecked():
             self.runSaveBtn.setEnabled(True)
+            self.arduinoBtn.setEnabled(True)
             mode ="rgbMode"
         elif self.rbMode.isChecked():
             self.runSaveBtn.setEnabled(True)
+            self.arduinoBtn.setEnabled(True)
             mode ="rbMode"
         else:
             self.runSaveBtn.setEnabled(False)
+            self.arduinoBtn.setEnabled(False)
         return mode
     
     def fileSizeSetting(self):
@@ -616,6 +621,33 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.savingPath.insert(folderName)
         else:
             print('No folder selected')
+            
+    def arduinoSync(self):
+        """
+        Send informations about the coming sequence acquisition to the arduino
+        inside each LED drivers
+        """
+        #Calculation of the time LED must be on
+        exp = (self.mmc.getExposure()) # in ms
+        ledOnDurationMs = round(exp*(self.expRatio.value()),3)
+        print ledOnDurationMs
+        rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()]
+        greenFrameInterval = self.gInterval.value()
+        colorMode = self.rbColorBox.currentText()
+        #ARDUINO object initialization
+        ledDriverNb=[0,1,2] #[Red, Green, Blue]
+        for driverNb in ledDriverNb:
+            driver = Arduino(driverNb)
+            if driver.isConnected():
+                print('Driver num ',driverNb,' is connected')
+                driver.sendIllumTime(ledOnDurationMs)
+                if self.rgbMode.isChecked():
+                    driver.rgbModeSettings(rgbLedRatio)
+                elif self.rbMode.isChecked():
+                    driver.rbModeSettings(greenFrameInterval,colorMode)#TO DO : add the checking of color mode here
+                driver.closeConn()
+            else:
+                print('Driver num ',driverNb,' is NOT connected')
 
     
     ######################################
@@ -649,15 +681,33 @@ class isoiWindow(QtWidgets.QMainWindow):
                 run = False
         if run and (self.ledTrigBox.currentText() == 'Cyclops'):
             if(self.triggerModeCheck('Internal (Recommended for fast acquisitions)')):
+                choice = QMessageBox.question(self, 'LED driver synchronization',
+                                                    "Are the LED drivers synchronized with acquisition settings ?",
+                                                    QMessageBox.Yes | QMessageBox.No)
+                if choice == QMessageBox.Yes:
+                    print("Running")
+                else:
+                    print('Synchronization launched')
+                    self.arduinoSync()
                 run = True
+                    
             else:
                 run = False
                 
         #Check that a directory was selected
         folderName=self.savingPath.text()        
-        if run and (path.isdir(folderName)):
+        if run:
             print (folderName+'/'+self.experimentName.text())
-            if path.exists(folderName+'/'+self.experimentName.text()):
+            if not (path.isdir(folderName)) :
+                emptyFolderMsg = QMessageBox.warning(self,"Empty saving Folder",
+                                                     "Select a folder before running the experiment")
+                print emptyFolderMsg
+#                emptyFolderMsg.setIcon(QMessageBox.Warning)
+#                emptyFolderMsg.setText("Select a folder before running the experiment")
+#                emptyFolderMsg.setWindowTitle("Empty saving Folder")
+#                emptyFolderMsg.exec_()
+                run = False
+            elif path.exists(folderName+'/'+self.experimentName.text()):
                 choice = QMessageBox.question(self, 'Overwriting',
                                                 "This experiment folder already exist, do you want to overwrite it ?",
                                                 QMessageBox.Yes | QMessageBox.No)
@@ -684,7 +734,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         cycleTime = (self.testFramerate()) # int (seconds)
         rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
         maxFrames =  self.framePerFileBox.value() #int
-        expRatio = self.expRatio.value() #int
+        expRatio = self.expRatio.value() #float
         rbGreenRatio = self.gInterval.value() #int
         savingPath = self.savingPath.text() #str
         colorMode = self.rbColorBox.currentText() #str

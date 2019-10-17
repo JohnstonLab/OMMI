@@ -375,7 +375,7 @@ class SequenceAcquisition(QThread):
             self.imageCount = self._sequenceAcqu()
             print'run fct done'
         elif self.acquMode == "Cyclops":
-            self.arduinoSync()
+            #self.arduinoSync()
             self.imageCount = self._seqAcqCyclops()
         else:
             print 'Please select a valid mode of triggering the LED'

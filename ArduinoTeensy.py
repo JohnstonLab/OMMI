@@ -218,6 +218,8 @@ class Arduino(object):
         """
         Change the LED alternation mode to rbMode and send the interval between
         green frames to the LED driver.
+        Note that there are 3 submodes in the rbMode : Blue and red, red only
+        and blue only.
         """
         #Send M char to inform arduino the mode will be set
         self.sendChar('M')
@@ -268,19 +270,23 @@ class Arduino(object):
             except:
                 print 'No data sent'
          
-    def redOnlyModeSettings(self):
+    def synchronization(self, illumTime, rgbLedRatio=None, greenFrameInterval=None, colorMode=None):
         """
-        Change the LED alternation mode to red only mode and send the interval 
-        between green frames to the LED driver.
+        Initialize and send the information to each LED driver.
         """
-        
-    def blueOnlyModeSettings(self):
-        """
-        Change the LED alternation mode to blue only mode and send the interval 
-        between green frames to the LED driver
-        """
-        
-        
+        ledDriverNb=[0,1,2] #[Red, Green, Blue]
+        for driverNb in ledDriverNb:
+            driver = Arduino(driverNb)
+            if driver.isConnected():
+                print('Driver num ',driverNb,' is connected')
+                driver.sendIllumTime(illumTime)
+                if rgbLedRatio: #if rgbLedRatio is not None, this statement will be executed
+                    driver.rgbModeSettings(rgbLedRatio)
+                elif self.seqMode == 'rbMode':
+                    driver.rbModeSettings(self.greenFrameInterval,self.colorMode)#TO DO : add the checking of color mode here
+                driver.closeConn()
+            else:
+                print('Driver num ',driverNb,' is NOT connected')
     
     def readData(self,nlines,printData=False,array=True,integers=False,Floaters=False):
         
