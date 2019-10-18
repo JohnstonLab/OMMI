@@ -262,7 +262,7 @@ class SequenceAcquisition(QThread):
                 startTime = time()	
                 frameTime = startTime - startAcquisitionTime #Taking the off time to be synchronized with metadata
                 odourValveSig = readOdourValve(self.labjack, 2)
-                respirationSig = readSignal(self.labjack, 3)
+                respirationSig = readSignal(self.labjack, 1)
                 saveMetadata(	self.textFile, 
 								str(frameTime),
 								str(self.ledList[imageCount]), 
@@ -318,6 +318,7 @@ class SequenceAcquisition(QThread):
         #Calculation of the time LED must be on
         exp = (self.mmc.getExposure()) # in ms
         ledOnDurationMs = round(exp*self.expRatio,3)
+        ledOnDurationBlue= round(exp,3)
         print 'time LED ON (ms) : ', ledOnDurationMs
         
         #ARDUINO object initialization
@@ -326,7 +327,10 @@ class SequenceAcquisition(QThread):
             driver = Arduino(driverNb)
             if driver.isConnected():
                 print('Driver num ',driverNb,' is connected')
-                driver.sendIllumTime(ledOnDurationMs)
+                if driverNb!=2:
+                    driver.sendIllumTime(ledOnDurationMs)
+                if driverNb==2:
+                    driver.sendIllumTime(ledOnDurationBlue)
                 if self.seqMode == "rgbMode":
                     driver.rgbModeSettings(self.rgbLedRatio)
                 elif self.seqMode == 'rbMode':
@@ -375,7 +379,7 @@ class SequenceAcquisition(QThread):
             self.imageCount = self._sequenceAcqu()
             print'run fct done'
         elif self.acquMode == "Cyclops":
-            #self.arduinoSync()
+            self.arduinoSync()
             self.imageCount = self._seqAcqCyclops()
         else:
             print 'Please select a valid mode of triggering the LED'

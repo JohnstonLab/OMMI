@@ -630,6 +630,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         #Calculation of the time LED must be on
         exp = (self.mmc.getExposure()) # in ms
         ledOnDurationMs = round(exp*(self.expRatio.value()),3)
+        ledOnDurationBlue= round(exp,3)
         print ledOnDurationMs
         rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()]
         greenFrameInterval = self.gInterval.value()
@@ -640,7 +641,10 @@ class isoiWindow(QtWidgets.QMainWindow):
             driver = Arduino(driverNb)
             if driver.isConnected():
                 print('Driver num ',driverNb,' is connected')
-                driver.sendIllumTime(ledOnDurationMs)
+                if driverNb!=2:
+                    driver.sendIllumTime(ledOnDurationMs)
+                if driverNb==2:
+                    driver.sendIllumTime(ledOnDurationBlue)
                 if self.rgbMode.isChecked():
                     driver.rgbModeSettings(rgbLedRatio)
                 elif self.rbMode.isChecked():
