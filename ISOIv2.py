@@ -215,7 +215,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.realExp.setText(str(self.mmc.getExposure()))
         
         #Initialize framerate label
-        self.approxFramerate()
+        self.cycleTime = self.approxFramerate()
         
         #ProgressBar
         self.progressBar.setMinimum(0)
@@ -297,9 +297,10 @@ class isoiWindow(QtWidgets.QMainWindow):
         
         #Cycle time calculation
         #Note that it doesn't take the LED triggering by the labjack in count
-        cycleTime = exposure + fullFrame*frameRatio+interFrame+5*row+startDelay
+        cycleTime = exposure + fullFrame*frameRatio+interFrame+5*row+startDelay+3E-3 #seconds #add 3ms to secure the approximation
         print('cycleTime : ',cycleTime)
         self.approxFramerateLabel.setText(str(round(1/cycleTime,2)))
+        return cycleTime
         
     def testFramerate(self):
         """
@@ -732,37 +733,30 @@ class isoiWindow(QtWidgets.QMainWindow):
         object will handle the actual sequence acquisition.
         """
         
-        #Get experiment/acquisition settings from the GUI
-        name = self.experimentName.text() #str
-        duration = self.experimentDuration.value() # float (seconds)
-        cycleTime = (self.testFramerate()) # int (seconds)
-        rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
-        maxFrames =  self.framePerFileBox.value() #int
-        expRatio = self.expRatio.value() #float
-        rbGreenRatio = self.gInterval.value() #int
-        savingPath = self.savingPath.text() #str
-        colorMode = self.rbColorBox.currentText() #str
+        #Get the trigger settings from the GUI
         triggerStart = self.startTriggerBox.isChecked()
         triggerStop = self.stopTriggerBox.isChecked()
         
-         
+        
         #Creation of a SequenceAcquisition class instance
-        self.sequencAcq = SequenceAcquisition(name, 
-                                         duration,
-                                         cycleTime,
-                                         rgbLedRatio,
-                                         rbGreenRatio,
-                                         maxFrames,
-                                         expRatio,
-                                         savingPath,
-                                         colorMode,
-                                         self.mmc,
-                                         self.labjack)
+        self.sequencAcq = SequenceAcquisition(self.mmc,self.labjack)
         print 'object initialized'
         self.sequencAcq.isFinished.connect(self.acquisitionDone)
         self.sequencAcq.nbFramesSig.connect(self.initProgressBar)
         self.sequencAcq.progressSig.connect(self.updateProgressBar)
-        self.sequencAcq.acquMode = self.ledTrigBox.currentText() #TO DO : set all the parameters like this
+        
+        #Get experiment/acquisition settings from the GUI
+        self.sequencAcq.experimentName = self.experimentName.text() #str
+        self.sequencAcq.duration = self.experimentDuration.value() # float (seconds)
+        self.sequencAcq.cycleTime = (self.approxFramerate()) # int (seconds)
+        self.sequencAcq.rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
+        self.sequencAcq.maxFrames =self.framePerFileBox.value() #int
+        self.sequencAcq.expRatio = self.expRatio.value() #float
+        self.sequencAcq.greenFrameInterval = self.gInterval.value() #int
+        self.sequencAcq.folderPath = self.savingPath.text() #str
+        self.sequencAcq.colorMode = self.rbColorBox.currentText() #str
+        
+        self.sequencAcq.acquMode = self.ledTrigBox.currentText()
         if self.rgbMode.isChecked():
             self.sequencAcq.seqMode = "rgbMode"
         elif self.rbMode.isChecked():
@@ -800,6 +794,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         # We don't want to enable user to start another thread while this one is
         # running so we disable the start button.
         self.runSaveBtn.setEnabled(False)
+        #Prepare each informations and file needed
+        self.sequencAcq.sequencePreparation()
         if not triggerStart:
             # We have all the events we need connected we can start the thread 
             self.sequencAcq.start()
@@ -823,6 +819,12 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.sequencAcq.isStarted.connect(self.startInterrupt.abort)
             self.startInterrupt.start() # start listening to the signal
             startTriggerMsg.exec_() #Pop window to prevent listenning to trigger
+    
+    def loopAcquisition(self):
+        """
+        Acquire images in a loop process, synchronized with a SYNC signal.
+        """
+    
     
     ##### Methods in charge of communication with SequenceAcquisition class instance ####
     def initProgressBar(self,nbFrames):

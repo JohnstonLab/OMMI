@@ -35,27 +35,31 @@ class SequenceAcquisition(QThread):
     #Color mode in R-B acquisition
     rbColorModes = ['Red and Blue', 'Red only', 'Blue only']
     
-    def __init__(self, experimentName, duration, cycleTime, rgbLedRatio, greenFrameInterval, maxFrames, expRatio, folderPath, colorMode, mmc, labjack, parent=None):
+    def __init__(self, mmc, labjack, parent=None):
         QThread.__init__(self,parent)
         
-        #Set instance attributes
-        self.experimentName = experimentName
-        self.duration = duration
-        self.cycleTime = cycleTime
-        self.rgbLedRatio = rgbLedRatio
-        self.greenFrameInterval = greenFrameInterval
-        self.maxFrames = maxFrames
-        self.expRatio = expRatio
-        self.colorMode = colorMode
+        #Add the camera and the labjack
         self.mmc = mmc
         self.labjack = labjack
+        
         self.acqRunning = True
-        self.nbFrames = None    #Initialized in _sequenceInit method
+        
+        #Initialize with information from the GUI
+        self.experimentName = None
+        self.duration = None
+        self.cycleTime = None
+        self.rgbLedRatio = None
+        self.greenFrameInterval = None
+        self.maxFrames = None
+        self.expRatio = None
+        self.colorMode = None
+        self.folderPath = None
+        
+        #Initialized in other method of this class
+        self.nbFrames = None    
         self.ledList = None     #Initialized in _sequenceInit method
         self.tiffWriterList = None  #Initialized in filesInit method from SaveFcts.py
         self.textFile = None        #Initialized in filesInit method from SaveFcts.py
-        self.savePath = None
-        self.folderPath = folderPath
         self.acquMode = None
         self.seqMode = None
         
@@ -78,7 +82,7 @@ class SequenceAcquisition(QThread):
         print 'LED sequence : ', self.ledSeq
         self.ledList = self.ledSeq*(int(self.nbFrames/(len(self.ledSeq)))+1) ## schedule LED lighting
         #NB : no return needed because each ledList and nbFrames are instance attribute
-        
+         
     def _rbSequenceInit(self):
         """
         Set the LEDs sequence list in function of the time of the experiment.
@@ -340,9 +344,10 @@ class SequenceAcquisition(QThread):
                 print('Driver num ',driverNb,' is NOT connected')
                 
                 
-    
-    def run(self):
-        self.isStarted.emit()
+    def sequencePreparation(self):
+        """
+        Prepare a sequence acquisition setting up all the parameters.
+        """
         #Calculation of the number of frames in function of the duration + LED list for the acquisition
         if self.seqMode == "rgbMode":
             self._rgbSequenceInit()
@@ -351,7 +356,8 @@ class SequenceAcquisition(QThread):
         else:
             print('Please select a valid mode of led sequence initialization')
         #Sending nb of frames to initialize the progress bar
-        self.nbFramesSig.emit(self.nbFrames)
+        if type(self.nbFrames) == int:
+            self.nbFramesSig.emit(self.nbFrames)
         
         #Saving the configuration of the experiment file (.json)
         self.savePath = cfgFileSaving(self.experimentName, 
@@ -373,13 +379,18 @@ class SequenceAcquisition(QThread):
                                                             self.experimentName,
                                                             self.nbFrames, 
                                                             self.maxFrames)
+        #send all informations to each LED driver
+        self.arduinoSync()
+    
+    def run(self):
+        self.isStarted.emit()
         #Launching the frame acquisition
         if self.acquMode == "Labjack":
             print'sequ acq about to start'
             self.imageCount = self._sequenceAcqu()
             print'run fct done'
         elif self.acquMode == "Cyclops":
-            self.arduinoSync()
+            #self.arduinoSync()
             self.imageCount = self._seqAcqCyclops()
         else:
             print 'Please select a valid mode of triggering the LED'
