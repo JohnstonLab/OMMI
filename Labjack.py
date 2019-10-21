@@ -88,7 +88,7 @@ def trigImage(device):
     device.setFIOState(trig, 0)
 
     
-def waitForSignal(device, signalType="TTL", channelType="FIO", channel=0):
+def waitForSignal(device, signalType="TTL", channelType="AIN", channel=1):
     """
     Wait for a signal into the LabJack
     

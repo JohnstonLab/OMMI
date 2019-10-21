@@ -14,10 +14,12 @@ from multiprocessing.pool import ThreadPool
 
 #Class Import
 from ArduinoTeensy import Arduino
+from SignalInterrupt import SignalInterrupt 
 
 #Function import
 from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, readSignal, readOdourValve, trigImage, risingEdge
 from saveFcts import filesInit, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata, cfgFileSaving
+
 
 
 class SequenceAcquisition(QThread):
@@ -65,6 +67,9 @@ class SequenceAcquisition(QThread):
         self.acquMode = None
         self.seqMode = None
         
+        self.startAcquisitionTime = None
+        self.stimName = None
+        
 
     def __del__(self):
         self.wait()
@@ -76,7 +81,8 @@ class SequenceAcquisition(QThread):
         with each of these ratios on the pattern [xR,yG,zB]
         """
         ## send all of this to sequence acq
-        self.nbFrames = int(self.duration/self.cycleTime)+1  ## Determine number of frames. (+1) because int round at the lower int
+        if not self.nbFrames:
+            self.nbFrames = int(self.duration/self.cycleTime)+1  ## Determine number of frames. (+1) because int round at the lower int
         self.ledSeq = [0]*self.rgbLedRatio[0]+[1]*self.rgbLedRatio[1]+[2]*self.rgbLedRatio[2] #Sequence of LED lighting in function of the ratio
                                                                                 #RED = 0
                                                                                 #GREEN = 1
@@ -93,7 +99,8 @@ class SequenceAcquisition(QThread):
         """
         
         ## send all of this to sequence acq
-        self.nbFrames = int(self.duration/self.cycleTime)+1 ## Determine number of frames. (+1) because int round at the lower int
+        if not self.nbFrames:
+            self.nbFrames = int(self.duration/self.cycleTime)+1 ## Determine number of frames. (+1) because int round at the lower int
         #nbGreenFrames = self.rbGreenRatio[0] #nb of green frames in each green sequence #NOT YET USED
         nbGreenSequence = float(self.nbFrames)/self.greenFrameInterval #Dividing nbFrames by the green frame interval with a float to have float division
         print 'Nb of green frames : ', nbGreenSequence
@@ -170,7 +177,7 @@ class SequenceAcquisition(QThread):
         self.mmc.clearCircularBuffer() 
         imageCount=0
         self.mmc.startContinuousSequenceAcquisition(1)
-        while(imageCount<(self.nbFrames) and self.acqRunning):
+        while(imageCount<(self.nbFrames) and self.acqRunning and self.loopRunning):
             if self.mmc.getRemainingImageCount() > 0: #Returns number of image in circular buffer, stop when seq acq finished #Enter this loop BETWEEN acquisition
                 #trigImage(labjack) #Generate a pulse, which allows to flag the entry in this code statement with the oscilloscope    
                 img = self.mmc.popNextImage() #Gets and removes the next image from the circular buffer
@@ -196,7 +203,7 @@ class SequenceAcquisition(QThread):
         Get the last images in the circular buffer if the acquisition was aborted.
         This step ensure that there is the same amount of metadata than frames saved.
         """
-        if (not self.acqRunning): #Check if sequence acquisition was aborted.
+        if (not self.acqRunning) or (not self.loopRunning): #Check if sequence acquisition was aborted or loop was paused.
             print('cycleTime :',self.cycleTime)
             sleep(self.cycleTime)
             print ('remaining images in the circular buffer :',self.mmc.getRemainingImageCount())
@@ -210,11 +217,18 @@ class SequenceAcquisition(QThread):
             tiffWritersClose(self.tiffWriterList)
             if ((self.nbFrames/self.maxFrames)>=1): #check that multiples .tif were initialized
                 # --> CHECK WICH .tif are empty and suppress it
-                tiffWriterDel(self.experimentName, 
-                              self.savePath, 
-                              imageCount, 
-                              self.maxFrames, 
-                              self.tiffWriterList)
+                if self.stimName:
+                    tiffWriterDel(self.stimName, 
+                                  self.savePath, 
+                                  imageCount, 
+                                  self.maxFrames, 
+                                  self.tiffWriterList)
+                else:
+                    tiffWriterDel(self.experimentName, 
+                                  self.savePath, 
+                                  imageCount, 
+                                  self.maxFrames, 
+                                  self.tiffWriterList)
     
     def _sequenceAcqu(self):
         """
@@ -261,12 +275,13 @@ class SequenceAcquisition(QThread):
         imageCount=0
         
         #Timestamp to flag the beginning of acquisition 
-        startAcquisitionTime = time()
+        if not self.startAcquisitionTime:
+            self.startAcquisitionTime = time()
         print 'timestamp got'
-        while(imageCount<(self.nbFrames) and self.acqRunning):
+        while(imageCount<(self.nbFrames) and self.acqRunning and self.loopRunning):
             if risingEdge(self.labjack, 3): #Labjack, channel, timeout(s)
                 startTime = time()	
-                frameTime = startTime - startAcquisitionTime #Taking the off time to be synchronized with metadata
+                frameTime = startTime - self.startAcquisitionTime #Taking the off time to be synchronized with metadata
                 odourValveSig = readOdourValve(self.labjack, 2)
                 respirationSig = readSignal(self.labjack, 1)
                 saveMetadata(	self.textFile, 
@@ -385,22 +400,102 @@ class SequenceAcquisition(QThread):
         #send all informations to each LED driver
         self.arduinoSync()
     
+    def loopFolderPreparation(self):
+        """
+        Create a config
+        """
+        #Calculation of the number of frames in function of the duration + LED list for the acquisition
+        # THIS IS USEFUL FOR THE LABJACK MODE ONLY
+#        if self.seqMode == "rgbMode":
+#            self._rgbSequenceInit()
+#        elif self.seqMode == 'rbMode':
+#            self._rbSequenceInit()
+#        else:
+#            print('Please select a valid mode of led sequence initialization')
+        #Sending nb of frames to initialize the progress bar
+        
+        #Saving the configuration of the experiment file (.json)
+        self.savePath = cfgFileSaving(self.experimentName, 
+                                      self.nbFrames, 
+                                      self.duration,
+                                      self.expRatio,
+                                      self.acquMode,
+                                      self.seqMode,
+                                      self.rgbLedRatio,
+                                      self.greenFrameInterval,
+                                      round(1/self.cycleTime,2), #framerate approx
+                                      self.folderPath,
+                                      self.colorMode,
+                                      self.mmc, 
+                                      'Zyla') #WARNING > modulabilty (there is a way to get device label but it's not so easy)
+    
+    
+    
+    def _loopPreparation(self, stimNumber):
+        """
+        Init files for a loop acquisition
+        """
+        self.nbFrames=10000 #TO DO --> better place for this line of code
+        
+        self.stimName= self.experimentName+'_S'+str(stimNumber)
+        (self.tiffWriterList, self.textFile) = filesInit(   self.savePath,
+                                                            self.stimName,
+                                                            self.nbFrames, 
+                                                            self.maxFrames)
+        if self.seqMode == "rgbMode":
+            self._rgbSequenceInit()
+        elif self.seqMode == 'rbMode':
+            self._rbSequenceInit()
+        self.arduinoSync()
+    
     def run(self):
         self.isStarted.emit()
         #Launching the frame acquisition
-        if self.acquMode == "Labjack":
-            print'sequ acq about to start'
-            self.imageCount = self._sequenceAcqu()
-            print'run fct done'
-        elif self.acquMode == "Cyclops":
+#        if self.acquMode == "Labjack":
+#            print'sequ acq about to start'
+#            self.imageCount = self._sequenceAcqu()
+#            print'run fct done'
+        if self.acquMode == "Cyclops":
             #self.arduinoSync()
             self.imageCount = self._seqAcqCyclops()
+        elif self.acquMode == "Loop":
+            
+            interruptAIN = 1
+            stopSignalState = False
+            waitToCheckSignal = 0.5
+            #Instanciate a SignalInterrupt object to listen to the labjack and the moment when SYNC signal goes low
+            self.stopInterrupt = SignalInterrupt(self.labjack, interruptAIN, waitToCheckSignal, stopSignalState)
+            self.stopInterrupt.stateReachedInterrupt.connect(self.pauseLoop)
+            self.stopInterrupt.start()
+            
+            stimNumber = 1
+            self.startAcquisitionTime = time()
+            print 'start acquisition time :', self.startAcquisitionTime
+            while(self.acqRunning):
+                print 'Stimulation nb ', stimNumber
+                self._loopPreparation(stimNumber)
+                #Wait for the raise of the SYNC signal
+                if waitForSignal(self.labjack, channel=1): #waitForSignal(device, signalType="TTL", channelType="AIN", channel=1)
+                    self.loopRunning = True
+                    self.imageCount = self._seqAcqCyclops()
+                    print self.imageCount
+                    stimNumber += 1
+            self.stopInterrupt.abort() #Stop the listenning action of the Interrupt
+                
+            
         else:
             print 'Please select a valid mode of triggering the LED'
         
         print 'end of the thread'
         self.isFinished.emit()
             
+    def pauseLoop(self):
+        """
+        Pause the acquisition in the loop mode. Action triggered by the end of a stim sync signal
+        """
+        print 'SYNC stim detected LOW'
+        self.loopRunning = False
+        
     def abort(self):
         """
         Interrupt the threads running for LED switching and frame saving.

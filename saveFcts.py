@@ -86,7 +86,7 @@ def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode,
             "Global informations":{
                     "Experiment date and time":str(datetime.now()),         #str
                     "Experiment name":name,                                 #str
-                    "Number of frames":nbFrames,                            #int
+                    "Number of frames":nbFrames,                            #int or NoneType
                     "Duration":duration                                    #float
             },
             ### Acquisition settings ###

@@ -98,7 +98,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         #self.trigBtn.clicked.connect(self.launchHisto)
         self.abortBtn.setEnabled(False)
         self.arduinoBtn.setEnabled(False)
-        self.arduinoBtn.clicked.connect(self.arduinoSync)
+        self.arduinoBtn.clicked.connect(self.loopAcquisition)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
         self.approxFramerateBtn.clicked.connect(self.approxFramerate)
@@ -686,14 +686,14 @@ class isoiWindow(QtWidgets.QMainWindow):
                 run = False
         if run and (self.ledTrigBox.currentText() == 'Cyclops'):
             if(self.triggerModeCheck('Internal (Recommended for fast acquisitions)')):
-                choice = QMessageBox.question(self, 'LED driver synchronization',
-                                                    "Are the LED drivers synchronized with acquisition settings ?",
-                                                    QMessageBox.Yes | QMessageBox.No)
-                if choice == QMessageBox.Yes:
-                    print("Running")
-                else:
-                    print('Synchronization launched')
-                    self.arduinoSync()
+#                choice = QMessageBox.question(self, 'LED driver synchronization',
+#                                                    "Are the LED drivers synchronized with acquisition settings ?",
+#                                                    QMessageBox.Yes | QMessageBox.No)
+#                if choice == QMessageBox.Yes:
+#                    print("Running")
+#                else:
+#                    print('Synchronization launched')
+#                    self.arduinoSync()
                 run = True
                     
             else:
@@ -820,12 +820,46 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.sequencAcq.isStarted.connect(self.startInterrupt.abort)
             self.startInterrupt.start() # start listening to the signal
             startTriggerMsg.exec_() #Pop window to prevent listenning to trigger
+            
     
     def loopAcquisition(self):
         """
         Acquire images in a loop process, synchronized with a SYNC signal.
         """
-    
+        #Creation of a SequenceAcquisition class instance
+        self.sequencAcq = SequenceAcquisition(self.mmc,self.labjack)
+        print 'object initialized'
+        self.sequencAcq.isFinished.connect(self.acquisitionDone)
+        
+        #Get experiment/acquisition settings from the GUI
+        self.sequencAcq.experimentName = self.experimentName.text() #str
+        self.sequencAcq.cycleTime = (self.approxFramerate()) # int (seconds)
+        self.sequencAcq.rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
+        self.sequencAcq.maxFrames =self.framePerFileBox.value() #int
+        self.sequencAcq.expRatio = self.expRatio.value() #float
+        self.sequencAcq.greenFrameInterval = self.gInterval.value() #int
+        self.sequencAcq.folderPath = self.savingPath.text() #str
+        self.sequencAcq.colorMode = self.rbColorBox.currentText() #str
+        
+        self.sequencAcq.acquMode = "Loop"
+        if self.rgbMode.isChecked():
+            self.sequencAcq.seqMode = "rgbMode"
+        elif self.rbMode.isChecked():
+            self.sequencAcq.seqMode = "rbMode"
+        
+        # At this point we want to allow user to stop/terminate the thread
+        # so we enable that button
+        self.abortBtn.setEnabled(True)
+        # And we connect the click of that button to the built in
+        # terminate method that all QThread instances have
+        self.abortBtn.clicked.connect(self.sequencAcq.abort)
+        # We don't want to enable user to start another thread while this one is
+        # running so we disable the start button.
+        self.runSaveBtn.setEnabled(False)
+        #Prepare experiment folder and config File
+        self.sequencAcq.loopFolderPreparation()
+        # We have all the events we need connected we can start the thread 
+        self.sequencAcq.start()
     
     ##### Methods in charge of communication with SequenceAcquisition class instance ####
     def arduinoSyncMsg(self):
