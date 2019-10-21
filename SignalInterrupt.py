@@ -72,7 +72,6 @@ class SignalInterrupt(QThread):
                     print 'interrupt detected'
                     if self.waitedState != None:
                         self._checkWantedState(signalState)
-                    print 'interrupt'
             signalPrevState =self._signalState(readSignal(self.labjack, self.channel)) 
         print 'run fct of Interrupt done'
     

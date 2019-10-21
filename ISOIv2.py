@@ -744,6 +744,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.sequencAcq.isFinished.connect(self.acquisitionDone)
         self.sequencAcq.nbFramesSig.connect(self.initProgressBar)
         self.sequencAcq.progressSig.connect(self.updateProgressBar)
+        self.arduinoSyncMsg() #connection signal and frame display
         
         #Get experiment/acquisition settings from the GUI
         self.sequencAcq.experimentName = self.experimentName.text() #str
@@ -827,6 +828,18 @@ class isoiWindow(QtWidgets.QMainWindow):
     
     
     ##### Methods in charge of communication with SequenceAcquisition class instance ####
+    def arduinoSyncMsg(self):
+        """
+        Display a window to prevent the user the arduino is synchronised
+        """
+        self.syncMsg = QMessageBox()
+        self.syncMsg.setIcon(QMessageBox.Warning)
+        self.syncMsg.setText("The sequence acquisition is about to start")
+        self.syncMsg.setWindowTitle("Arduino synchronization")
+        self.sequencAcq.arduinoSyncStarted.connect(self.syncMsg.exec_)
+        self.sequencAcq.arduinoSyncFinished.connect(self.syncMsg.close)
+        
+    
     def initProgressBar(self,nbFrames):
         """
         Initialize the progress bar in function of the nb of frames of the acquisition.

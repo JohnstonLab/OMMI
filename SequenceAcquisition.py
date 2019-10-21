@@ -31,6 +31,8 @@ class SequenceAcquisition(QThread):
     progressSig = pyqtSignal(int)
     isFinished = pyqtSignal()
     isStarted = pyqtSignal()
+    arduinoSyncStarted = pyqtSignal()
+    arduinoSyncFinished = pyqtSignal()
     
     #Color mode in R-B acquisition
     rbColorModes = ['Red and Blue', 'Red only', 'Blue only']
@@ -319,6 +321,7 @@ class SequenceAcquisition(QThread):
         Send informations about the coming sequence acquisition to the arduino
         inside each LED drivers
         """
+        self.arduinoSyncStarted.emit()
         #Calculation of the time LED must be on
         exp = (self.mmc.getExposure()) # in ms
         ledOnDurationMs = round(exp*self.expRatio,3)
@@ -342,7 +345,7 @@ class SequenceAcquisition(QThread):
                 driver.closeConn()
             else:
                 print('Driver num ',driverNb,' is NOT connected')
-                
+        self.arduinoSyncFinished.emit()
                 
     def sequencePreparation(self):
         """
