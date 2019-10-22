@@ -537,7 +537,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         try:
             self.experimentDuration.setValue(cfgDict['Global informations']['Duration'])
         except:
-            print 'Global informations are not accessible'
+            print 'Duration not accessible in this CFG file'
             
         self.settingsLoaded.emit()
     

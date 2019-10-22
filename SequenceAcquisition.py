@@ -475,11 +475,16 @@ class SequenceAcquisition(QThread):
                 print 'Stimulation nb ', stimNumber
                 self._loopPreparation(stimNumber)
                 #Wait for the raise of the SYNC signal
-                if waitForSignal(self.labjack, channel=1): #waitForSignal(device, signalType="TTL", channelType="AIN", channel=1)
+                #if waitForSignal(self.labjack, channel=1): #waitForSignal(device, signalType="TTL", channelType="AIN", channel=1)
+                while(not risingEdge(self.labjack, interruptAIN)) and self.acqRunning:
+                    continue
+                if self.acqRunning:
                     self.loopRunning = True
                     self.imageCount = self._seqAcqCyclops()
                     print self.imageCount
                     stimNumber += 1
+                else:
+                    print 'abort loop'
             self.stopInterrupt.abort() #Stop the listenning action of the Interrupt
                 
             
