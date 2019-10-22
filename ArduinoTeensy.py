@@ -191,6 +191,7 @@ class Arduino(object):
         """
         Send the time within a LED ON from the beggining of an acquisition.
         """
+        sync = True
         self.sendChar('E')
         msIllumTime = int(illumTime)
         usIllumTime = int(round((illumTime-msIllumTime),3)*1000) #Round and convert to us then to INT
@@ -198,21 +199,22 @@ class Arduino(object):
         for char in str(msIllumTime):
             self.sendChar(char)
         time.sleep(0.8) # time for parse INT
-        try:
-            intSent = self.readData(1)
-            print intSent
-        except:
-            print 'No data sent'
-        
+        intSent = self.readData(1, integers = True)
+        print msIllumTime
+        nbSent = intSent[0]
+        if nbSent != msIllumTime:
+            sync = False
+        print 'sync value for ms component :', sync
         #Sending us component
         for char in str(usIllumTime):
             self.sendChar(char)
         time.sleep(0.8)
-        try:
-            intSent = self.readData(1)
-            print intSent
-        except:
-            print 'No data sent'
+        intSent = self.readData(1, integers = True)
+        nbSent = intSent[0]
+        if nbSent != usIllumTime:
+            sync = False
+        print 'sync value for us component :', sync
+        return sync
     
     def rbModeSettings(self, greenFrameInterval, colorMode):
         """
@@ -221,6 +223,7 @@ class Arduino(object):
         Note that there are 3 submodes in the rbMode : Blue and red, red only
         and blue only.
         """
+        sync = True
         #Send M char to inform arduino the mode will be set
         self.sendChar('M')
         #Send G char to chose the rbMode
@@ -239,6 +242,13 @@ class Arduino(object):
             #Send the greenFrameInterval variable
             for char in str(greenFrameInterval):
                 self.sendChar(char)
+        time.sleep(0.8) #Wait that ParseInt() fct of the arduino timed out
+        #Verification of the value sent
+        intSent = self.readData(1, integers = True)
+        nbSent = intSent[0]
+        if nbSent != greenFrameInterval:
+            sync = False
+        return sync
     
     def rgbModeSettings(self, ledRatio):
         """
@@ -375,7 +385,11 @@ def synchronization(illumTime, rgbLedRatio=None, greenFrameInterval=None, colorM
         driver = Arduino(driverNb)
         if driver.isConnected():
             print('Driver num ',driverNb,' is connected')
-            driver.sendIllumTime(illumTime[driverNb])
+            sync = False
+            while(not sync):
+                print 'illumTime for this driver :', illumTime[driverNb]
+                sync = driver.sendIllumTime(illumTime[driverNb])
+                print 'sync value of attempt to set illumtime  : ', sync
             if rgbLedRatio: #if rgbLedRatio is not None, this statement will be executed
                 sync = False
                 while(not sync):
@@ -398,18 +412,23 @@ if __name__ == '__main__':
 #    if blueArduino:
 #        blueArduino.blinkingLED(0.5)
 #    print blueArduino
-    redArduino = Arduino(0)
-    exposure = 10.07
-    redArduino.sendIllumTime(exposure)
+    illumTime = [10.07,10.07,10.07]
     greenFrameInterval = 20
-    redArduino.rbModeSettings(greenFrameInterval)
-    
+    colorMode = 'Red and Blue'
+    synchronization(illumTime, greenFrameInterval = greenFrameInterval, colorMode = colorMode)
+#    redArduino = Arduino(0)
+#    exposure = 10.07
+#    sync = redArduino.sendIllumTime(exposure)
+#    print sync
+#    greenFrameInterval = 20
+#    sync = redArduino.rbModeSettings(greenFrameInterval, )
+#    print sync
+##    try:
+##        blueArduino.closeConn()
+##    except:
+##        print 'no way to close blueArduino'
 #    try:
-#        blueArduino.closeConn()
+#        redArduino.closeConn()
 #    except:
-#        print 'no way to close blueArduino'
-    try:
-        redArduino.closeConn()
-    except:
-        print 'no way to close redArduino'
+#        print 'no way to close redArduino'
     print 'endTest'

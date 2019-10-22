@@ -101,6 +101,7 @@ void loop()
           //receive green frames interval
           greenFrameInterval = Serial.parseInt();
           cyclops0.set_trigger( rbModeFct, RISING); // cyclops trigger on rising edges
+          Serial.println(greenFrameInterval);
         }
         else if(incomingByte =='R'){
           //Set to redOnly mode
@@ -108,6 +109,7 @@ void loop()
           //receive green frames interval
           greenFrameInterval = Serial.parseInt();
           cyclops0.set_trigger( redModeFct, RISING); // cyclops trigger on rising edges
+          Serial.println(greenFrameInterval);
         }
         else if(incomingByte =='B'){
           //Set to blueOnly mode
@@ -115,6 +117,7 @@ void loop()
           //receive green frames interval
           greenFrameInterval = Serial.parseInt();
           cyclops0.set_trigger( blueModeFct, RISING); // cyclops trigger on rising edges
+          Serial.println(greenFrameInterval);
         }
       }
     }
@@ -179,4 +182,3 @@ void redModeFct()
   //Nothing to do
   frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
 }
-
