@@ -68,6 +68,11 @@ void loop()
         Serial.println(usIllumTime);
       }
 
+      else if(incomingByte == 'R'){
+        //Reset the frame counter to prepare next acquisition (with same parameters)
+        frameCounter=0;
+      }
+      
       else if(incomingByte == 'M'){
         // Setting the alternation mode of the LED
         frameCounter=0; red = true; blue = false; //Reset default parameters

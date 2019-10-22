@@ -499,6 +499,11 @@ class SequenceAcquisition(QThread):
                     print self.imageCount
                     stimNumber += 1
                 else:
+                    #Close tiff file open
+                    tiffWritersClose(self.tiffWriterList)
+                    #close the metadata .txt file
+                    self.textFile.close()
+                    
                     print 'abort loop'
             self.stopInterrupt.abort() #Stop the listenning action of the Interrupt
                 

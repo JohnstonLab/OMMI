@@ -154,7 +154,7 @@ def risingEdge(device, lj_channel, timeout=0.5):
     
     return True when the risingedge is detected.
     """
-    trigLevel = 3
+    trigLevel = 2.4
     rEdge = False
     
     #if (device.getAIN(cameraTrig_lj) > trigLevel):

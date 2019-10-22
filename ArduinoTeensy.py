@@ -79,7 +79,6 @@ class Arduino(object):
         else:
             self.ser.close()
             self.ser=None
-            print 'Wrong LED driver, connection aborted'
     
     def __repr__(self):
         """ 
@@ -204,7 +203,6 @@ class Arduino(object):
         nbSent = intSent[0]
         if nbSent != msIllumTime:
             sync = False
-        print 'sync value for ms component :', sync
         #Sending us component
         for char in str(usIllumTime):
             self.sendChar(char)
@@ -213,7 +211,6 @@ class Arduino(object):
         nbSent = intSent[0]
         if nbSent != usIllumTime:
             sync = False
-        print 'sync value for us component :', sync
         return sync
     
     def rbModeSettings(self, greenFrameInterval, colorMode):
@@ -282,6 +279,11 @@ class Arduino(object):
                 sync = False
         return sync
 
+    def resetFrameCounter(self):
+        """
+        Send R char to tell reset the framecounter of each arduino.
+        """
+        self.sendChar('R')
     
     def readData(self,nlines,printData=False,array=True,integers=False,Floaters=False):
         
@@ -387,7 +389,6 @@ def synchronization(illumTime, rgbLedRatio=None, greenFrameInterval=None, colorM
             print('Driver num ',driverNb,' is connected')
             sync = False
             while(not sync):
-                print 'illumTime for this driver :', illumTime[driverNb]
                 sync = driver.sendIllumTime(illumTime[driverNb])
                 print 'sync value of attempt to set illumtime  : ', sync
             if rgbLedRatio: #if rgbLedRatio is not None, this statement will be executed
