@@ -29,6 +29,7 @@ from SignalInterrupt import SignalInterrupt
 from ArduinoTeensy import Arduino
 
 #Function import
+import ArduinoTeensy
 from histogram import histoInit, histoCalc
 from crop import crop_w_mouse
 from camInit import camInit, defaultCameraSettings
@@ -95,10 +96,11 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.histoBtn.clicked.connect(self.oldHisto)
         self.runSaveBtn.clicked.connect(self.paramCheck)
         self.runSaveBtn.setEnabled(False)
-        #self.trigBtn.clicked.connect(self.launchHisto)
         self.abortBtn.setEnabled(False)
         self.arduinoBtn.setEnabled(False)
-        self.arduinoBtn.clicked.connect(self.loopAcquisition)
+        self.arduinoBtn.clicked.connect(self.arduinoSync)
+        self.loopBtn.setEnabled(False)
+        self.loopBtn.clicked.connect(self.loopAcquisition)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
         self.approxFramerateBtn.clicked.connect(self.approxFramerate)
@@ -579,17 +581,21 @@ class isoiWindow(QtWidgets.QMainWindow):
         if self.rgbMode.isChecked() and self.rbMode.isChecked() :
             self.runSaveBtn.setEnabled(False)
             self.arduinoBtn.setEnabled(False)
+            self.loopBtn.setEnabled(False)
         elif self.rgbMode.isChecked():
             self.runSaveBtn.setEnabled(True)
             self.arduinoBtn.setEnabled(True)
+            self.loopBtn.setEnabled(True)
             mode ="rgbMode"
         elif self.rbMode.isChecked():
             self.runSaveBtn.setEnabled(True)
             self.arduinoBtn.setEnabled(True)
+            self.loopBtn.setEnabled(True)
             mode ="rbMode"
         else:
             self.runSaveBtn.setEnabled(False)
             self.arduinoBtn.setEnabled(False)
+            self.loopBtn.setEnabled(False)
         return mode
     
     def fileSizeSetting(self):
@@ -632,27 +638,41 @@ class isoiWindow(QtWidgets.QMainWindow):
         exp = (self.mmc.getExposure()) # in ms
         ledOnDurationMs = round(exp*(self.expRatio.value()),3)
         ledOnDurationBlue= round(exp,3)
+        #list containing each illumTime for each LED
+        illumTime=[ledOnDurationMs, ledOnDurationMs, ledOnDurationBlue]
         print ledOnDurationMs
         rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()]
         greenFrameInterval = self.gInterval.value()
         colorMode = self.rbColorBox.currentText()
+        
+        #Arduino sync via ArduinoTeensy package
+        if self.rgbMode.isChecked():
+            print 'rgbMode call'
+            ArduinoTeensy.synchronization(illumTime,  
+                                          rgbLedRatio = rgbLedRatio)
+        elif self.rbMode.isChecked():
+            print 'rbMode call'
+            ArduinoTeensy.synchronization(illumTime,  
+                                          greenFrameInterval = greenFrameInterval,
+                                          colorMode = colorMode)
+        
         #ARDUINO object initialization
-        ledDriverNb=[0,1,2] #[Red, Green, Blue]
-        for driverNb in ledDriverNb:
-            driver = Arduino(driverNb)
-            if driver.isConnected():
-                print('Driver num ',driverNb,' is connected')
-                if driverNb!=2:
-                    driver.sendIllumTime(ledOnDurationMs)
-                if driverNb==2:
-                    driver.sendIllumTime(ledOnDurationBlue)
-                if self.rgbMode.isChecked():
-                    driver.rgbModeSettings(rgbLedRatio)
-                elif self.rbMode.isChecked():
-                    driver.rbModeSettings(greenFrameInterval,colorMode)#TO DO : add the checking of color mode here
-                driver.closeConn()
-            else:
-                print('Driver num ',driverNb,' is NOT connected')
+#        ledDriverNb=[0,1,2] #[Red, Green, Blue]
+#        for driverNb in ledDriverNb:
+#            driver = Arduino(driverNb)
+#            if driver.isConnected():
+#                print('Driver num ',driverNb,' is connected')
+#                if driverNb!=2:
+#                    driver.sendIllumTime(ledOnDurationMs)
+#                if driverNb==2:
+#                    driver.sendIllumTime(ledOnDurationBlue)
+#                if self.rgbMode.isChecked():
+#                    driver.rgbModeSettings(rgbLedRatio)
+#                elif self.rbMode.isChecked():
+#                    driver.rbModeSettings(greenFrameInterval,colorMode)#TO DO : add the checking of color mode here
+#                driver.closeConn()
+#            else:
+#                print('Driver num ',driverNb,' is NOT connected')
 
     
     ######################################

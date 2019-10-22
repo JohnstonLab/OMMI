@@ -325,7 +325,7 @@
         <x>350</x>
         <y>20</y>
         <width>377</width>
-        <height>441</height>
+        <height>470</height>
        </rect>
       </property>
       <property name="font">
@@ -638,13 +638,20 @@
         </layout>
        </item>
        <item row="9" column="0">
+        <widget class="QPushButton" name="loopBtn">
+         <property name="text">
+          <string>LOOP</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
         <widget class="QPushButton" name="abortBtn">
          <property name="text">
           <string>ABORT</string>
          </property>
         </widget>
        </item>
-       <item row="10" column="0" colspan="2">
+       <item row="11" column="0" colspan="3">
         <widget class="QProgressBar" name="progressBar">
          <property name="value">
           <number>24</number>
@@ -654,17 +661,14 @@
       </layout>
       <zorder>label_15</zorder>
       <zorder>expRatio</zorder>
-      <zorder>label_20</zorder>
-      <zorder>gInterval</zorder>
       <zorder>arduinoBtn</zorder>
       <zorder>abortBtn</zorder>
       <zorder>progressBar</zorder>
       <zorder>label_4</zorder>
       <zorder>experimentDuration</zorder>
       <zorder>rgbMode</zorder>
-      <zorder>rbMode</zorder>
       <zorder></zorder>
-      <zorder>rbColorBox</zorder>
+      <zorder>loopBtn</zorder>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_2">

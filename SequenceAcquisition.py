@@ -17,6 +17,7 @@ from ArduinoTeensy import Arduino
 from SignalInterrupt import SignalInterrupt 
 
 #Function import
+import ArduinoTeensy
 from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, readSignal, readOdourValve, trigImage, risingEdge
 from saveFcts import filesInit, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata, cfgFileSaving
 
@@ -341,25 +342,39 @@ class SequenceAcquisition(QThread):
         exp = (self.mmc.getExposure()) # in ms
         ledOnDurationMs = round(exp*self.expRatio,3)
         ledOnDurationBlue= round(exp,3)
+        #list containing each illumTime for each LED
+        illumTime=[ledOnDurationMs, ledOnDurationMs, ledOnDurationBlue]
         print 'time LED ON (ms) : ', ledOnDurationMs
         
+        if self.seqMode == "rgbMode":
+            print 'rgbMode call'
+            ArduinoTeensy.synchronization(illumTime,  
+                                          rgbLedRatio = self.rgbLedRatio)
+        elif self.seqMode == 'rbMode':
+            print 'rbMode call'
+            ArduinoTeensy.synchronization(illumTime,  
+                                          greenFrameInterval = self.greenFrameInterval,
+                                          colorMode = self.colorMode)
+        
         #ARDUINO object initialization
-        ledDriverNb=[0,1,2] #[Red, Green, Blue]
-        for driverNb in ledDriverNb:
-            driver = Arduino(driverNb)
-            if driver.isConnected():
-                print('Driver num ',driverNb,' is connected')
-                if driverNb!=2:
-                    driver.sendIllumTime(ledOnDurationMs)
-                if driverNb==2:
-                    driver.sendIllumTime(ledOnDurationBlue)
-                if self.seqMode == "rgbMode":
-                    driver.rgbModeSettings(self.rgbLedRatio)
-                elif self.seqMode == 'rbMode':
-                    driver.rbModeSettings(self.greenFrameInterval,self.colorMode)#TO DO : add the checking of color mode here
-                driver.closeConn()
-            else:
-                print('Driver num ',driverNb,' is NOT connected')
+#        ledDriverNb=[0,1,2] #[Red, Green, Blue]
+#        for driverNb in ledDriverNb:
+#            driver = Arduino(driverNb)
+#            if driver.isConnected():
+#                print('Driver num ',driverNb,' is connected')
+#                if driverNb!=2:
+#                    driver.sendIllumTime(ledOnDurationMs)
+#                if driverNb==2:
+#                    driver.sendIllumTime(ledOnDurationBlue)
+#                if self.seqMode == "rgbMode":
+#                    driver.rgbModeSettings(self.rgbLedRatio)
+#                elif self.seqMode == 'rbMode':
+#                    driver.rbModeSettings(self.greenFrameInterval,self.colorMode)#TO DO : add the checking of color mode here
+#                driver.closeConn()
+#            else:
+#                print('Driver num ',driverNb,' is NOT connected')
+        
+        
         self.arduinoSyncFinished.emit()
                 
     def sequencePreparation(self):

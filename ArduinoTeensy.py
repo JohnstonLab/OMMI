@@ -112,13 +112,13 @@ class Arduino(object):
         
         try:
             send = self.ser.write(valueToWrite)
-            print(
-            """
-            Data sent succesfully.
-            Data sent: %s
-            Immediate response: %s
-            """ 
-            %(char,send))
+#            print(
+#            """
+#            Data sent succesfully.
+#            Data sent: %s
+#            Immediate response: %s
+#            """ 
+#            %(char,send))
         except Exception as e:
             print("Some error occurred, here is the exception: ",e)
 
@@ -245,48 +245,33 @@ class Arduino(object):
         Change the LED alternation mode to rgbMode and send the LED alternation 
         sequence to the LED driver.
         """
+        sync = True
         ledSeq = [0]*ledRatio[0]+[1]*ledRatio[1]+[2]*ledRatio[2]
         #Send M char to inform arduino the mode will be set
         self.sendChar('M')
         #Send L char to chose the rgbMode and send the List
         self.sendChar('L')
+        
         #Send the LED alternation sequence
-        #time.sleep(0.5)
         for char in str(int(len(ledSeq))):
             self.sendChar(char)
         time.sleep(0.8) #Wait that ParseInt() fct of the arduino timed out
-        try:
-            intSent = self.readData(1)
-            print intSent
-        except:
-            print 'No data sent'
+        #Verification of the value sent
+        intSent = self.readData(1, integers = True)
+        nbSent = intSent[0]
+        if nbSent != len(ledSeq):
+            sync = False
         time.sleep(0.1)
         for ledInt in ledSeq:
             self.sendChar(str(ledInt))
             time.sleep(0.8)
-            try:
-                intSent = self.readData(1)
-                print intSent
-            except:
-                print 'No data sent'
-         
-    def synchronization(self, illumTime, rgbLedRatio=None, greenFrameInterval=None, colorMode=None):
-        """
-        Initialize and send the information to each LED driver.
-        """
-        ledDriverNb=[0,1,2] #[Red, Green, Blue]
-        for driverNb in ledDriverNb:
-            driver = Arduino(driverNb)
-            if driver.isConnected():
-                print('Driver num ',driverNb,' is connected')
-                driver.sendIllumTime(illumTime)
-                if rgbLedRatio: #if rgbLedRatio is not None, this statement will be executed
-                    driver.rgbModeSettings(rgbLedRatio)
-                elif self.seqMode == 'rbMode':
-                    driver.rbModeSettings(self.greenFrameInterval,self.colorMode)#TO DO : add the checking of color mode here
-                driver.closeConn()
-            else:
-                print('Driver num ',driverNb,' is NOT connected')
+            intSent = self.readData(1, integers = True)
+            print intSent
+            nbSent = intSent[0]
+            if nbSent != ledInt:
+                sync = False
+        return sync
+
     
     def readData(self,nlines,printData=False,array=True,integers=False,Floaters=False):
         
@@ -376,6 +361,34 @@ class Arduino(object):
         self.connected = False
         print("Arduino connection to "+str(self.port)+" closed!")
         
+
+### Arduino-related function
+        
+         
+def synchronization(illumTime, rgbLedRatio=None, greenFrameInterval=None, colorMode=None):
+    """
+    Initialize and send the information to each LED driver.
+    """
+    print 'Synchronization fct from Teensy called'
+    ledDriverNb=[0,1,2] #[Red, Green, Blue]
+    for driverNb in ledDriverNb:
+        driver = Arduino(driverNb)
+        if driver.isConnected():
+            print('Driver num ',driverNb,' is connected')
+            driver.sendIllumTime(illumTime[driverNb])
+            if rgbLedRatio: #if rgbLedRatio is not None, this statement will be executed
+                sync = False
+                while(not sync):
+                    sync = driver.rgbModeSettings(rgbLedRatio)
+                    print 'sync value of attempt to set rgbmode : ', sync
+            elif greenFrameInterval and colorMode:
+                driver.rbModeSettings(greenFrameInterval,colorMode)#TO DO : add the checking of color mode here
+            driver.closeConn()
+        else:
+            print('Driver num ',driverNb,' is NOT connected')
+
+
+
 ###TEST SECTION :
         
 if __name__ == '__main__':
