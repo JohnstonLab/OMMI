@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -781,7 +781,7 @@
         <string>Load Experiment Folder</string>
        </property>
       </widget>
-      <widget class="QListWidget" name="subDirList_2">
+      <widget class="QListWidget" name="dataStimList">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -796,7 +796,7 @@
         <rect>
          <x>150</x>
          <y>20</y>
-         <width>111</width>
+         <width>291</width>
          <height>16</height>
         </rect>
        </property>
@@ -804,11 +804,11 @@
         <string>load a folder...</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="splitBtn_2">
+      <widget class="QPushButton" name="splitFilesOdourBtn">
        <property name="geometry">
         <rect>
          <x>280</x>
-         <y>60</y>
+         <y>100</y>
          <width>151</width>
          <height>23</height>
         </rect>
@@ -817,7 +817,7 @@
         <string>Split files by odour</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="loadJsonBtn">
+      <widget class="QPushButton" name="loadStimSeqBtn">
        <property name="geometry">
         <rect>
          <x>460</x>
@@ -830,7 +830,7 @@
         <string>Load Stim Sequence File</string>
        </property>
       </widget>
-      <widget class="QListWidget" name="subDirList_3">
+      <widget class="QListWidget" name="stimList">
        <property name="geometry">
         <rect>
          <x>460</x>
@@ -838,6 +838,19 @@
          <width>231</width>
          <height>151</height>
         </rect>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="splitStimFileBtn">
+       <property name="geometry">
+        <rect>
+         <x>280</x>
+         <y>60</y>
+         <width>151</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Split Stim file</string>
        </property>
       </widget>
      </widget>

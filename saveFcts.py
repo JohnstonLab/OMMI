@@ -119,17 +119,17 @@ def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode,
     print 'saving succeed'
     return savePath
     
-def cfgFileLoading(settingsFilePath):
+def jsonFileLoading(filePath):
     """
-    Open a json file and creat a python dictionnary.
+    Open a json file and create a python dictionnary.
     """
-    settingsDict = None
+    pyDict = None
     try:
-            with open(settingsFilePath) as json_file:
-                settingsDict = json.load(json_file)
+            with open(filePath) as json_file:
+                pyDict = json.load(json_file)
     except:
             print 'error in loading the file'
-    return settingsDict
+    return pyDict
 
 def filesInit(savePath, name, nbFrames, maxFrames):
     """
