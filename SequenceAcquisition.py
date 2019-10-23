@@ -284,7 +284,7 @@ class SequenceAcquisition(QThread):
                 startTime = time()	
                 frameTime = startTime - self.startAcquisitionTime #Taking the off time to be synchronized with metadata
                 odourValveSig = readOdourValve(self.labjack, 2)
-                respirationSig = readSignal(self.labjack, 1)
+                respirationSig = readSignal(self.labjack, 0)
                 saveMetadata(	self.textFile, 
 								str(frameTime),
 								str(self.ledList[imageCount]), 

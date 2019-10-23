@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>844</width>
-    <height>675</height>
+    <width>825</width>
+    <height>587</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,11 +20,11 @@
       <x>10</x>
       <y>0</y>
       <width>791</width>
-      <height>561</height>
+      <height>541</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -675,67 +675,184 @@
      <attribute name="title">
       <string>Images Analysis</string>
      </attribute>
-     <widget class="QPushButton" name="loadFileBtn">
+     <widget class="QGroupBox" name="groupBox_3">
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>30</y>
-        <width>135</width>
-        <height>23</height>
+        <y>20</y>
+        <width>701</width>
+        <height>211</height>
        </rect>
       </property>
-      <property name="text">
-       <string>Load Experiment Folder</string>
+      <property name="autoFillBackground">
+       <bool>true</bool>
       </property>
+      <property name="title">
+       <string>Classic File</string>
+      </property>
+      <widget class="QPushButton" name="splitAllBtn">
+       <property name="geometry">
+        <rect>
+         <x>280</x>
+         <y>80</y>
+         <width>151</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Process whole folder</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="loadFileBtn">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>135</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Load Mouse Folder</string>
+       </property>
+      </widget>
+      <widget class="QListWidget" name="subDirList">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>50</y>
+         <width>256</width>
+         <height>151</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="folderName">
+       <property name="geometry">
+        <rect>
+         <x>150</x>
+         <y>20</y>
+         <width>361</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>load a folder...</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="splitBtn">
+       <property name="geometry">
+        <rect>
+         <x>280</x>
+         <y>50</y>
+         <width>151</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Split channels and .txt files</string>
+       </property>
+      </widget>
      </widget>
-     <widget class="QLabel" name="folderName">
-      <property name="geometry">
-       <rect>
-        <x>170</x>
-        <y>30</y>
-        <width>361</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>load a folder...</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="splitBtn">
-      <property name="geometry">
-       <rect>
-        <x>290</x>
-        <y>60</y>
-        <width>151</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Split channels and .txt files</string>
-      </property>
-     </widget>
-     <widget class="QListWidget" name="subDirList">
+     <widget class="QGroupBox" name="groupBox_4">
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>60</y>
-        <width>256</width>
-        <height>192</height>
+        <y>240</y>
+        <width>701</width>
+        <height>211</height>
        </rect>
       </property>
-     </widget>
-     <widget class="QPushButton" name="splitAllBtn">
-      <property name="geometry">
-       <rect>
-        <x>290</x>
-        <y>90</y>
-        <width>151</width>
-        <height>23</height>
-       </rect>
+      <property name="autoFillBackground">
+       <bool>true</bool>
       </property>
-      <property name="text">
-       <string>Process whole folder</string>
+      <property name="title">
+       <string>Loop File</string>
       </property>
+      <widget class="QPushButton" name="splitAllBtn_2">
+       <property name="geometry">
+        <rect>
+         <x>280</x>
+         <y>100</y>
+         <width>151</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Process whole folder</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="loadExpFileBtn">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>135</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Load Experiment Folder</string>
+       </property>
+      </widget>
+      <widget class="QListWidget" name="subDirList_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>50</y>
+         <width>256</width>
+         <height>151</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="experimentFolderName">
+       <property name="geometry">
+        <rect>
+         <x>150</x>
+         <y>20</y>
+         <width>111</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>load a folder...</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="splitBtn_2">
+       <property name="geometry">
+        <rect>
+         <x>280</x>
+         <y>60</y>
+         <width>151</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Split channels and .txt files</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="loadJsonBtn">
+       <property name="geometry">
+        <rect>
+         <x>460</x>
+         <y>20</y>
+         <width>135</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Load Stim Sequence File</string>
+       </property>
+      </widget>
+      <widget class="QListWidget" name="subDirList_3">
+       <property name="geometry">
+        <rect>
+         <x>460</x>
+         <y>50</y>
+         <width>231</width>
+         <height>151</height>
+        </rect>
+       </property>
+      </widget>
      </widget>
     </widget>
    </widget>
@@ -745,7 +862,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>844</width>
+     <width>825</width>
      <height>21</height>
     </rect>
    </property>
