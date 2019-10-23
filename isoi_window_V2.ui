@@ -768,19 +768,6 @@
       <property name="title">
        <string>Loop File</string>
       </property>
-      <widget class="QPushButton" name="splitAllBtn_2">
-       <property name="geometry">
-        <rect>
-         <x>280</x>
-         <y>100</y>
-         <width>151</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Process whole folder</string>
-       </property>
-      </widget>
       <widget class="QPushButton" name="loadExpFileBtn">
        <property name="geometry">
         <rect>
@@ -827,7 +814,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>Split channels and .txt files</string>
+        <string>Split files by odour</string>
        </property>
       </widget>
       <widget class="QPushButton" name="loadJsonBtn">

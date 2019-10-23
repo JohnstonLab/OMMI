@@ -70,6 +70,7 @@ class SequenceAcquisition(QThread):
         
         self.startAcquisitionTime = None
         self.stimName = None
+        self.loopRunning = True #by default we need to have this value set to True for the frameSaving thread
         
 
     def __del__(self):
