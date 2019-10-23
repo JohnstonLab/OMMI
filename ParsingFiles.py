@@ -63,17 +63,17 @@ def get_immediate_subdirectories(a_dir):
     return [name for name in os.listdir(a_dir)
             if os.path.isdir(os.path.join(a_dir, name))]
     
-def getTifLists(currdir):
+def getTifLists(currdir, fileName=None):
     """
     Return a list of the path of all .tif files in the folder.
     """
     tifsList=[]           
     for file in os.listdir(currdir):
-        if fnmatch.fnmatch(file, '*.tif'):
+        if fnmatch.fnmatch(file, '*.tif') and str(file)[0:-8] == fileName:
             tifsList.append(currdir+"/"+file)
     return tifsList
 
-def splitColorChannel(experimentDir, txtArray, tifsList):
+def splitColorChannel(filesName, txtArray, tifsList, processedFolderPath):
     """
     Takes the metadat and a list of .tif path to create a folder with
     one channel tif and the time stamps corresponding
@@ -91,18 +91,18 @@ def splitColorChannel(experimentDir, txtArray, tifsList):
     #ledOnDuration =txtFile[:,5] #useless
     
     #Create or verify that processed folder exsits
-    savePath = experimentDir+'/Processed'
-    if not os.path.exists(savePath):
-        os.makedirs(savePath)
+#    savePath = filesFolder+'/Processed'
+#    if not os.path.exists(savePath):
+#        os.makedirs(savePath)
     #Create a txt file
-    redTextFile = open(savePath+"/"+"red"+".txt", 'w')
-    greenTextFile = open(savePath+"/"+"green"+".txt", 'w')
-    blueTextFile = open(savePath+"/"+"blue"+".txt", 'w')
+    redTextFile = open(processedFolderPath+"/"+filesName+"_R"+".txt", 'w')
+    greenTextFile = open(processedFolderPath+"/"+filesName+"_G"+".txt", 'w')
+    blueTextFile = open(processedFolderPath+"/"+filesName+"_B"+".txt", 'w')
     print'.txt init'
     #Create a tiffWriter
-    redTif = tifffile.TiffWriter(savePath+"/"+"red"+".tif", bigtiff=True)
-    greenTif = tifffile.TiffWriter(savePath+"/"+"green"+".tif", bigtiff=True)
-    blueTif = tifffile.TiffWriter(savePath+"/"+"blue"+".tif", bigtiff=True)
+    redTif = tifffile.TiffWriter(processedFolderPath+"/"+filesName+"_R"+".tif", bigtiff=True)
+    greenTif = tifffile.TiffWriter(processedFolderPath+"/"+filesName+"_G"+".tif", bigtiff=True)
+    blueTif = tifffile.TiffWriter(processedFolderPath+"/"+filesName+"_B"+".tif", bigtiff=True)
     print'.itf init'
     
     splitTifs(redTif, tifsList, 0, channel)
@@ -122,7 +122,8 @@ def splitColorChannel(experimentDir, txtArray, tifsList):
     redTif.close()
     greenTif.close()
     blueTif.close()
-    
+        
+
 def txtFileSizeCorrection():
     """
     Because the metadata and the are saved in 2 different threads,

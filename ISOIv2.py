@@ -17,6 +17,7 @@ from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, QFileDialog
 from time import time, sleep
+import os
 from os import path
 import ctypes
 
@@ -110,8 +111,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.savingPathBtn.clicked.connect(self.browseSavingFolder)
         
         self.loadFileBtn.clicked.connect(self.loadFolder)
-        self.splitBtn.clicked.connect(self.processExperiment)
-        self.splitAllBtn.clicked.connect(self.processAllExperiments)
+        self.splitBtn.clicked.connect(self.processRunExperiment)
+        self.splitAllBtn.clicked.connect(self.processAllRunExperiments)
         
         #Connect Signals
         self.updateFramesPerFile.connect(self.fileSizeSetting)
@@ -1009,6 +1010,7 @@ class isoiWindow(QtWidgets.QMainWindow):
     #### Analysis part ####
     #######################
         
+    ####CLASSIC FILE###
     def loadFolder(self):
         """
         Load a folder containing experiments.
@@ -1024,7 +1026,7 @@ class isoiWindow(QtWidgets.QMainWindow):
             print('No folder selected')
         
 
-    def processExperiment(self):
+    def processRunExperiment(self):
         """
         Get the experiment folder name from the gui and call the split fction.
         Called when split channels button is pressed.
@@ -1032,12 +1034,16 @@ class isoiWindow(QtWidgets.QMainWindow):
         experimentFolder = self.subDirList.currentItem() 
         if experimentFolder :
             print 'item well selected'
-            experimentFolderName = experimentFolder.text()
-            self.splitChannels(experimentFolderName)
+            experimentName = experimentFolder.text()
+            experimentFolder = self.analysisPath+'/'+experimentName
+            processedFolderPath = experimentFolder+'/Processed'
+            if not os.path.exists(processedFolderPath):
+                os.makedirs(processedFolderPath)
+            self.splitChannels(experimentName, experimentFolder, processedFolderPath)
         else:
             print 'Please, select a valid experiment folder' #TO DO : add window
     
-    def processAllExperiments(self):
+    def processAllRunExperiments(self):
         """
         Get all the experiment names and call slit fct for each one
         """
@@ -1049,32 +1055,27 @@ class isoiWindow(QtWidgets.QMainWindow):
             print('cannot call this protected function')
         try:
             for experiment in experimentsList:
-                experimentFolderName = experiment.text()
-                self.splitChannels(experimentFolderName)
+                experimentName = experiment.text()
+                experimentFolder = self.analysisPath+'/'+experimentName
+                processedFolderPath = experimentFolder+'/Processed'
+                if not os.path.exists(processedFolderPath):
+                    os.makedirs(processedFolderPath)
+                self.splitChannels(experimentName, experimentFolder, processedFolderPath)
         except:
             print('Empty list of experiments')
+
     
-    
-    def splitChannels(self, experimentFolderName):
+    def splitChannels(self, filesName, filesFolder, processedFolderPath):
         """
         Concatenate all the .tif to segment them in blue, red and green channels.
         Create new .txt files for each channels containing the timestamps.
         """
-        print'split channel fct'
         
-        #If method called witout argument, trie
-        print experimentFolderName
-#        if not experimentFolderName : #experimentFolderName = False or None will enter the statement
-#            experimentFolder = self.subDirList.currentItem() 
-#            print 'item well selected'
-#            experimentFolderName = experimentFolder.text()
-#            print str(experimentFolderName)
-        #if experimentFolderName : #experimentFolderName = something will enter this statement
-        print self.analysisPath
-        print str(experimentFolderName)
-        experimentFolderPath = self.analysisPath+'/'+experimentFolderName
-        print experimentFolderPath
-        filePath =self.analysisPath+'/'+experimentFolderName+'/'+experimentFolderName
+        #print self.analysisPath
+        print 'loading ', filesName,' in folder : ',filesFolder
+        #experimentFolderPath = self.analysisPath+'/'+experimentFolderName
+        #print experimentFolderPath
+        filePath =filesFolder+'/'+filesName
         print filePath
         txtFile=filePath+'.txt'
         try:
@@ -1082,20 +1083,21 @@ class isoiWindow(QtWidgets.QMainWindow):
         except:
             print 'error to convert txt to array'
         try:
-            tifsPathList = getTifLists(experimentFolderPath)
+            tifsPathList = getTifLists(filesFolder, filesName)
             print tifsPathList
         except:
-            print 'error to convert txt to array'
+            print 'error to get the tifs list'
         try:
-            splitColorChannel(experimentFolderPath, txtArray, tifsPathList)
+            splitColorChannel(filesName, txtArray, tifsPathList, processedFolderPath)
         except:
-            print 'error to split channels'   
-            
-            
-#        else:
-#            print 'Please, select a valid experiment folder'
-
+            print 'error to split channels' 
     
+    ####LOOP FILE###
+    
+    def loadLoopExp(self):
+        """
+        Load a loop folder experiment.
+        """
     
     #################################
     #### Common utility function ####
