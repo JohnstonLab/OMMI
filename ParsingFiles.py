@@ -83,7 +83,7 @@ def getTifLists(currdir, fileName=None):
     """
     tifsList=[]           
     for file in os.listdir(currdir):
-        if fnmatch.fnmatch(file, '*.tif') and str(file)[0:-8] == fileName:
+        if fnmatch.fnmatch(file, '*.tif') and str(file)[0:-8] == fileName: #Remove the incrementing nb of images
             tifsList.append(currdir+"/"+file)
     return tifsList
 

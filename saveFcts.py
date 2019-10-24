@@ -15,6 +15,7 @@ from tifffile import imsave, imread
 from datetime import date
 import json
 import os
+import fnmatch
 from datetime import datetime
 import threading
 
@@ -156,8 +157,10 @@ def filesInit(savePath, name, nbFrames, maxFrames):
     return (tifList, textFile)
 
 
-def tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList):
-    print 'TiffWriterdel fct called'
+def emptyTiffDel(name, savePath, imageCount, maxFrames, tiffWriterList):
+    """
+    Supress the empty tiff generated for an aborted sequence acquisition.
+    """
     for i in range((imageCount/maxFrames)+1,len(tiffWriterList)):   #All files that are empty (imageCount/maxFrames)+1, will be suppressed
         filename = savePath+"/"+name+'%(number)04d.tif' % {"number": i+1}
         try:
@@ -165,6 +168,20 @@ def tiffWriterDel(name, savePath, imageCount, maxFrames, tiffWriterList):
             print 'Empty .tif suppression succeed'
         except OSError as e:  ## if failed, report it back to the user ##
             print ("Error: %s - %s." % (e.filename, e.strerror))
+
+
+def acqFilesDel(fileBaseName, filesPath):
+    """
+    Suppres all the file with the basename took in argument.
+    """
+    
+    for file in os.listdir(filesPath):
+        if fnmatch.fnmatch(file, fileBaseName+'*'):
+            try:    
+                os.remove(filesPath+'/'+file)
+                print (file+' suppression succeed')
+            except OSError as e:  ## if failed, report it back to the user ##
+                print ("Error: %s - %s." % (e.filename, e.strerror))
 
 def tiffWritersClose(tifList):
     for tif in tifList:

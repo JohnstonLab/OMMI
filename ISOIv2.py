@@ -821,6 +821,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         # We don't want to enable user to start another thread while this one is
         # running so we disable the start button.
         self.runSaveBtn.setEnabled(False)
+        self.loopBtn.setEnabled(False)
         #Prepare each informations and file needed
         self.sequencAcq.sequencePreparation()
         if not triggerStart:
@@ -882,6 +883,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         # We don't want to enable user to start another thread while this one is
         # running so we disable the start button.
         self.runSaveBtn.setEnabled(False)
+        self.loopBtn.setEnabled(False)
         #Prepare experiment folder and config File
         self.sequencAcq.loopFolderPreparation()
         # We have all the events we need connected we can start the thread 
@@ -920,6 +922,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.progressBar.reset()
         #Change button state
         self.abortBtn.setEnabled(False)
+        self.loopBtn.setEnabled(True)
         self.runSaveBtn.setEnabled(True)
         
         
@@ -1165,14 +1168,14 @@ class isoiWindow(QtWidgets.QMainWindow):
         except:
             print 'please select a correct json file'
             process=False
-        ##add the verification on the size of the list ?
-        if process :
-            
+        ##verification that stimDic and stimFiles are loaded and have the same length
+        if process and self.dataStimList.count() and self.stimList.count():
+            #loop through each stim file and associate im
             for index in xrange(self.dataStimList.count()):
                 stimName = self.dataStimList.item(index).text()
                 print stimName
-                stimNb =int(stimName[-2:]) #take the last 2 char which are the stimNb
-                odour = valveList[stimNb-1] #because the valve list begin at 0 !!
+                #stimNb =int(stimName[-2:]) #take the last 2 char which are the stimNb
+                odour = valveList[index]
                 print 'odour : ',odour
                 experimentFolder = self.loopAnalysisPath
                 processedFolderPath = experimentFolder+'/OD'+str(odour)+'_processed'

@@ -19,7 +19,8 @@ from SignalInterrupt import SignalInterrupt
 #Function import
 import ArduinoTeensy
 from Labjack import greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, readSignal, readOdourValve, trigImage, risingEdge
-from saveFcts import filesInit, tiffWriterDel, tiffWritersClose, saveFrame, saveMetadata, cfgFileSaving
+from saveFcts import filesInit, emptyTiffDel, tiffWritersClose, saveFrame, saveMetadata, cfgFileSaving
+import saveFcts
 
 
 
@@ -220,13 +221,13 @@ class SequenceAcquisition(QThread):
             if ((self.nbFrames/self.maxFrames)>=1): #check that multiples .tif were initialized
                 # --> CHECK WICH .tif are empty and suppress it
                 if self.stimName:
-                    tiffWriterDel(self.stimName, 
+                    emptyTiffDel(self.stimName, 
                                   self.savePath, 
                                   imageCount, 
                                   self.maxFrames, 
                                   self.tiffWriterList)
                 else:
-                    tiffWriterDel(self.experimentName, 
+                    emptyTiffDel(self.experimentName, 
                                   self.savePath, 
                                   imageCount, 
                                   self.maxFrames, 
@@ -357,25 +358,6 @@ class SequenceAcquisition(QThread):
                                           greenFrameInterval = self.greenFrameInterval,
                                           colorMode = self.colorMode)
         
-        #ARDUINO object initialization
-#        ledDriverNb=[0,1,2] #[Red, Green, Blue]
-#        for driverNb in ledDriverNb:
-#            driver = Arduino(driverNb)
-#            if driver.isConnected():
-#                print('Driver num ',driverNb,' is connected')
-#                if driverNb!=2:
-#                    driver.sendIllumTime(ledOnDurationMs)
-#                if driverNb==2:
-#                    driver.sendIllumTime(ledOnDurationBlue)
-#                if self.seqMode == "rgbMode":
-#                    driver.rgbModeSettings(self.rgbLedRatio)
-#                elif self.seqMode == 'rbMode':
-#                    driver.rbModeSettings(self.greenFrameInterval,self.colorMode)#TO DO : add the checking of color mode here
-#                driver.closeConn()
-#            else:
-#                print('Driver num ',driverNb,' is NOT connected')
-        
-        
         self.arduinoSyncFinished.emit()
                 
     def sequencePreparation(self):
@@ -453,7 +435,7 @@ class SequenceAcquisition(QThread):
         """
         self.nbFrames=10000 #TO DO --> better place for this line of code
         
-        self.stimName= self.experimentName+'_S'+str(stimNumber)
+        self.stimName= self.experimentName+'_S%(number)02d_' % {"number": stimNumber} #%02d return a 2 char string : 1-->01
         (self.tiffWriterList, self.textFile) = filesInit(   self.savePath,
                                                             self.stimName,
                                                             self.nbFrames, 
@@ -504,7 +486,7 @@ class SequenceAcquisition(QThread):
                     tiffWritersClose(self.tiffWriterList)
                     #close the metadata .txt file
                     self.textFile.close()
-                    
+                    saveFcts.acqFilesDel(self.stimName,self.savePath)
                     print 'abort loop'
             self.stopInterrupt.abort() #Stop the listenning action of the Interrupt
                 
