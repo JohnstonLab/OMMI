@@ -651,34 +651,38 @@ class isoiWindow(QtWidgets.QMainWindow):
         greenFrameInterval = self.gInterval.value()
         colorMode = self.rbColorBox.currentText()
         
+        #Display window Init
+        self.syncMsg = QMessageBox()
+        self.syncMsg.setIcon(QMessageBox.Warning)
+        self.syncMsg.setText("Synchronization... please wait")
+        
         #Arduino sync via ArduinoTeensy package
         if self.rgbMode.isChecked():
             print 'rgbMode call'
-            ArduinoTeensy.synchronization(illumTime,  
-                                          rgbLedRatio = rgbLedRatio)
+            ledDriverNb=[0,1,2] #[Red, Green, Blue]
+            for driverNb in ledDriverNb:
+                driver = Arduino(driverNb)
+                self.syncMsg.setWindowTitle("LED driver "+str(driverNb)+" synchronization")
+                driver.syncStarted.connect(self.syncMsg.exec_)
+                driver.syncFinished.connect(self.syncMsg.close)
+                driver.synchronization(illumTime,  
+                                       rgbLedRatio = rgbLedRatio)
+#            ArduinoTeensy.synchronization(illumTime,  
+#                                          rgbLedRatio = rgbLedRatio)
         elif self.rbMode.isChecked():
             print 'rbMode call'
-            ArduinoTeensy.synchronization(illumTime,  
-                                          greenFrameInterval = greenFrameInterval,
-                                          colorMode = colorMode)
-        
-        #ARDUINO object initialization
-#        ledDriverNb=[0,1,2] #[Red, Green, Blue]
-#        for driverNb in ledDriverNb:
-#            driver = Arduino(driverNb)
-#            if driver.isConnected():
-#                print('Driver num ',driverNb,' is connected')
-#                if driverNb!=2:
-#                    driver.sendIllumTime(ledOnDurationMs)
-#                if driverNb==2:
-#                    driver.sendIllumTime(ledOnDurationBlue)
-#                if self.rgbMode.isChecked():
-#                    driver.rgbModeSettings(rgbLedRatio)
-#                elif self.rbMode.isChecked():
-#                    driver.rbModeSettings(greenFrameInterval,colorMode)#TO DO : add the checking of color mode here
-#                driver.closeConn()
-#            else:
-#                print('Driver num ',driverNb,' is NOT connected')
+            ledDriverNb=[0,1,2] #[Red, Green, Blue]
+            for driverNb in ledDriverNb:
+                driver = Arduino(driverNb)
+                self.syncMsg.setWindowTitle("LED driver "+str(driverNb)+" synchronization")
+                driver.syncStarted.connect(self.syncMsg.exec_)
+                driver.syncFinished.connect(self.syncMsg.close)
+                driver.synchronization(illumTime,  
+                                       greenFrameInterval = greenFrameInterval,
+                                       colorMode = colorMode)
+#            ArduinoTeensy.synchronization(illumTime,  
+#                                          greenFrameInterval = greenFrameInterval,
+#                                          colorMode = colorMode)
 
     
     ######################################
@@ -712,14 +716,6 @@ class isoiWindow(QtWidgets.QMainWindow):
                 run = False
         if run and (self.ledTrigBox.currentText() == 'Cyclops'):
             if(self.triggerModeCheck('Internal (Recommended for fast acquisitions)')):
-#                choice = QMessageBox.question(self, 'LED driver synchronization',
-#                                                    "Are the LED drivers synchronized with acquisition settings ?",
-#                                                    QMessageBox.Yes | QMessageBox.No)
-#                if choice == QMessageBox.Yes:
-#                    print("Running")
-#                else:
-#                    print('Synchronization launched')
-#                    self.arduinoSync()
                 run = True
                     
             else:
@@ -733,10 +729,6 @@ class isoiWindow(QtWidgets.QMainWindow):
                 emptyFolderMsg = QMessageBox.warning(self,"Empty saving Folder",
                                                      "Select a folder before running the experiment")
                 print emptyFolderMsg
-#                emptyFolderMsg.setIcon(QMessageBox.Warning)
-#                emptyFolderMsg.setText("Select a folder before running the experiment")
-#                emptyFolderMsg.setWindowTitle("Empty saving Folder")
-#                emptyFolderMsg.exec_()
                 run = False
             elif path.exists(folderName+'/'+self.experimentName.text()):
                 choice = QMessageBox.question(self, 'Overwriting',
@@ -1169,7 +1161,7 @@ class isoiWindow(QtWidgets.QMainWindow):
             print 'please select a correct json file'
             process=False
         ##verification that stimDic and stimFiles are loaded and have the same length
-        if process and self.dataStimList.count() and self.stimList.count():
+        if process and self.dataStimList.count()==self.stimList.count():
             #loop through each stim file and associate im
             for index in xrange(self.dataStimList.count()):
                 stimName = self.dataStimList.item(index).text()
@@ -1182,9 +1174,6 @@ class isoiWindow(QtWidgets.QMainWindow):
                 if not os.path.exists(processedFolderPath):
                     os.makedirs(processedFolderPath)
                 self.splitChannels(stimName, experimentFolder, processedFolderPath)
-#            for stim in range(1,(numOfVials*nOfTrials)+1):
-#                print 'stim ', stim
-#                stimName = self.dataStimList.item(vial).text()
             
                 
                 

@@ -349,14 +349,18 @@ class SequenceAcquisition(QThread):
         print 'time LED ON (ms) : ', ledOnDurationMs
         
         if self.seqMode == "rgbMode":
-            print 'rgbMode call'
-            ArduinoTeensy.synchronization(illumTime,  
-                                          rgbLedRatio = self.rgbLedRatio)
+            ledDriverNb=[0,1,2] #[Red, Green, Blue]
+            for driverNb in ledDriverNb:
+                driver = Arduino(driverNb)
+                driver.synchronization(illumTime,  
+                                       self.rgbLedRatio = rgbLedRatio)
         elif self.seqMode == 'rbMode':
-            print 'rbMode call'
-            ArduinoTeensy.synchronization(illumTime,  
-                                          greenFrameInterval = self.greenFrameInterval,
-                                          colorMode = self.colorMode)
+            ledDriverNb=[0,1,2] #[Red, Green, Blue]
+            for driverNb in ledDriverNb:
+                driver = Arduino(driverNb)
+                driver.synchronization(illumTime,  
+                                       self.greenFrameInterval = greenFrameInterval,
+                                       self.colorMode = colorMode)
         
         self.arduinoSyncFinished.emit()
                 

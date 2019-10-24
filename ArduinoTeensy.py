@@ -13,19 +13,24 @@ import time
 import serial.tools.list_ports as lsports
 import struct
 
-class Arduino(object):
+from PyQt5.QtCore import QObject, pyqtSignal
+
+
+class Arduino(QObject):
     """
     Class of Arduino Teensy.
     Inspired from : https://github.com/mick001/Arduino-Comm-Class/blob/master/ArduinoUnoClass.py
     """
 
-
+    syncStarted = pyqtSignal()
+    syncFinished = pyqtSignal()
     #Color mode in R-B acquisition
     rbColorModes = ['Red and Blue', 'Red only', 'Blue only']
 
-    def __init__(self, led,speed=9600, timeout=1):
-
+    def __init__(self, led,speed=9600, timeout=1, parent=None):
         """ CLASS CONSTRUCTOR """
+        
+        QObject.__init__(self,parent)
         
         self.led = led
         self.speed = speed
@@ -357,6 +362,27 @@ class Arduino(object):
         else:
             print("Nothing to return since array = False")
     
+    
+    def synchronization(self, illumTime, rgbLedRatio=None, greenFrameInterval=None, colorMode=None):
+        """
+        Function in charge of the
+        """
+        self.syncStarted.emit()
+        if self.isConnected():
+            print('Driver num ',self.led,' is connected')
+            sync = False
+            while(not sync):
+                sync = self.sendIllumTime(illumTime[self.led])
+                print 'sync value of attempt to set illumtime  : ', sync
+            if rgbLedRatio: #if rgbLedRatio is not None, this statement will be executed
+                sync = False
+                while(not sync):
+                    sync = self.rgbModeSettings(rgbLedRatio)
+                    print 'sync value of attempt to set rgbmode : ', sync
+            elif greenFrameInterval and colorMode:
+                self.rbModeSettings(greenFrameInterval,colorMode)#TO DO : add the checking of color mode here
+            self.closeConn()
+        self.syncFinished.emit()
     
     def isConnected(self):
         """
