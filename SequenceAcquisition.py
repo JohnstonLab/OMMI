@@ -353,14 +353,14 @@ class SequenceAcquisition(QThread):
             for driverNb in ledDriverNb:
                 driver = Arduino(driverNb)
                 driver.synchronization(illumTime,  
-                                       self.rgbLedRatio = rgbLedRatio)
+                                       rgbLedRatio = self.rgbLedRatio)
         elif self.seqMode == 'rbMode':
             ledDriverNb=[0,1,2] #[Red, Green, Blue]
             for driverNb in ledDriverNb:
                 driver = Arduino(driverNb)
                 driver.synchronization(illumTime,  
-                                       self.greenFrameInterval = greenFrameInterval,
-                                       self.colorMode = colorMode)
+                                       greenFrameInterval = self.greenFrameInterval,
+                                       colorMode = self.colorMode)
         
         self.arduinoSyncFinished.emit()
                 

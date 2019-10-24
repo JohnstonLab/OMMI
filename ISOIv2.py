@@ -95,13 +95,13 @@ class isoiWindow(QtWidgets.QMainWindow):
         # Connect push buttons
         self.cropBtn.clicked.connect(self.crop)
         self.histoBtn.clicked.connect(self.oldHisto)
-        self.runSaveBtn.clicked.connect(self.paramCheck)
+        self.runSaveBtn.clicked.connect(self.runCheck)
         self.runSaveBtn.setEnabled(False)
         self.abortBtn.setEnabled(False)
         self.arduinoBtn.setEnabled(False)
         self.arduinoBtn.clicked.connect(self.arduinoSync)
         self.loopBtn.setEnabled(False)
-        self.loopBtn.clicked.connect(self.loopAcquisition)
+        self.loopBtn.clicked.connect(self.loopCheck)
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
         self.approxFramerateBtn.clicked.connect(self.approxFramerate)
@@ -651,38 +651,41 @@ class isoiWindow(QtWidgets.QMainWindow):
         greenFrameInterval = self.gInterval.value()
         colorMode = self.rbColorBox.currentText()
         
-        #Display window Init
-        self.syncMsg = QMessageBox()
-        self.syncMsg.setIcon(QMessageBox.Warning)
-        self.syncMsg.setText("Synchronization... please wait")
+        
         
         #Arduino sync via ArduinoTeensy package
         if self.rgbMode.isChecked():
             print 'rgbMode call'
             ledDriverNb=[0,1,2] #[Red, Green, Blue]
             for driverNb in ledDriverNb:
+                #driver init
                 driver = Arduino(driverNb)
-                self.syncMsg.setWindowTitle("LED driver "+str(driverNb)+" synchronization")
-                driver.syncStarted.connect(self.syncMsg.exec_)
-                driver.syncFinished.connect(self.syncMsg.close)
+                #Display window Init
+                syncMsg = QMessageBox()
+                syncMsg.setIcon(QMessageBox.Warning)
+                syncMsg.setText("Synchronization... please wait")
+                syncMsg.setWindowTitle("LED driver "+str(driverNb)+" synchronization")
+                driver.syncStarted.connect(syncMsg.exec_)
+                driver.syncFinished.connect(syncMsg.close)
                 driver.synchronization(illumTime,  
                                        rgbLedRatio = rgbLedRatio)
-#            ArduinoTeensy.synchronization(illumTime,  
-#                                          rgbLedRatio = rgbLedRatio)
+                
         elif self.rbMode.isChecked():
             print 'rbMode call'
             ledDriverNb=[0,1,2] #[Red, Green, Blue]
             for driverNb in ledDriverNb:
+                #driver init
                 driver = Arduino(driverNb)
-                self.syncMsg.setWindowTitle("LED driver "+str(driverNb)+" synchronization")
-                driver.syncStarted.connect(self.syncMsg.exec_)
-                driver.syncFinished.connect(self.syncMsg.close)
+                #Display window Init
+                syncMsg = QMessageBox()
+                syncMsg.setIcon(QMessageBox.Warning)
+                syncMsg.setText("Synchronization... please wait")
+                syncMsg.setWindowTitle("LED driver "+str(driverNb)+" synchronization")
+                driver.syncFinished.connect(syncMsg.close)
+                syncMsg.exec_()
                 driver.synchronization(illumTime,  
                                        greenFrameInterval = greenFrameInterval,
                                        colorMode = colorMode)
-#            ArduinoTeensy.synchronization(illumTime,  
-#                                          greenFrameInterval = greenFrameInterval,
-#                                          colorMode = colorMode)
 
     
     ######################################
@@ -741,9 +744,17 @@ class isoiWindow(QtWidgets.QMainWindow):
                     print('Change the experiment name')
                     run = False
         
-        if run:
-            self.saveImageSeq()
+#        if run:
+#            self.saveImageSeq()
+        return run
             
+    def runCheck(self):
+        """
+        Check the parameters of the acquisiton before calling it.
+        """
+        if self.paramCheck():
+            self.saveImageSeq()
+    
     def saveImageSeq(self):
         """
         Get all informations from the GUI needed for setting up an acquisition.
@@ -762,7 +773,6 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.sequencAcq.isFinished.connect(self.acquisitionDone)
         self.sequencAcq.nbFramesSig.connect(self.initProgressBar)
         self.sequencAcq.progressSig.connect(self.updateProgressBar)
-        self.arduinoSyncMsg() #connection signal and frame display
         
         #Get experiment/acquisition settings from the GUI
         self.sequencAcq.experimentName = self.experimentName.text() #str
@@ -841,6 +851,13 @@ class isoiWindow(QtWidgets.QMainWindow):
             startTriggerMsg.exec_() #Pop window to prevent listenning to trigger
             
     
+    def loopCheck(self):
+        """
+        Check the parameters of the acquisiton before calling it.
+        """
+        if self.paramCheck():
+            self.loopAcquisition()
+    
     def loopAcquisition(self):
         """
         Acquire images in a loop process, synchronized with a SYNC signal.
@@ -882,18 +899,6 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.sequencAcq.start()
     
     ##### Methods in charge of communication with SequenceAcquisition class instance ####
-    def arduinoSyncMsg(self):
-        """
-        Display a window to prevent the user the arduino is synchronised
-        """
-        self.syncMsg = QMessageBox()
-        self.syncMsg.setIcon(QMessageBox.Warning)
-        self.syncMsg.setText("The sequence acquisition is about to start")
-        self.syncMsg.setWindowTitle("Arduino synchronization")
-        self.sequencAcq.arduinoSyncStarted.connect(self.syncMsg.exec_)
-        self.sequencAcq.arduinoSyncFinished.connect(self.syncMsg.close)
-        
-    
     def initProgressBar(self,nbFrames):
         """
         Initialize the progress bar in function of the nb of frames of the acquisition.
