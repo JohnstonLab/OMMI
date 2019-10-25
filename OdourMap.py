@@ -32,9 +32,68 @@ class OdourMap(QThread):
         self.rAndFEdges = np.zeros((self.stimNb,2), dtype='i,i')
         self.baselineLenMax = 10000
         self.stimLenMax = 10000
+        self.stimLen = None
+        self.baselinLen = None
+        
+        #Filtering parameter
+        self.filterSize = (3,3) #default value
+        
+        #Downsampling the image
+        self.rescaleRatio = 0.5 #default value
+        
+        self.redProcess = False
+        self.blueProcess = False
         
     def __del__(self):
         self.wait()
+        
+    def getFilterSize(self):
+        """
+        Return the filter size of the odour map object
+        """
+        return self.filterSize
+    
+    def setFilterSize(self, filterSize):
+        """
+        Set the filter size of the odour map object
+        """
+        if type(filterSize) == tuple or type(filterSize) == int:
+            self.filterSize = filterSize
+        else:
+            print 'Wrong size type, filter size value : ',self.getFilterSize()
+    
+    def getRescaleRatio(self):
+        """
+        Return the rescaling ratio of the odour map object
+        """
+        return self.filterSize
+    
+    def setRescaleRatio(self, rescaleRatio):
+        """
+        Set the rescaling ratio of the odour map object
+        """
+        if type(rescaleRatio) == float:
+            self.rescaleRatio = rescaleRatio
+        else:
+            print 'Wrong size type, rescaling ratio value : ',self.getRescaleRatio()
+            
+    def setBaselineLen(self, baselineLen):
+        """
+        Set the baseline length of the odour map object
+        """
+        if type(baselineLen) == int:
+            self.baselinLen = baselineLen
+        else:
+            print 'Wrong size type, baseline length value : ',self.baselinLen
+            
+    def setStimLen(self, stimLen):
+        """
+        Set the stimulation length of the odour map object
+        """
+        if type(stimLen) == int:
+            self.stimLen = stimLen
+        else:
+            print 'Wrong size type, stimulation length value : ',self.stimLen
         
     def bAndSMaxLength(self):
         """
@@ -108,6 +167,11 @@ class OdourMap(QThread):
         Contains the main part of the process (allowing th GUI to response)
         """
         print('run fct of the odourMap class called')
+        
+        if self.redProcess :
+            print 'red process'
+        if self.blueProcess :
+            print 'blue process'
         
         
 if __name__ == '__main__':
