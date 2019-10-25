@@ -83,8 +83,12 @@ def getTifLists(currdir, fileName=None):
     """
     tifsList=[]           
     for file in os.listdir(currdir):
-        if fnmatch.fnmatch(file, '*.tif') and str(file)[0:-8] == fileName: #Remove the incrementing nb of images
-            tifsList.append(currdir+"/"+file)
+        if fileName:
+            if fnmatch.fnmatch(file, '*.tif') and str(file)[0:-8] == fileName: #Remove the incrementing nb of images
+                tifsList.append(currdir+"/"+file)
+        else:
+            if fnmatch.fnmatch(file, '*.tif'):
+                tifsList.append(currdir+"/"+file)
     return tifsList
 
 def splitColorChannel(filesName, txtArray, tifsList, processedFolderPath):
@@ -100,7 +104,7 @@ def splitColorChannel(filesName, txtArray, tifsList, processedFolderPath):
     time = txtArray[:,0]
     channel = txtArray[:,1]
     #frames = txtFile[:,2] #Useless
-    odourValve = txtArray[:,3] #useless
+    odourValve = txtArray[:,3]
     #respiration = txtFile[:,4] #useless
     #ledOnDuration =txtFile[:,5] #useless
     
@@ -181,7 +185,7 @@ def splitTimestamps(textFile, time, odourValve, numChannel, channel):
     try:
         toSaveArray = np.nonzero(channel==numChannel)[0] #We now that it is 1D array
         for frameNb in toSaveArray:
-            textFile.write(str(time[frameNb])+'\t'+str(odourValve[frameNb])+'\n')
+            textFile.write(str(time[frameNb])+'\t'+str(int(odourValve[frameNb]))+'\n')
     except:
         print('Parsing .txt file doesnt work')
         

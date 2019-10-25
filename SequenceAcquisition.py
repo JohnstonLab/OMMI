@@ -439,7 +439,7 @@ class SequenceAcquisition(QThread):
         """
         self.nbFrames=10000 #TO DO --> better place for this line of code
         
-        self.stimName= self.experimentName+'_S%(number)02d_' % {"number": stimNumber} #%02d return a 2 char string : 1-->01
+        self.stimName= self.experimentName+'_S%(number)03d' % {"number": stimNumber} #%02d return a 2 char string : 1-->01
         (self.tiffWriterList, self.textFile) = filesInit(   self.savePath,
                                                             self.stimName,
                                                             self.nbFrames, 

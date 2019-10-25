@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>825</width>
-    <height>587</height>
+    <height>573</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
       <x>10</x>
       <y>0</y>
       <width>791</width>
-      <height>541</height>
+      <height>531</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -673,7 +673,7 @@
     </widget>
     <widget class="QWidget" name="tab_2">
      <attribute name="title">
-      <string>Images Analysis</string>
+      <string>Files Splitting</string>
      </attribute>
      <widget class="QGroupBox" name="groupBox_3">
       <property name="geometry">
@@ -800,6 +800,9 @@
          <height>16</height>
         </rect>
        </property>
+       <property name="styleSheet">
+        <string notr="true">border-color: rgb(0, 0, 0);</string>
+       </property>
        <property name="text">
         <string>load a folder...</string>
        </property>
@@ -852,6 +855,158 @@
        <property name="text">
         <string>Split Stim file</string>
        </property>
+      </widget>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_3">
+     <attribute name="title">
+      <string>Odour Map Creation</string>
+     </attribute>
+     <widget class="QGroupBox" name="groupBox_5">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>20</y>
+        <width>701</width>
+        <height>271</height>
+       </rect>
+      </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <property name="title">
+       <string>Map Creation</string>
+      </property>
+      <widget class="QListWidget" name="splittedChannelsList">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>50</y>
+         <width>231</width>
+         <height>151</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>270</x>
+         <y>30</y>
+         <width>151</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>11</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Baseline of (frames) :</string>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="baselineLength">
+       <property name="geometry">
+        <rect>
+         <x>450</x>
+         <y>30</y>
+         <width>42</width>
+         <height>22</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_5">
+       <property name="geometry">
+        <rect>
+         <x>270</x>
+         <y>60</y>
+         <width>171</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>11</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Stimulation of (frames) :</string>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="stimLength">
+       <property name="geometry">
+        <rect>
+         <x>450</x>
+         <y>60</y>
+         <width>42</width>
+         <height>22</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="redProcess">
+       <property name="geometry">
+        <rect>
+         <x>280</x>
+         <y>90</y>
+         <width>70</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Red</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="blueProcess">
+       <property name="geometry">
+        <rect>
+         <x>280</x>
+         <y>120</y>
+         <width>70</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Blue</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="mapBtn">
+       <property name="geometry">
+        <rect>
+         <x>340</x>
+         <y>100</y>
+         <width>111</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Create Odour Map</string>
+       </property>
+      </widget>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>231</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_13">
+        <item>
+         <widget class="QPushButton" name="loadOdourFolderBtn">
+          <property name="text">
+           <string>Load Odour Folder</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="odourFolder">
+          <property name="text">
+           <string>load a folder...</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
     </widget>
