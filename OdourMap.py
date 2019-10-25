@@ -41,9 +41,9 @@ class OdourMap(QThread):
         Scan each txt (for blue and red channels)in the odour folder and 
         determine the maximum stimulation length and baseline length
         """
+        stimNbBlue=0
+        stimNbRed=0
         for txt in self.txtList:
-            stimNbBlue=0
-            stimNbRed=0
             if txt[-5:-4] == 'B': #take the last characters of the filename (without the extension)
                 self._edgeSignalDetection(txt, stimNbBlue, 1)
                 stimNbBlue+=1
@@ -59,32 +59,36 @@ class OdourMap(QThread):
         length
         """
         try:
-            txtArray = ParsingFiles.load2DArrayFromTxt(self.odourFolder+'/'+txt, '\t')
-            #time = txtArray[:,0]
-            odourValve = txtArray[:,1]
-            #calculation of the baseline and stim lenght
-            stimStart = 0
-            frameCounter = 0
-            prevValue = 0 #Suppose that each txt begin with low stim
-            for value in odourValve:
-                if prevValue < value:
-                    rEdgeValue = frameCounter
-                elif prevValue > value:
-                    fEdgeValue = frameCounter
-                    baselineLen =  rEdgeValue-stimStart
-                    stimLen = fEdgeValue - rEdgeValue
-                    if baselineLen < self.baselineLenMax:
-                        self.baselineLenMax = baselineLen
-                        print 'baselineMax : ',self.baselineLenMax
-                    if stimLen < self.stimLenMax:
-                        self.stimLenMax = stimLen
-                        print 'stim max : ',self.stimLenMax
-                    self.rAndFEdges[stimNb,color] = np.array((rEdgeValue,fEdgeValue))
-                    print self.rAndFEdges
-                    
-                frameCounter+=1
-                prevValue=value
-        except:
+        txtArray = ParsingFiles.load2DArrayFromTxt(self.odourFolder+'/'+txt, '\t')
+        #time = txtArray[:,0]
+        odourValve = txtArray[:,1]
+        #calculation of the baseline and stim lenght
+        stimStart = 0
+        frameCounter = 0
+        prevValue = 0 #Suppose that each txt begin with low stim
+        for value in odourValve:
+            if prevValue < value:
+                rEdgeValue = frameCounter
+            elif prevValue > value:
+                fEdgeValue = frameCounter
+                baselineLen =  rEdgeValue-stimStart
+                stimLen = fEdgeValue - rEdgeValue
+                if baselineLen < self.baselineLenMax:
+                    self.baselineLenMax = baselineLen
+                    print 'baselineMax : ',self.baselineLenMax
+                if stimLen < self.stimLenMax:
+                    self.stimLenMax = stimLen
+                    print 'stim max : ',self.stimLenMax
+                print 'Stim nb : ', stimNb,' and color : ', color
+                try:    
+                    self.rAndFEdges[stimNb,color] = (rEdgeValue,fEdgeValue)
+                except:
+                    print 'array trouble'
+                print self.rAndFEdges
+                
+            frameCounter+=1
+            prevValue=value
+            except:
                 print ('wrong txt file structure')
         
             
@@ -109,6 +113,6 @@ class OdourMap(QThread):
 if __name__ == '__main__':
     
     print 'test'
-    odourMap = OdourMap('E:/OIIS Data/191022/concentration_1pc_again_again/OD1_processed')
+    odourMap = OdourMap('C:/data_OMMI/01pc/OD1_processed')
     odourMap.bAndSMaxLength()
     
