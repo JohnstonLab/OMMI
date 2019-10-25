@@ -59,37 +59,37 @@ class OdourMap(QThread):
         length
         """
         try:
-        txtArray = ParsingFiles.load2DArrayFromTxt(self.odourFolder+'/'+txt, '\t')
-        #time = txtArray[:,0]
-        odourValve = txtArray[:,1]
-        #calculation of the baseline and stim lenght
-        stimStart = 0
-        frameCounter = 0
-        prevValue = 0 #Suppose that each txt begin with low stim
-        for value in odourValve:
-            if prevValue < value:
-                rEdgeValue = frameCounter
-            elif prevValue > value:
-                fEdgeValue = frameCounter
-                baselineLen =  rEdgeValue-stimStart
-                stimLen = fEdgeValue - rEdgeValue
-                if baselineLen < self.baselineLenMax:
-                    self.baselineLenMax = baselineLen
-                    print 'baselineMax : ',self.baselineLenMax
-                if stimLen < self.stimLenMax:
-                    self.stimLenMax = stimLen
-                    print 'stim max : ',self.stimLenMax
-                print 'Stim nb : ', stimNb,' and color : ', color
-                try:    
-                    self.rAndFEdges[stimNb,color] = (rEdgeValue,fEdgeValue)
-                except:
-                    print 'array trouble'
-                print self.rAndFEdges
-                
-            frameCounter+=1
-            prevValue=value
-            except:
-                print ('wrong txt file structure')
+            txtArray = ParsingFiles.load2DArrayFromTxt(self.odourFolder+'/'+txt, '\t')
+            #time = txtArray[:,0]
+            odourValve = txtArray[:,1]
+            #calculation of the baseline and stim lenght
+            stimStart = 0
+            frameCounter = 0
+            prevValue = 0 #Suppose that each txt begin with low stim
+            for value in odourValve:
+                if prevValue < value:
+                    rEdgeValue = frameCounter
+                elif prevValue > value:
+                    fEdgeValue = frameCounter
+                    baselineLen =  rEdgeValue-stimStart
+                    stimLen = fEdgeValue - rEdgeValue
+                    if baselineLen < self.baselineLenMax:
+                        self.baselineLenMax = baselineLen
+                        print 'baselineMax : ',self.baselineLenMax
+                    if stimLen < self.stimLenMax:
+                        self.stimLenMax = stimLen
+                        print 'stim max : ',self.stimLenMax
+                    print 'Stim nb : ', stimNb,' and color : ', color
+                    try:    
+                        self.rAndFEdges[stimNb,color] = (rEdgeValue,fEdgeValue)
+                    except:
+                        print 'array trouble'
+                    print self.rAndFEdges
+                    
+                frameCounter+=1
+                prevValue=value
+        except:
+            print ('wrong txt file structure')
         
             
     def _stimNbCalculation(self, txtList):
