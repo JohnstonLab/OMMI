@@ -65,7 +65,7 @@ def get_immediate_subdirectories(a_dir):
 
 def getTxtList(currdir, hideExt=False):
     """
-    Return the .txt file(s) path list in a folder.
+    Return the .txt file(s) NAME (not path) list in a folder.
     """  
     txtList=[]           
     for file in os.listdir(currdir):
@@ -76,7 +76,7 @@ def getTxtList(currdir, hideExt=False):
                 txtList.append(str(file))
     return txtList
 
-def getTifLists(currdir, fileName=None):
+def getTifLists(currdir, fileName=None, color=None):
     """
     Return a list of the path of all .tif files in the folder.
     FileName allows to check 
@@ -85,6 +85,9 @@ def getTifLists(currdir, fileName=None):
     for file in os.listdir(currdir):
         if fileName:
             if fnmatch.fnmatch(file, '*.tif') and str(file)[0:-8] == fileName: #Remove the incrementing nb of images
+                tifsList.append(currdir+"/"+file)
+        elif color:
+            if fnmatch.fnmatch(file, '*.tif') and str(file)[-5:-4] == color: #Remove the image extension
                 tifsList.append(currdir+"/"+file)
         else:
             if fnmatch.fnmatch(file, '*.tif'):

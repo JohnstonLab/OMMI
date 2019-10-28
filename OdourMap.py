@@ -13,17 +13,27 @@ from PyQt5.QtCore import QThread
 #package import
 import ParsingFiles
 import numpy as np 
+import tifffile
+import matplotlib.pyplot as plt
+from skimage import filters, transform, util
+import cv2
 
 class OdourMap(QThread):
     """
     OdourMap object are created from pre-parsed data
     """
     
+    mathOperation = ["divide","substract"]
+    
     def __init__(self, odourFolder,parent=None):
         QThread.__init__(self,parent)
         
         self.odourFolder = odourFolder
-        self.txtList = ParsingFiles.getTxtList(odourFolder)
+        self.txtList = ParsingFiles.getTxtList(odourFolder) #WARNING : only the .txt name
+        self.redTifs = ParsingFiles.getTifLists(odourFolder, color ='R') #full path of the file
+        print self.redTifs
+        self.blueTifs = ParsingFiles.getTifLists(odourFolder, color ='B')
+        print self.blueTifs
         self.stimNb = self._stimNbCalculation(self.txtList)
         print 'stimNb :', self.stimNb 
         #create a matrix of tuples which will contain (rEdge,fEdge) for each 
@@ -41,6 +51,8 @@ class OdourMap(QThread):
         #Downsampling the image
         self.rescaleRatio = 0.5 #default value
         
+        self.mathOperation = OdourMap.mathOperation[0]
+        
         self.redProcess = False
         self.blueProcess = False
         
@@ -57,8 +69,10 @@ class OdourMap(QThread):
         """
         Set the filter size of the odour map object
         """
-        if type(filterSize) == tuple or type(filterSize) == int:
+        if type(filterSize) == tuple:
             self.filterSize = filterSize
+        elif type(filterSize) == int:
+            self.filterSize = (filterSize,filterSize)
         else:
             print 'Wrong size type, filter size value : ',self.getFilterSize()
     
@@ -138,12 +152,10 @@ class OdourMap(QThread):
                     if stimLen < self.stimLenMax:
                         self.stimLenMax = stimLen
                         print 'stim max : ',self.stimLenMax
-                    print 'Stim nb : ', stimNb,' and color : ', color
                     try:    
                         self.rAndFEdges[stimNb,color] = (rEdgeValue,fEdgeValue)
                     except:
                         print 'array trouble'
-                    print self.rAndFEdges
                     
                 frameCounter+=1
                 prevValue=value
@@ -161,6 +173,84 @@ class OdourMap(QThread):
                 stimNb+=1
         return stimNb
                 
+    def _imagesProcessing(self, tif):
+        """
+        Process each images of the stack contained in one .tif file.
+        Warning data type :
+        https://scikit-image.org/docs/dev/user_guide/data_types.html#data-types
+        """
+        tif32 = util.img_as_float32(tif)
+        N = tif32.shape[0]
+        tifAvg = None
+        imCount = 0
+        for image in tif32:
+            print image.shape
+            im = filters.median(image, np.ones(self.filterSize))
+            try:
+                im = transform.rescale(im, self.rescaleRatio, anti_aliasing=True)
+                print im.shape
+            except:
+                print 'failed rescale'
+            if tifAvg is not None :
+                tifAvg += im/N
+            else:
+                h,w = im.shape
+                tifAvg = np.ones((h,w), np.float32) 
+                tifAvg += im/N
+            print 'image ',imCount,' processed'
+            imCount+=1
+        return tifAvg
+            
+    
+    def _tifProcessing(self, tif, stimNb, color):
+        """
+        Apply ro whole pipeline to a tif containing frames for 1 stimulation
+        """
+        tifArray = tifffile.imread(tif)
+        print 'tif shape : ', tifArray.shape
+        rEdge = self.rAndFEdges[stimNb,color][0]
+        fEdge = self.rAndFEdges[stimNb,color][1]
+        if self.baselinLen :
+            baseline = tifArray[rEdge-self.baselinLen: rEdge]
+        else:
+            baseline = tifArray[rEdge-self.baselineLenMax: rEdge]
+        if self.stimLen:
+            stim = tifArray[fEdge-self.stimLen:fEdge]
+        else:
+            stim = tifArray[fEdge-self.stimLenMax:fEdge]
+        print baseline.shape, stim.shape
+        baselineAvg = self._imagesProcessing(baseline)
+        stimAvg = self._imagesProcessing(stim)
+        
+        if self.mathOperation == OdourMap.mathOperation[0]: #divide
+            odMap = (stimAvg/baselineAvg)
+        elif self.mathOperation == OdourMap.mathOperation[1]: #substract
+            odMap= stimAvg-baselineAvg
+        
+        print odMap
+        tifffile.imsave(self.odourFolder+'/stim_c%i_S%i.tif' %(color,stimNb), stimAvg)
+        print self.odourFolder+'/stim_c%i_S%i.tif' %(color,stimNb)
+        tifffile.imsave(self.odourFolder+'/baseline_c%i_S%i.tif' %(color,stimNb), baselineAvg)
+        print self.odourFolder+'/baseline_c%i_S%i.tif' %(color,stimNb)
+        tifffile.imsave(self.odourFolder+'/map_c%i_S%i.tif' %(color,stimNb),odMap)
+        print self.odourFolder+'/map_c%i_S%i.tif' %(color,stimNb)
+        
+#        cv2.namedWindow('Stim AVG')
+#        cv2.namedWindow('Baseline AVG')
+#        cv2.imshow('Stim AVG', stimAvg)
+#        cv2.imshow('Baseline AVG', baselineAvg)
+#        cv2.namedWindow('odour map')
+#        cv2.imshow('odour map', odMap)
+#        
+#        while(True):
+#            if cv2.waitKey(33) == 27:
+#                break
+#            if cv2.getWindowProperty('Stim AVG', 1) == -1: #Condition verified when 'X' (close) button is pressed
+#                break
+#            if cv2.getWindowProperty('Baseline AVG', 1) == -1: #Condition verified when 'X' (close) button is pressed
+#                break 
+#        cv2.destroyAllWindows()
+    
     
     def run(self):
         """
@@ -170,13 +260,30 @@ class OdourMap(QThread):
         
         if self.redProcess :
             print 'red process'
+            stimNb=0
+            color=0
+            for tif in self.redTifs:
+                print 'processing of : ', tif
+                self._tifProcessing(tif, stimNb, color)
+                stimNb+=1
         if self.blueProcess :
             print 'blue process'
+            stimNb=0
+            color=1
+            for tif in self.blueTifs:
+                print 'processing of : ', tif
+                self._tifProcessing(tif, stimNb, color)
+                stimNb+=1
         
         
 if __name__ == '__main__':
     
     print 'test'
-    odourMap = OdourMap('C:/data_OMMI/01pc/OD1_processed')
+    odourMap = OdourMap('C:/data_OMMI/ID723/10pc/OD1_processed')
     odourMap.bAndSMaxLength()
+    odourMap.baselinLen = 100
+    odourMap.stimLen = 150
+    odourMap.redProcess = True
+    odourMap.mathOperation="divide"
+    odourMap.start()
     
