@@ -16,6 +16,7 @@ import numpy as np
 import tifffile
 import matplotlib.pyplot as plt
 from skimage import filters, transform, util
+from scipy import ndimage
 import cv2
 
 class OdourMap(QThread):
@@ -184,21 +185,19 @@ class OdourMap(QThread):
         tifAvg = None
         imCount = 0
         for image in tif32:
-            print image.shape
-            im = filters.median(image, np.ones(self.filterSize))
+            im = ndimage.median_filter(image, self.filterSize) #filters.median(image, np.ones(self.filterSize))
 #            try:
 #                im = transform.rescale(im, self.rescaleRatio, anti_aliasing=True)
-#                print im.shape
 #            except:
 #                print 'failed rescale'
             if tifAvg is not None :
                 tifAvg += im/N
             else:
                 h,w = im.shape
+                print h,w
                 tifAvg = np.ones((h,w), np.float32) 
                 tifAvg += im/N
             imCount+=1
-        print 
         return tifAvg
             
     
@@ -231,9 +230,9 @@ class OdourMap(QThread):
         tifffile.imsave(tif[:-4]+'_stim.tif', stimAvg)
         print tif[:-4]+'_stim.tif'
         tifffile.imsave(tif[:-4]+'_baseline.tif', baselineAvg)
-        print tif[:-4]+'_baseline'
+        print tif[:-4]+'_baseline.tif'
         tifffile.imsave(tif[:-4]+'_map.tif',odMap)
-        print tif[:-4]+'_map'
+        print tif[:-4]+'_map.tif'
         
 #        cv2.namedWindow('Stim AVG')
 #        cv2.namedWindow('Baseline AVG')
@@ -279,11 +278,16 @@ class OdourMap(QThread):
 if __name__ == '__main__':
     
     print 'test'
-    odourMap = OdourMap('E:/OIIS Data/191025/ID723/10pc/OD8_processed') 
-    odourMap.bAndSMaxLength()
-    odourMap.baselinLen = 100
-    odourMap.stimLen = 150
-    odourMap.redProcess = True
-    odourMap.mathOperation="divide"
-    odourMap.start()
+    #odourMap = OdourMap('E:/OIIS Data/191025/ID723/10pc/OD8_processed')
+    #odourMap = OdourMap('C:/data_OMMI/ID723/10pc/OD1_processed')
+    #E:\OMMI\ID723\10pc\OD1_processed
+    for od in range(1,9):
+        odourMap = OdourMap('E:/OMMI/ID723/1pc/OD%i_processed'%(od))
+        odourMap.bAndSMaxLength()
+        odourMap.baselinLen = 100
+        odourMap.stimLen = 150
+        odourMap.redProcess = True
+        odourMap.blueProcess = True
+        #odourMap.mathOperation="divide"
+        odourMap.start()
     
