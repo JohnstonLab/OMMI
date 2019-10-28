@@ -186,19 +186,19 @@ class OdourMap(QThread):
         for image in tif32:
             print image.shape
             im = filters.median(image, np.ones(self.filterSize))
-            try:
-                im = transform.rescale(im, self.rescaleRatio, anti_aliasing=True)
-                print im.shape
-            except:
-                print 'failed rescale'
+#            try:
+#                im = transform.rescale(im, self.rescaleRatio, anti_aliasing=True)
+#                print im.shape
+#            except:
+#                print 'failed rescale'
             if tifAvg is not None :
                 tifAvg += im/N
             else:
                 h,w = im.shape
                 tifAvg = np.ones((h,w), np.float32) 
                 tifAvg += im/N
-            print 'image ',imCount,' processed'
             imCount+=1
+        print 
         return tifAvg
             
     
@@ -228,12 +228,12 @@ class OdourMap(QThread):
             odMap= stimAvg-baselineAvg
         
         print odMap
-        tifffile.imsave(self.odourFolder+'/stim_c%i_S%i.tif' %(color,stimNb), stimAvg)
-        print self.odourFolder+'/stim_c%i_S%i.tif' %(color,stimNb)
-        tifffile.imsave(self.odourFolder+'/baseline_c%i_S%i.tif' %(color,stimNb), baselineAvg)
-        print self.odourFolder+'/baseline_c%i_S%i.tif' %(color,stimNb)
-        tifffile.imsave(self.odourFolder+'/map_c%i_S%i.tif' %(color,stimNb),odMap)
-        print self.odourFolder+'/map_c%i_S%i.tif' %(color,stimNb)
+        tifffile.imsave(tif[:-4]+'_stim.tif', stimAvg)
+        print tif[:-4]+'_stim.tif'
+        tifffile.imsave(tif[:-4]+'_baseline.tif', baselineAvg)
+        print tif[:-4]+'_baseline'
+        tifffile.imsave(tif[:-4]+'_map.tif',odMap)
+        print tif[:-4]+'_map'
         
 #        cv2.namedWindow('Stim AVG')
 #        cv2.namedWindow('Baseline AVG')
@@ -279,7 +279,7 @@ class OdourMap(QThread):
 if __name__ == '__main__':
     
     print 'test'
-    odourMap = OdourMap('C:/data_OMMI/ID723/10pc/OD1_processed')
+    odourMap = OdourMap('E:/OIIS Data/191025/ID723/10pc/OD8_processed') 
     odourMap.bAndSMaxLength()
     odourMap.baselinLen = 100
     odourMap.stimLen = 150

@@ -105,7 +105,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.loadBtn.clicked.connect(self.loadZyla)
         self.unloadBtn.clicked.connect(self.unloadDevices)
         self.approxFramerateBtn.clicked.connect(self.approxFramerate)
-        self.testFramerateBtn.clicked.connect(self.testFramerate)
+        self.testFramerateBtn.clicked.connect(self.testFramerateInt)
         self.loadSettingsFileBtn.clicked.connect(self.loadjsonFile)
         self.defaultSettingsBtn.clicked.connect(self.defaultSettings)
         self.savingPathBtn.clicked.connect(self.browseSavingFolder)
@@ -323,11 +323,11 @@ class isoiWindow(QtWidgets.QMainWindow):
         if self.triggerModeCheck(triggerMode):
             self.mmc.startContinuousSequenceAcquisition(1)
             print('acquisition start')
-            waitForSignal(self.labjack, "TTL", "AIN", 0)
+            print waitForSignal(self.labjack, "TTL", "AIN", 0)
             start = time()
             #One acquisition begin
             trigImage(self.labjack)
-            waitForSignal(self.labjack, "TTL", "AIN", 0)
+            print waitForSignal(self.labjack, "TTL", "AIN", 0)
             #When the ARM signal back in high state, acquisition is done
             end = time()
             self.mmc.stopSequenceAcquisition()
@@ -335,6 +335,39 @@ class isoiWindow(QtWidgets.QMainWindow):
             print(cycleTime)
             self.testFramerateLabel.setText(str(round(1/cycleTime,2)))
         self.triggerChange(previousTriggerMode)
+        return cycleTime
+    
+    def testFramerateInt(self):
+        """
+        This function test the framerate. Fire a serie of 5 images using the 
+        internal trigger mode and mesure the average cycle time.
+        """
+        cycleTime = 0
+#        previousTriggerMode = self.mmc.getProperty(self.DEVICE[0], 'TriggerMode')
+#        triggerMode = 'External'
+#        print('test of the framerate')
+#        self.triggerChange(triggerMode)
+#        if self.triggerModeCheck(triggerMode):
+        self.mmc.startContinuousSequenceAcquisition(1)
+        print('acquisition start')
+        imageCount = 0
+        imageNb = 5
+        first=True
+        while (imageCount< imageNb):
+            if (self.mmc.getRemainingImageCount() > 0):
+                self.mmc.clearCircularBuffer() ## remove the last image from the circular buffer
+                if first:
+                    start = time()
+                    first = not(first)
+                else:
+                    end = time()
+                    print 'end - start : ', end-start
+                    cycleTime+= (end-start)/(imageNb-1) #5 images give you 4 interval
+                    print cycleTime
+                    start = time()
+                imageCount+=1
+        self.mmc.stopSequenceAcquisition()
+        self.testFramerateLabel.setText(str(round(1/cycleTime,2)))
         return cycleTime
     
     

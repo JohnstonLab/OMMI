@@ -36,7 +36,7 @@ def camInit(mmc):
     mmc.initializeAllDevices()
     mmc.setCameraDevice(DEVICE[0])
     
-    mmc.setProperty(DEVICE[0], 'TriggerMode', 'External') #Internal (Recommended for fast acquisitions) #External
+    mmc.setProperty(DEVICE[0], 'TriggerMode', 'Internal (Recommended for fast acquisitions)') #Internal (Recommended for fast acquisitions) #External
     mmc.setProperty(DEVICE[0], 'Binning', binn[2])
     mmc.setExposure(DEVICE[0], exp)
     mmc.setProperty(DEVICE[0], 'AcquisitionWindow', AcqWindow) #NOT AVAILABLE IN DEMO
