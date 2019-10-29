@@ -26,12 +26,14 @@ class OdourMap(QThread):
     
     mathOperation = ["divide","substract"]
     
-    def __init__(self, odourFolder,parent=None):
+    def __init__(self, odourFolder, resultSavePath=None,parent=None):
         QThread.__init__(self,parent)
         
         self.odourFolder = odourFolder
-        self.txtList = ParsingFiles.getTxtList(odourFolder) #WARNING : only the .txt name
-        self.redTifs = ParsingFiles.getTifLists(odourFolder, color ='R') #full path of the file
+        if resultSavePath is None:
+            self.resultSavePath = self.odourFolder
+        self.txtList = ParsingFiles.getTxtList(odourFolder) #WARNING : only the file name (with extension)
+        self.redTifs = ParsingFiles.getTifLists(odourFolder, color ='R') #full path of the file #WARNING don't name a file with B at the end
         print self.redTifs
         self.blueTifs = ParsingFiles.getTifLists(odourFolder, color ='B')
         print self.blueTifs
@@ -45,6 +47,9 @@ class OdourMap(QThread):
         self.stimLenMax = 10000
         self.stimLen = None
         self.baselinLen = None
+        
+        #Instanciate the rAndFEdges object
+        self.bAndSMaxLength()
         
         #Filtering parameter
         self.filterSize = (3,3) #default value
@@ -186,6 +191,7 @@ class OdourMap(QThread):
         imCount = 0
         for image in tif32:
             im = ndimage.median_filter(image, self.filterSize) #filters.median(image, np.ones(self.filterSize))
+#           #Facultactive rescaling
 #            try:
 #                im = transform.rescale(im, self.rescaleRatio, anti_aliasing=True)
 #            except:
@@ -194,19 +200,16 @@ class OdourMap(QThread):
                 tifAvg += im/N
             else:
                 h,w = im.shape
-                print h,w
-                tifAvg = np.ones((h,w), np.float32) 
+                tifAvg = np.ones((h,w), np.float32) #Should we really use ones ?
                 tifAvg += im/N
             imCount+=1
         return tifAvg
             
     
-    def _tifProcessing(self, tif, stimNb, color):
+    def _tifProcessing(self, tifName, tifArray , stimNb, color):
         """
         Apply ro whole pipeline to a tif containing frames for 1 stimulation
         """
-        tifArray = tifffile.imread(tif)
-        print 'tif shape : ', tifArray.shape
         rEdge = self.rAndFEdges[stimNb,color][0]
         fEdge = self.rAndFEdges[stimNb,color][1]
         if self.baselinLen :
@@ -217,7 +220,6 @@ class OdourMap(QThread):
             stim = tifArray[fEdge-self.stimLen:fEdge]
         else:
             stim = tifArray[fEdge-self.stimLenMax:fEdge]
-        print baseline.shape, stim.shape
         baselineAvg = self._imagesProcessing(baseline)
         stimAvg = self._imagesProcessing(stim)
         
@@ -226,14 +228,15 @@ class OdourMap(QThread):
         elif self.mathOperation == OdourMap.mathOperation[1]: #substract
             odMap= stimAvg-baselineAvg
         
-        print odMap
-        tifffile.imsave(tif[:-4]+'_stim.tif', stimAvg)
-        print tif[:-4]+'_stim.tif'
-        tifffile.imsave(tif[:-4]+'_baseline.tif', baselineAvg)
-        print tif[:-4]+'_baseline.tif'
-        tifffile.imsave(tif[:-4]+'_map.tif',odMap)
-        print tif[:-4]+'_map.tif'
+#        print odMap
+#        tifffile.imsave(tif[:-4]+'_stim.tif', stimAvg)
+#        print tif[:-4]+'_stim.tif'
+#        tifffile.imsave(tif[:-4]+'_baseline.tif', baselineAvg)
+#        print tif[:-4]+'_baseline.tif'
+        tifffile.imsave(tifName+'_map.tif',odMap)
+        print tifName+'_map.tif'
         
+#        #Display of the files generated ?        
 #        cv2.namedWindow('Stim AVG')
 #        cv2.namedWindow('Baseline AVG')
 #        cv2.imshow('Stim AVG', stimAvg)
@@ -249,7 +252,23 @@ class OdourMap(QThread):
 #            if cv2.getWindowProperty('Baseline AVG', 1) == -1: #Condition verified when 'X' (close) button is pressed
 #                break 
 #        cv2.destroyAllWindows()
+        return odMap
     
+    def _mapAvging(self, odMapList, savePath):
+        """
+        Take a list of odour map in argument and generate a map wich is the 
+        average of all these maps
+        """
+        odMapAvg = np.zeros(odMapList[0].shape, odMapList[0].dtype)
+        for odMap in odMapList:
+            odMapAvg += odMap/len(odMapList)
+        tifffile.imsave(savePath, odMapAvg)
+        return odMapAvg
+        
+    def folderProcessing(self):
+        """
+        Process a folder
+        """
     
     def run(self):
         """
@@ -261,29 +280,44 @@ class OdourMap(QThread):
             print 'red process'
             stimNb=0
             color=0
+            odMapList = []
             for tif in self.redTifs:
-                print 'processing of : ', tif
-                self._tifProcessing(tif, stimNb, color)
-                stimNb+=1
+                tifArray = tifffile.imread(tif)
+                if len(tifArray.shape) == 3 :
+                    print 'processing of : ', tif
+                    tifName = tif[:-4]
+                    odMapList.append(self._tifProcessing(tifName, tifArray, stimNb, color))
+                    stimNb+=1
+                else:
+                    print 'This tif is not a stack of frames and cannot be processed'
+            self.redOdMapAvg = self._mapAvging(odMapList, self.resultSavePath+'/R_avgMap.tif')
         if self.blueProcess :
             print 'blue process'
             stimNb=0
             color=1
+            odMapList = []
             for tif in self.blueTifs:
-                print 'processing of : ', tif
-                self._tifProcessing(tif, stimNb, color)
-                stimNb+=1
+                tifArray = tifffile.imread(tif)
+                if len(tifArray.shape) == 3 :
+                    print 'processing of : ', tif
+                    tifName = tif[:-4]
+                    odMapList.append(self._tifProcessing(tifName, tifArray, stimNb, color))
+                    stimNb+=1
+                else:
+                    print 'This tif is not a stack of frames and cannot be processed'
+            self.blueOdMapAvg = self._mapAvging(odMapList, self.resultSavePath+'/B_avgMap.tif')
         
         
 if __name__ == '__main__':
     
-    print 'test'
+    print 'test of the odour map class and functionalities'
     #odourMap = OdourMap('E:/OIIS Data/191025/ID723/10pc/OD8_processed')
     #odourMap = OdourMap('C:/data_OMMI/ID723/10pc/OD1_processed')
     #E:\OMMI\ID723\10pc\OD1_processed
-    for od in range(1,9):
-        odourMap = OdourMap('E:/OMMI/ID723/1pc/OD%i_processed'%(od))
-        odourMap.bAndSMaxLength()
+    for od in range(1,2):
+        odourMap = OdourMap('E:/OIIS Data/191028/ID724m/10pc/OD%i_processed'%(od)) #E:\OIIS Data\191025\ID723\1pc
+        (rEdge,fEdge) = odourMap.rAndFEdges[0][0]
+        print rEdge,fEdge
         odourMap.baselinLen = 100
         odourMap.stimLen = 150
         odourMap.redProcess = True

@@ -467,6 +467,9 @@
              </item>
              <item>
               <widget class="QSpinBox" name="gInterval">
+               <property name="minimum">
+                <number>1</number>
+               </property>
                <property name="maximum">
                 <number>10000</number>
                </property>
@@ -877,7 +880,7 @@
       <property name="title">
        <string>Map Creation</string>
       </property>
-      <widget class="QListWidget" name="splittedChannelsList">
+      <widget class="QListWidget" name="odourFoldersList">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -891,7 +894,7 @@
        <property name="geometry">
         <rect>
          <x>270</x>
-         <y>30</y>
+         <y>60</y>
          <width>151</width>
          <height>16</height>
         </rect>
@@ -909,7 +912,7 @@
        <property name="geometry">
         <rect>
          <x>450</x>
-         <y>30</y>
+         <y>60</y>
          <width>42</width>
          <height>22</height>
         </rect>
@@ -919,7 +922,7 @@
        <property name="geometry">
         <rect>
          <x>270</x>
-         <y>60</y>
+         <y>90</y>
          <width>171</width>
          <height>16</height>
         </rect>
@@ -937,17 +940,17 @@
        <property name="geometry">
         <rect>
          <x>450</x>
-         <y>60</y>
+         <y>90</y>
          <width>42</width>
          <height>22</height>
         </rect>
        </property>
       </widget>
-      <widget class="QCheckBox" name="redProcess">
+      <widget class="QCheckBox" name="redProcessBox">
        <property name="geometry">
         <rect>
          <x>280</x>
-         <y>90</y>
+         <y>120</y>
          <width>70</width>
          <height>17</height>
         </rect>
@@ -956,10 +959,10 @@
         <string>Red</string>
        </property>
       </widget>
-      <widget class="QCheckBox" name="blueProcess">
+      <widget class="QCheckBox" name="blueProcessBox">
        <property name="geometry">
         <rect>
-         <x>280</x>
+         <x>350</x>
          <y>120</y>
          <width>70</width>
          <height>17</height>
@@ -972,42 +975,128 @@
       <widget class="QPushButton" name="mapBtn">
        <property name="geometry">
         <rect>
-         <x>340</x>
-         <y>100</y>
-         <width>111</width>
+         <x>260</x>
+         <y>170</y>
+         <width>211</width>
          <height>23</height>
         </rect>
        </property>
        <property name="text">
-        <string>Create Odour Map</string>
+        <string>Create Odour Map for Selected Odours</string>
        </property>
       </widget>
-      <widget class="QWidget" name="layoutWidget">
+      <widget class="QWidget" name="">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>20</y>
-         <width>231</width>
-         <height>25</height>
+         <x>500</x>
+         <y>90</y>
+         <width>171</width>
+         <height>16</height>
         </rect>
        </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_13">
+       <layout class="QHBoxLayout" name="horizontalLayout_14">
         <item>
-         <widget class="QPushButton" name="loadOdourFolderBtn">
+         <widget class="QLabel" name="label_22">
+          <property name="font">
+           <font>
+            <pointsize>8</pointsize>
+           </font>
+          </property>
           <property name="text">
-           <string>Load Odour Folder</string>
+           <string>Stimulation ends at frame</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="odourFolder">
+         <widget class="QLabel" name="stimEndLabel">
+          <property name="font">
+           <font>
+            <pointsize>8</pointsize>
+           </font>
+          </property>
           <property name="text">
-           <string>load a folder...</string>
+           <string>...</string>
           </property>
          </widget>
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>500</x>
+         <y>60</y>
+         <width>171</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_15">
+        <item>
+         <widget class="QLabel" name="label_17">
+          <property name="font">
+           <font>
+            <pointsize>8</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Stimulation starts at frame</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="stimStartLabel">
+          <property name="font">
+           <font>
+            <pointsize>8</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QPushButton" name="loadOdourFolderBtn">
+       <property name="geometry">
+        <rect>
+         <x>11</x>
+         <y>21</y>
+         <width>121</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Load Experiment Folder</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="expFolderO">
+       <property name="geometry">
+        <rect>
+         <x>139</x>
+         <y>21</y>
+         <width>241</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>load a folder...</string>
+       </property>
+      </widget>
+      <zorder>odourFoldersList</zorder>
+      <zorder>label</zorder>
+      <zorder>baselineLength</zorder>
+      <zorder>label_5</zorder>
+      <zorder>stimLength</zorder>
+      <zorder>redProcessBox</zorder>
+      <zorder>blueProcessBox</zorder>
+      <zorder>mapBtn</zorder>
+      <zorder>layoutWidget</zorder>
+      <zorder>expFolderO</zorder>
+      <zorder>label_17</zorder>
+      <zorder>stimStartLabel</zorder>
+      <zorder>label_22</zorder>
+      <zorder>stimEndLabel</zorder>
      </widget>
     </widget>
    </widget>

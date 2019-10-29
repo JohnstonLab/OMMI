@@ -15,7 +15,7 @@ import MMCorePy
 import cv2
 from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QMessageBox, QFileDialog
+from PyQt5.QtWidgets import QMessageBox, QFileDialog, QAbstractItemView
 from time import time, sleep
 import os
 from os import path
@@ -118,6 +118,9 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.loadStimSeqBtn.clicked.connect(self.loadStimSequence)
         self.splitStimFileBtn.clicked.connect(self.splitStimFiles)
         self.splitFilesOdourBtn.clicked.connect(self.splitLoopExp)
+        
+        self.loadOdourFolderBtn.clicked.connect(self.loadExpOdFolder)
+        self.mapBtn.clicked.connect(self.createOdourMap)
         
         #Connect Signals
         self.updateFramesPerFile.connect(self.fileSizeSetting)
@@ -237,11 +240,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         #Led sequence mode toogle buttons
         self.rgbMode.stateChanged.connect(self.ledSequenceModeCheck)
         self.rbMode.stateChanged.connect(self.ledSequenceModeCheck)
-    
-    
-            
 
-        
+        self.odourFoldersList.setSelectionMode(QAbstractItemView.ExtendedSelection)
     
     
     #################################
@@ -1227,26 +1227,77 @@ class isoiWindow(QtWidgets.QMainWindow):
     #### Odour Map Creation Part ####
     #################################
     
-    def loadOdourFolder(self):
+    def loadExpOdFolder(self):
         """
         Load an odour folder containing each color channel for a stimulation
         (bot .tif and .txt channel)
         """
-        folderName = str(QFileDialog.getExistingDirectory(self, "Select an odour folder containing each color channel for a stimulation"))
+#        folderName = str(QFileDialog.getExistingDirectory(self, "Select an odour folder containing each color channel for a stimulation"))
+#        if path.isdir(folderName):
+#            self.experimentFolderName.setText(folderName)
+#            txtList = getTxtList(folderName, hideExt=True)
+#            if txtList:
+#                self.splittedChannelsList.clear()
+#                self.splittedChannelsList.addItems(txtList)
+#                self.odourMap = OdourMap(folderName)
+#            else:
+#                print('Wrong or empty folder')
+#        else:
+#            print('No folder selected')
+        
+        folderName = str(QFileDialog.getExistingDirectory(self, "Select an experiment folder"))
         if path.isdir(folderName):
-            self.experimentFolderName.setText(folderName)
-            txtList = getTxtList(folderName, hideExt=True)
-            if txtList:
-                self.splittedChannelsList.clear()
-                self.splittedChannelsList.addItems(txtList)
-                self.odourMap = OdourMap(folderName)
-            else:
-                print('Wrong or empty folder')
-        else:
-            print('No folder selected')
+           self.expFolderO.setText(folderName)
+           self.expFolderOPath = folderName
+           subDirectories = get_immediate_subdirectories(folderName)
+           if len(subDirectories) == 0:
+               print "Don't forget to split files into odours folder"
+           else:   
+               self.odourFoldersList.clear()
+               self.odourFoldersList.addItems(subDirectories)
+               self.odourFoldersList.itemClicked.connect(self.mapCreationUpdate)
+               
+    def mapCreationUpdate(self, listItem):
+        """
+        Take an odour folder in argument and update the informations displayed 
+        in the GUI about the processing parameters.
+        """
+        try:
+            odourFolder = listItem.text()
+            print odourFolder
+            print self.expFolderOPath+'/'+odourFolder
+            odourMap = OdourMap(self.expFolderOPath+'/'+odourFolder)
+            print 'odourMap object well instanciate'
+            self.baselineLength.setMaximum(odourMap.baselineLenMax)
+            self.stimLength.setMaximum(odourMap.stimLenMax)
+            (rEdge,fEdge) = odourMap.rAndFEdges[0][0] #Take the rEdge and fEdge of the red text file and first stim
+            print rEdge,fEdge
+            self.stimStartLabel.setText(str(rEdge))
+            self.stimEndLabel.setText(str(fEdge))
+        except:
+            print 'No way to initialize the odourFolder object'
+    
+    def createOdourMap(self):
+        """
+        Create odour maps for each of the selected files on the computer.
+        """
+        selectedOdours = self.odourFoldersList.selectedItems()
+        odour = selectedOdours[0]
+        for odour in selectedOdours:
+            odour = odour.text()
+            print odour
+            odourMap = None
+            try:
+                odourMap = OdourMap(self.expFolderOPath+'/'+odour)
+            except:
+                print 'ERROR : please select a valid odour folder'
+            if odourMap is not None:
+                odourMap.baselinLen = self.baselineLength.value()
+                odourMap.stimLen = self.stimLength.value()
+                odourMap.redProcess = self.redProcessBox.isChecked()
+                odourMap.blueProcess = self.blueProcessBox.isChecked()
+                odourMap.start()
             
-    
-    
     
     
     #################################
