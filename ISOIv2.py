@@ -63,8 +63,8 @@ class isoiWindow(QtWidgets.QMainWindow):
     
     #LED lit time (as a ratio of the exposure time) 
     ratioMin = 0.05
-    ratioMax = 2.
-    ratioDefault = 1.1
+    ratioMax = 3.
+    ratioDefault = 0.5
     ratioStep = 0.05
     
     #PyQt Signals definition, allows communication between different devices
@@ -200,11 +200,23 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.framePerFileBox.setValue(isoiWindow.framePerFileDefault)
         self.framePerFileBox.valueChanged.connect(self.updateFramesPerFile.emit)
       
-        #Interval Ms
-        self.expRatio.setValue(isoiWindow.ratioDefault)
-        self.expRatio.setMaximum(isoiWindow.ratioMax)
-        self.expRatio.setSingleStep(isoiWindow.ratioStep)
-        self.expRatio.setMinimum(isoiWindow.ratioMin)
+        #Inteval red LED on
+        self.rExpRatio.setValue(isoiWindow.ratioDefault)
+        self.rExpRatio.setMaximum(isoiWindow.ratioMax)
+        self.rExpRatio.setSingleStep(isoiWindow.ratioStep)
+        self.rExpRatio.setMinimum(isoiWindow.ratioMin)
+        
+        #Inteval green LED on
+        self.gExpRatio.setValue(isoiWindow.ratioDefault)
+        self.gExpRatio.setMaximum(isoiWindow.ratioMax)
+        self.gExpRatio.setSingleStep(isoiWindow.ratioStep)
+        self.gExpRatio.setMinimum(isoiWindow.ratioMin)
+        
+        #Inteval blue LED on
+        self.bExpRatio.setValue(2*isoiWindow.ratioDefault)
+        self.bExpRatio.setMaximum(isoiWindow.ratioMax)
+        self.bExpRatio.setSingleStep(isoiWindow.ratioStep)
+        self.bExpRatio.setMinimum(isoiWindow.ratioMin)
         
         #####
         
@@ -452,7 +464,6 @@ class isoiWindow(QtWidgets.QMainWindow):
                                             "This action will reset the ROI, do you want to continue ?",
                                             QMessageBox.Yes | QMessageBox.No)
         if choice == QMessageBox.Yes:
-            print("Running in Rolling mode")
             triggerMode = 'Internal (Recommended for fast acquisitions)'
             if self.triggerModeCheck(triggerMode):
                 greenOn(self.labjack)
@@ -523,7 +534,16 @@ class isoiWindow(QtWidgets.QMainWindow):
         ### Load acquisiton settings
         try:
             acqSettings = cfgDict["Acquisition settings"]
-            self.expRatio.setValue(acqSettings['LED illumination time (% of exposure)'])
+            try:
+                expRatio = acqSettings['LED illumination time (% of exposure)']
+                self.rExpRatio.setValue(expRatio[0])
+                self.gExpRatio.setValue(expRatio[1])
+                self.bExpRatio.setValue(expRatio[2])
+            except:
+                print 'old value mode for the LED illum time'
+                self.rExpRatio.setValue(acqSettings['LED illumination time (% of exposure)'])
+                self.gExpRatio.setValue(acqSettings['LED illumination time (% of exposure)'])
+                self.bExpRatio.setValue(acqSettings['LED illumination time (% of exposure)'])
             #self.ledTrigBox.setCurrentText(acqSettings['LED trigger mode'])
             ledSequenceMode = acqSettings['LED switching mode']
             if ledSequenceMode == "rgbMode":
@@ -643,11 +663,10 @@ class isoiWindow(QtWidgets.QMainWindow):
         """
         #Calculation of the time LED must be on
         exp = (self.mmc.getExposure()) # in ms
-        ledOnDurationMs = round(exp*(self.expRatio.value()),3)
-        ledOnDurationBlue= round(exp,3)
         #list containing each illumTime for each LED
-        illumTime=[ledOnDurationMs, ledOnDurationMs, ledOnDurationBlue]
-        print ledOnDurationMs
+        illumTime=[round(exp*(self.rExpRatio.value()),3),
+                   round(exp*(self.gExpRatio.value()),3),
+                   round(exp*(self.bExpRatio.value()),3)]
         rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()]
         greenFrameInterval = self.gInterval.value()
         colorMode = self.rbColorBox.currentText()
@@ -696,20 +715,6 @@ class isoiWindow(QtWidgets.QMainWindow):
             else:
                 print('Change mode in the other panel')
                 run = False
-                
-                
-#        #Trigger mode check
-#        if run and (self.ledTrigBox.currentText() == 'Labjack'):
-#            if (self.triggerModeCheck('External')):
-#                run = True
-#            else:
-#                run = False
-#        if run and (self.ledTrigBox.currentText() == 'Cyclops'):
-#            if(self.triggerModeCheck('Internal (Recommended for fast acquisitions)')):
-#                run = True
-#                    
-#            else:
-#                run = False
                 
         #Check that a directory was selected
         folderName=self.savingPath.text()        
@@ -764,7 +769,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.sequencAcq.cycleTime = (self.testFramerateInt()) # int (seconds)
         self.sequencAcq.rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
         self.sequencAcq.maxFrames =self.framePerFileBox.value() #int
-        self.sequencAcq.expRatio = self.expRatio.value() #float
+        self.sequencAcq.expRatio = [self.rExpRatio.value(),self.gExpRatio.value(),self.bExpRatio.value()]  #list float
         self.sequencAcq.greenFrameInterval = self.gInterval.value() #int
         self.sequencAcq.folderPath = self.savingPath.text() #str
         self.sequencAcq.colorMode = self.rbColorBox.currentText() #str
@@ -856,7 +861,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.sequencAcq.cycleTime = (self.testFramerateInt()) # int (seconds)
         self.sequencAcq.rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
         self.sequencAcq.maxFrames =self.framePerFileBox.value() #int
-        self.sequencAcq.expRatio = self.expRatio.value() #float
+        self.sequencAcq.expRatio = [self.rExpRatio.value(),self.gExpRatio.value(),self.bExpRatio.value()] #float
         self.sequencAcq.greenFrameInterval = self.gInterval.value() #int
         self.sequencAcq.folderPath = self.savingPath.text() #str
         self.sequencAcq.colorMode = self.rbColorBox.currentText() #str

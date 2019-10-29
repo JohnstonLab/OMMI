@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>825</width>
-    <height>573</height>
+    <width>791</width>
+    <height>574</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>0</y>
-      <width>791</width>
+      <width>761</width>
       <height>531</height>
      </rect>
     </property>
@@ -36,7 +36,7 @@
         <x>20</x>
         <y>20</y>
         <width>310</width>
-        <height>481</height>
+        <height>421</height>
        </rect>
       </property>
       <property name="autoFillBackground">
@@ -45,7 +45,7 @@
       <property name="title">
        <string>Camera Settings</string>
       </property>
-      <layout class="QGridLayout" name="gridLayout_2">
+      <layout class="QGridLayout" name="gridLayout_4">
        <item row="0" column="0">
         <widget class="QLabel" name="expLabel">
          <property name="font">
@@ -58,7 +58,33 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="3">
+       <item row="0" column="1" colspan="3">
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QSlider" name="expSlider">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="C_expSb"/>
+         </item>
+        </layout>
+       </item>
+       <item row="1" column="0" colspan="2">
+        <widget class="QLabel" name="expLabel_2">
+         <property name="font">
+          <font>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Real exposure :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
         <widget class="QLabel" name="realExp">
          <property name="font">
           <font>
@@ -116,7 +142,7 @@
          </item>
         </layout>
        </item>
-       <item row="3" column="0">
+       <item row="3" column="0" colspan="2">
         <widget class="QLabel" name="label_7">
          <property name="font">
           <font>
@@ -191,7 +217,7 @@
         </widget>
        </item>
        <item row="8" column="0" colspan="4">
-        <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <widget class="QLabel" name="label_2">
            <property name="font">
@@ -205,23 +231,48 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="Green">
-           <property name="text">
-            <string>GREEN</string>
-           </property>
-          </widget>
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="0" column="0">
+            <widget class="QCheckBox" name="Green">
+             <property name="text">
+              <string>GREEN</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QDoubleSpinBox" name="gExpRatio"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QCheckBox" name="Red">
+             <property name="text">
+              <string>RED</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="rExpRatio"/>
+           </item>
+           <item row="2" column="0">
+            <widget class="QCheckBox" name="Blue">
+             <property name="text">
+              <string>BLUE</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QDoubleSpinBox" name="bExpRatio"/>
+           </item>
+          </layout>
          </item>
          <item>
-          <widget class="QCheckBox" name="Red">
-           <property name="text">
-            <string>RED</string>
+          <widget class="QLabel" name="label_15">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
            </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="Blue">
            <property name="text">
-            <string>BLUE</string>
+            <string>(%exp)</string>
            </property>
           </widget>
          </item>
@@ -234,43 +285,17 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="0" colspan="2">
-        <widget class="QPushButton" name="loadBtn">
-         <property name="text">
-          <string>load Zyla</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QLabel" name="expLabel_2">
-         <property name="font">
-          <font>
-           <pointsize>11</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Real exposure :</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1" colspan="3">
-        <layout class="QHBoxLayout" name="horizontalLayout_4">
-         <item>
-          <widget class="QSlider" name="expSlider">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QDoubleSpinBox" name="C_expSb"/>
-         </item>
-        </layout>
-       </item>
        <item row="9" column="3">
         <widget class="QPushButton" name="loadSettingsFileBtn">
          <property name="text">
           <string>Load Settings</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0" colspan="2">
+        <widget class="QPushButton" name="loadBtn">
+         <property name="text">
+          <string>load Zyla</string>
          </property>
         </widget>
        </item>
@@ -301,13 +326,17 @@
       <zorder>loadSettingsFileBtn</zorder>
       <zorder>unloadBtn</zorder>
       <zorder>loadBtn</zorder>
+      <zorder>gExpRatio</zorder>
+      <zorder>label_15</zorder>
+      <zorder>rExpRatio</zorder>
+      <zorder>bExpRatio</zorder>
      </widget>
      <widget class="QGroupBox" name="groupBox_2">
       <property name="geometry">
        <rect>
         <x>350</x>
         <y>20</y>
-        <width>377</width>
+        <width>381</width>
         <height>470</height>
        </rect>
       </property>
@@ -332,38 +361,6 @@
          </property>
          <property name="text">
           <string>Duration (s) :</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QDoubleSpinBox" name="experimentDuration"/>
-       </item>
-       <item row="0" column="2" colspan="3">
-        <widget class="QLabel" name="label_15">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Interval LED ON (%exp)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="5">
-        <widget class="QDoubleSpinBox" name="expRatio"/>
-       </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QCheckBox" name="rgbMode">
-         <property name="font">
-          <font>
-           <pointsize>12</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Sequential</string>
          </property>
         </widget>
        </item>
@@ -641,25 +638,40 @@
          </property>
         </widget>
        </item>
-       <item row="9" column="0" colspan="2">
+       <item row="9" column="0">
         <widget class="QPushButton" name="abortBtn">
          <property name="text">
           <string>ABORT</string>
          </property>
         </widget>
        </item>
+       <item row="0" column="2">
+        <widget class="QDoubleSpinBox" name="experimentDuration"/>
+       </item>
+       <item row="1" column="0" colspan="3">
+        <widget class="QCheckBox" name="rgbMode">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Sequential</string>
+         </property>
+        </widget>
+       </item>
       </layout>
-      <zorder>label_15</zorder>
-      <zorder>expRatio</zorder>
       <zorder>arduinoBtn</zorder>
       <zorder>abortBtn</zorder>
       <zorder>progressBar</zorder>
       <zorder>label_4</zorder>
-      <zorder>experimentDuration</zorder>
       <zorder>rgbMode</zorder>
       <zorder></zorder>
       <zorder>loopBtn</zorder>
       <zorder>layoutWidget</zorder>
+      <zorder>experimentDuration</zorder>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_2">
@@ -1094,7 +1106,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>825</width>
+     <width>791</width>
      <height>21</height>
     </rect>
    </property>

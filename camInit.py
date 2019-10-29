@@ -57,5 +57,4 @@ def defaultCameraSettings(isoiWindow):
     isoiWindow.binChange(binn[2])
     isoiWindow.bitChange(bit[2])
     isoiWindow.shutChange('Global')
-    isoiWindow.triggerChange('External')
     isoiWindow.overlapChange('Off')

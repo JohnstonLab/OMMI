@@ -249,7 +249,7 @@ class SequenceAcquisition(QThread):
         """
         print 'New-Seq_acq'
         exp = (self.mmc.getExposure())*0.001 #converted in s
-        ledOnDuration = exp*self.expRatio
+        ledOnDuration = exp*self.expRatio[0]
         print 'time LED ON (s) : ', ledOnDuration
         
         print "Nb of frames : ", self.nbFrames
@@ -342,11 +342,10 @@ class SequenceAcquisition(QThread):
         self.arduinoSyncStarted.emit()
         #Calculation of the time LED must be on
         exp = (self.mmc.getExposure()) # in ms
-        ledOnDurationMs = round(exp*self.expRatio,3)
-        ledOnDurationBlue= round(exp,3)
         #list containing each illumTime for each LED
-        illumTime=[ledOnDurationMs, ledOnDurationMs, ledOnDurationBlue]
-        print 'time LED ON (ms) : ', ledOnDurationMs
+        illumTime=[round(exp*self.expRatio[0],3),
+                   round(exp*self.expRatio[1],3),
+                   round(exp*self.expRatio[2],3)]
         
         if self.seqMode == "rgbMode":
             ledDriverNb=[0,1,2] #[Red, Green, Blue]
@@ -379,6 +378,7 @@ class SequenceAcquisition(QThread):
         if type(self.nbFrames) == int:
             self.nbFramesSig.emit(self.nbFrames)
         
+        print 'acquisition Side : ', self.expRatio
         #Saving the configuration of the experiment file (.json)
         self.savePath = cfgFileSaving(self.experimentName, 
                                       self.nbFrames, 

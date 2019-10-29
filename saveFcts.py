@@ -92,7 +92,7 @@ def cfgFileSaving(name, nbFrames, duration, ledIllumRatio, ledTriggerMode,
             },
             ### Acquisition settings ###
             "Acquisition settings":{
-                    "LED illumination time (% of exposure)":ledIllumRatio,    #float
+                    "LED illumination time (% of exposure)":ledIllumRatio,    #list of float
                     "LED trigger mode":ledTriggerMode,                      #str
                     "LED switching mode":ledSwitchingMode,                  #str
                     "(RGB) LED ratio":rgbLedRatio,                          #list of int
