@@ -694,13 +694,6 @@ class isoiWindow(QtWidgets.QMainWindow):
             for driverNb in ledDriverNb:
                 #driver init
                 driver = Arduino(driverNb)
-                #Display window Init
-                syncMsg = QMessageBox()
-                syncMsg.setIcon(QMessageBox.Warning)
-                syncMsg.setText("Synchronization... please wait")
-                syncMsg.setWindowTitle("LED driver "+str(driverNb)+" synchronization")
-                driver.syncStarted.connect(syncMsg.exec_)
-                driver.syncFinished.connect(syncMsg.close)
                 driver.synchronization(illumTime,  
                                        rgbLedRatio = rgbLedRatio)
                 
@@ -710,13 +703,6 @@ class isoiWindow(QtWidgets.QMainWindow):
             for driverNb in ledDriverNb:
                 #driver init
                 driver = Arduino(driverNb)
-                #Display window Init
-                syncMsg = QMessageBox()
-                syncMsg.setIcon(QMessageBox.Warning)
-                syncMsg.setText("Synchronization... please wait")
-                syncMsg.setWindowTitle("LED driver "+str(driverNb)+" synchronization")
-                driver.syncFinished.connect(syncMsg.close)
-                syncMsg.exec_()
                 driver.synchronization(illumTime,  
                                        greenFrameInterval = greenFrameInterval,
                                        colorMode = colorMode)
@@ -777,9 +763,6 @@ class isoiWindow(QtWidgets.QMainWindow):
                 else:
                     print('Change the experiment name')
                     run = False
-        
-#        if run:
-#            self.saveImageSeq()
         return run
             
     def runCheck(self):
@@ -1144,18 +1127,6 @@ class isoiWindow(QtWidgets.QMainWindow):
         Load an odour folder containing each color channel for a stimulation
         (bot .tif and .txt channel)
         """
-#        folderName = str(QFileDialog.getExistingDirectory(self, "Select an odour folder containing each color channel for a stimulation"))
-#        if path.isdir(folderName):
-#            self.experimentFolderName.setText(folderName)
-#            txtList = getTxtList(folderName, hideExt=True)
-#            if txtList:
-#                self.splittedChannelsList.clear()
-#                self.splittedChannelsList.addItems(txtList)
-#                self.odourMap = OdourMap(folderName)
-#            else:
-#                print('Wrong or empty folder')
-#        else:
-#            print('No folder selected')
         
         folderName = str(QFileDialog.getExistingDirectory(self, "Select an experiment folder"))
         if path.isdir(folderName):
