@@ -148,14 +148,6 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.shutBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'ElectronicShutteringMode'))
         self.shutBox.currentTextChanged.connect(self.shutChange)
         
-        #Trigger mode selection
-        self.triggerBox.addItem('Internal (Recommended for fast acquisitions)')
-        #self.triggerBox.addItem('Software (Recommended for Live Mode)')
-        #self.triggerBox.addItem('External Start')
-        #self.triggerBox.addItem('External Exposure')
-        self.triggerBox.addItem('External')
-        self.triggerBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'TriggerMode'))
-        self.triggerBox.currentTextChanged.connect(self.triggerChange)
         
         #Overlap Mode
         self.overlapBox.addItem('On')
@@ -165,10 +157,10 @@ class isoiWindow(QtWidgets.QMainWindow):
 
         
         #LEDs trigger mode selection
-        self.ledTrigBox.addItem(isoiWindow.ledTriggerModes[1])
-        self.ledTrigBox.addItem(isoiWindow.ledTriggerModes[0])
-        self.ledTrigBox.setCurrentText(isoiWindow.ledTriggerModes[0])
-        self.ledTrigBox.currentTextChanged.connect(self.ledTrigChange)
+#        self.ledTrigBox.addItem(isoiWindow.ledTriggerModes[1])
+#        self.ledTrigBox.addItem(isoiWindow.ledTriggerModes[0])
+#        self.ledTrigBox.setCurrentText(isoiWindow.ledTriggerModes[0])
+#        self.ledTrigBox.currentTextChanged.connect(self.ledTrigChange)
         
         #Color mode of rb alternance box
         self.rbColorBox.addItem(isoiWindow.rbColorModes[0])
@@ -350,7 +342,6 @@ class isoiWindow(QtWidgets.QMainWindow):
 #        self.triggerChange(triggerMode)
 #        if self.triggerModeCheck(triggerMode):
         self.mmc.startContinuousSequenceAcquisition(1)
-        print('acquisition start')
         imageCount = 0
         imageNb = 5
         first=True
@@ -362,9 +353,7 @@ class isoiWindow(QtWidgets.QMainWindow):
                     first = not(first)
                 else:
                     end = time()
-                    print 'end - start : ', end-start
                     cycleTime+= (end-start)/(imageNb-1) #5 images give you 4 interval
-                    print cycleTime
                     start = time()
                 imageCount+=1
         self.mmc.stopSequenceAcquisition()
@@ -413,7 +402,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         try:
             self.mmc.setProperty(self.DEVICE[0],'TriggerMode',str(triggerMode))
             actualTriggerMode = self.mmc.getProperty(self.DEVICE[0], 'TriggerMode')
-            self.triggerBox.setCurrentText(actualTriggerMode)
+            #self.triggerBox.setCurrentText(actualTriggerMode)
+            print 'Trigger mode set at : ',actualTriggerMode
         except:
             print 'CMM err, no possibility to set TriggerMode'
 
@@ -561,7 +551,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         try:
             acqSettings = cfgDict["Acquisition settings"]
             self.expRatio.setValue(acqSettings['LED illumination time (% of exposure)'])
-            self.ledTrigBox.setCurrentText(acqSettings['LED trigger mode'])
+            #self.ledTrigBox.setCurrentText(acqSettings['LED trigger mode'])
             ledSequenceMode = acqSettings['LED switching mode']
             if ledSequenceMode == "rgbMode":
                 self.rgbMode.setChecked(True)
@@ -731,18 +721,18 @@ class isoiWindow(QtWidgets.QMainWindow):
                 run = False
                 
                 
-        #Trigger mode check
-        if run and (self.ledTrigBox.currentText() == 'Labjack'):
-            if (self.triggerModeCheck('External')):
-                run = True
-            else:
-                run = False
-        if run and (self.ledTrigBox.currentText() == 'Cyclops'):
-            if(self.triggerModeCheck('Internal (Recommended for fast acquisitions)')):
-                run = True
-                    
-            else:
-                run = False
+#        #Trigger mode check
+#        if run and (self.ledTrigBox.currentText() == 'Labjack'):
+#            if (self.triggerModeCheck('External')):
+#                run = True
+#            else:
+#                run = False
+#        if run and (self.ledTrigBox.currentText() == 'Cyclops'):
+#            if(self.triggerModeCheck('Internal (Recommended for fast acquisitions)')):
+#                run = True
+#                    
+#            else:
+#                run = False
                 
         #Check that a directory was selected
         folderName=self.savingPath.text()        
@@ -794,7 +784,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         #Get experiment/acquisition settings from the GUI
         self.sequencAcq.experimentName = self.experimentName.text() #str
         self.sequencAcq.duration = self.experimentDuration.value() # float (seconds)
-        self.sequencAcq.cycleTime = (self.approxFramerate()) # int (seconds)
+        self.sequencAcq.cycleTime = (self.testFramerateInt()) # int (seconds)
         self.sequencAcq.rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
         self.sequencAcq.maxFrames =self.framePerFileBox.value() #int
         self.sequencAcq.expRatio = self.expRatio.value() #float
@@ -802,7 +792,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.sequencAcq.folderPath = self.savingPath.text() #str
         self.sequencAcq.colorMode = self.rbColorBox.currentText() #str
         
-        self.sequencAcq.acquMode = self.ledTrigBox.currentText()
+        self.sequencAcq.acquMode = "Run"
         if self.rgbMode.isChecked():
             self.sequencAcq.seqMode = "rgbMode"
         elif self.rbMode.isChecked():
@@ -886,7 +876,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         
         #Get experiment/acquisition settings from the GUI
         self.sequencAcq.experimentName = self.experimentName.text() #str
-        self.sequencAcq.cycleTime = (self.approxFramerate()) # int (seconds)
+        self.sequencAcq.cycleTime = (self.testFramerateInt()) # int (seconds)
         self.sequencAcq.rgbLedRatio = [self.rRatio.value(),self.gRatio.value(),self.bRatio.value()] #list of int
         self.sequencAcq.maxFrames =self.framePerFileBox.value() #int
         self.sequencAcq.expRatio = self.expRatio.value() #float
@@ -938,7 +928,47 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.abortBtn.setEnabled(False)
         self.loopBtn.setEnabled(True)
         self.runSaveBtn.setEnabled(True)
+    
+    #############################    
+    #### Live Histogram part ####
+    #############################
+    
+    def oldHisto(self):
+        """
+        Function that calculate and display a histogram.
+        """
+        triggerMode = 'Internal (Recommended for fast acquisitions)'
+        if self.triggerModeCheck(triggerMode):
+            (mask, h_h, h_w, pixMaxVal, bin_width, nbins) = histoInit(mmc)
+            cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
+            cv2.namedWindow('Video')
+            self.mmc.snapImage()
+            g = self.mmc.getImage() #Initialize g
+            self.mmc.startContinuousSequenceAcquisition(1)
+            while True:
+                    if self.mmc.getRemainingImageCount() > 0:
+                        g = self.mmc.getLastImage()
+                        rgb2 = cv2.cvtColor(g.astype("uint16"),cv2.COLOR_GRAY2RGB)
+                        rgb2[g>(pixMaxVal-2)]=mask[g>(pixMaxVal-2)]*256 #It cannot be compared to pixMaxVal because it will never reach this value
+                        cv2.imshow('Video', rgb2)
 
+                    else:
+                        print('No frame')
+
+                    h = histoCalc(nbins, pixMaxVal, bin_width, h_h, h_w, g)
+                    cv2.imshow('Histogram',h)
+
+                    if cv2.waitKey(33) == 27:
+                        break
+                    if cv2.getWindowProperty('Video', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                        break
+                    elif cv2.getWindowProperty('Histogram', 1) == -1: #Condition verified when 'X' (close) button is pressed
+                        break
+
+            cv2.destroyAllWindows()
+            self.mmc.stopSequenceAcquisition()
+            
+            
     ##############################    
     #### Files splitting part ####
     ##############################

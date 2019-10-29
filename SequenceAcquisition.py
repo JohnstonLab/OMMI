@@ -457,7 +457,7 @@ class SequenceAcquisition(QThread):
 #            print'sequ acq about to start'
 #            self.imageCount = self._sequenceAcqu()
 #            print'run fct done'
-        if self.acquMode == "Cyclops":
+        if self.acquMode == "Run":
             #self.arduinoSync()
             self.imageCount = self._seqAcqCyclops()
         elif self.acquMode == "Loop":
