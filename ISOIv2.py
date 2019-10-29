@@ -302,33 +302,6 @@ class isoiWindow(QtWidgets.QMainWindow):
         print('cycleTime : ',cycleTime)
         self.approxFramerateLabel.setText(str(round(1/cycleTime,2)))
         return cycleTime
-        
-    def testFramerate(self):
-        """
-        This function test the framerate. Fire an image using the external 
-        trigger and mesure the cycle time.
-        """
-        cycleTime = None
-        previousTriggerMode = self.mmc.getProperty(self.DEVICE[0], 'TriggerMode')
-        triggerMode = 'External'
-        print('test of the framerate')
-        self.triggerChange(triggerMode)
-        if self.triggerModeCheck(triggerMode):
-            self.mmc.startContinuousSequenceAcquisition(1)
-            print('acquisition start')
-            print waitForSignal(self.labjack, "TTL", "AIN", 0)
-            start = time()
-            #One acquisition begin
-            trigImage(self.labjack)
-            print waitForSignal(self.labjack, "TTL", "AIN", 0)
-            #When the ARM signal back in high state, acquisition is done
-            end = time()
-            self.mmc.stopSequenceAcquisition()
-            cycleTime = end-start
-            print(cycleTime)
-            self.testFramerateLabel.setText(str(round(1/cycleTime,2)))
-        self.triggerChange(previousTriggerMode)
-        return cycleTime
     
     def testFramerateInt(self):
         """
@@ -644,6 +617,10 @@ class isoiWindow(QtWidgets.QMainWindow):
         
         sizeMax = fileSizeCalculation(framePerFile, ROI, bitPPix)
         self.sizePerFileLabel.setText(str(sizeMax))
+        
+        cycleTime = self.testFramerateInt()
+        durationPerFile = framePerFile*cycleTime
+        self.durationPerFileLabel.setText(str(round(durationPerFile,2)))
     
     ### SAVING FOLDER CHOICE ###
     
