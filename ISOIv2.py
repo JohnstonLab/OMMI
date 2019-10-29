@@ -240,7 +240,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         #Led sequence mode toogle buttons
         self.rgbMode.stateChanged.connect(self.ledSequenceModeCheck)
         self.rbMode.stateChanged.connect(self.ledSequenceModeCheck)
-
+        
+        #Allow the user to selected multiple items in the QlistWidget
         self.odourFoldersList.setSelectionMode(QAbstractItemView.ExtendedSelection)
     
     
