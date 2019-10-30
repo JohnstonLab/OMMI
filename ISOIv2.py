@@ -16,7 +16,7 @@ import cv2
 from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QAbstractItemView
-from time import time, sleep
+from time import time
 import os
 from os import path
 import ctypes
@@ -32,11 +32,10 @@ from OdourMap import OdourMap
 from LiveHistogram import LiveHistogram
 
 #Function import
-from histogram import histoInit, histoCalc
 from crop import crop_w_mouse
 from camInit import camInit, defaultCameraSettings
 from saveFcts import fileSizeCalculation, jsonFileLoading
-from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, blueOn, blueOff
+from Labjack import labjackInit
 from ParsingFiles import load2DArrayFromTxt, get_immediate_subdirectories, getTifLists, splitColorChannel, getTxtList
 #from ArduinoComm import connect, sendExposure, sendLedList, close
 
@@ -92,6 +91,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.mmc = mmc
         self.DEVICE = DEVICE
         self.labjack = labjack
+        self.liveHistogram = None
         
         # Connect push buttons
         self.cropBtn.clicked.connect(self.crop)
@@ -258,7 +258,6 @@ class isoiWindow(QtWidgets.QMainWindow):
         #exp=expVal/float(div)
         self.C_expSb.setValue(expVal) #update spinbox value
         self.expSlider.setValue(expVal) #update slider value
-        print 'exposure wanted : ', expVal
         try:
             self.mmc.setExposure(DEVICE[0], expVal)
             self.realExp.setText(str(self.mmc.getExposure()))
@@ -315,11 +314,6 @@ class isoiWindow(QtWidgets.QMainWindow):
         internal trigger mode and mesure the average cycle time.
         """
         cycleTime = 0
-#        previousTriggerMode = self.mmc.getProperty(self.DEVICE[0], 'TriggerMode')
-#        triggerMode = 'External'
-#        print('test of the framerate')
-#        self.triggerChange(triggerMode)
-#        if self.triggerModeCheck(triggerMode):
         self.mmc.startContinuousSequenceAcquisition(1)
         imageCount = 0
         imageNb = 5
@@ -373,22 +367,10 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.shutBox.setCurrentText(actualShutterMode)
         except:
             print 'CMM err, no possibility to set ElectronicShutteringMode'
-        
-    def triggerChange(self, triggerMode):
-        """
-        Change the TriggerMode in the camera settings and update the GUI.
-        """
-        try:
-            self.mmc.setProperty(self.DEVICE[0],'TriggerMode',str(triggerMode))
-            actualTriggerMode = self.mmc.getProperty(self.DEVICE[0], 'TriggerMode')
-            #self.triggerBox.setCurrentText(actualTriggerMode)
-            print 'Trigger mode set at : ',actualTriggerMode
-        except:
-            print 'CMM err, no possibility to set TriggerMode'
 
     def overlapChange(self, overlap):
         """
-        Change the TriggerMode in the camera settings and update the GUI.
+        Change the Overlap mode in the camera settings and update the GUI.
         """
         try:
             self.mmc.setProperty(self.DEVICE[0],'Overlap', str(overlap))
@@ -424,7 +406,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         """
         Send informations to the LED drivers to make the good LED blinking.
         """
-        self.histogram=False
+        if self.liveHistogram is not None:
+            self.liveHistogram.abort()
         print 'led toggle : ', color
         ledDriverNb=[0,1,2] #[Red, Green, Blue]
         exp = (self.mmc.getExposure()) # in ms
@@ -491,20 +474,15 @@ class isoiWindow(QtWidgets.QMainWindow):
                                             "This action will reset the ROI, do you want to continue ?",
                                             QMessageBox.Yes | QMessageBox.No)
         if choice == QMessageBox.Yes:
-            triggerMode = 'Internal (Recommended for fast acquisitions)'
-            if self.triggerModeCheck(triggerMode):
-                greenOn(self.labjack)
-                sleep(0.5)
-                self.mmc.clearROI()
-                self.mmc.snapImage()
-                img = self.mmc.getImage()
-                (x,y,w,h) = crop_w_mouse(img,self.mmc.getROI())
-                self.mmc.setROI(x,y,w,h)
-                print "image width: "+str(self.mmc.getImageWidth())
-                print "image height: "+str(self.mmc.getImageHeight())
-                cv2.destroyAllWindows()
-                greenOff(self.labjack)
-                self.updateFramesPerFile.emit()
+            self.mmc.clearROI()
+            self.mmc.snapImage()
+            img = self.mmc.getImage()
+            (x,y,w,h) = crop_w_mouse(img,self.mmc.getROI())
+            self.mmc.setROI(x,y,w,h)
+            print "image width: "+str(self.mmc.getImageWidth())
+            print "image height: "+str(self.mmc.getImageHeight())
+            cv2.destroyAllWindows()
+            self.updateFramesPerFile.emit()
         else:
             print('Cropping aborted')
     
@@ -553,7 +531,6 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.binChange(camSettingsDict["Binning"])
             self.bitChange(camSettingsDict["Bit depth"])
             self.shutChange(camSettingsDict["Shutter mode"])
-            self.triggerChange(camSettingsDict["Trigger mode"])
             self.overlapChange(camSettingsDict["Overlap mode"])
         except:
             print 'Camera settings dictionary is not accessible'
@@ -592,23 +569,6 @@ class isoiWindow(QtWidgets.QMainWindow):
             print 'Duration not accessible in this CFG file'
             
         self.settingsLoaded.emit()
-    
-    ### Msg display ###
-    def triggerModeCheck(self, triggerMode):
-        """
-        Check if the camera trigger mode is set to the triggerMode argument.
-        Pop-up window is generated if the wrong trigger mode is set on.
-        """
-        print triggerMode
-        if self.mmc.getProperty(self.DEVICE[0], 'TriggerMode') != triggerMode:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText("Set the trigger mode to : \n" + triggerMode)
-            msg.setWindowTitle("Trigger mode warning")
-            msg.exec_()
-            return False
-        else:
-            return True
         
     
     ######################################
@@ -840,6 +800,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         # running so we disable the start button.
         self.runSaveBtn.setEnabled(False)
         self.loopBtn.setEnabled(False)
+        self.arduinoBtn.setEnabled(False)
         #Prepare each informations and file needed
         self.sequencAcq.sequencePreparation()
         if not triggerStart:
@@ -909,6 +870,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         # running so we disable the start button.
         self.runSaveBtn.setEnabled(False)
         self.loopBtn.setEnabled(False)
+        self.arduinoBtn.setEnabled(False)
         #Prepare experiment folder and config File
         self.sequencAcq.loopFolderPreparation()
         # We have all the events we need connected we can start the thread 
@@ -937,6 +899,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.abortBtn.setEnabled(False)
         self.loopBtn.setEnabled(True)
         self.runSaveBtn.setEnabled(True)
+        self.arduinoBtn.setEnabled(True)
     
     #############################    
     #### Live Histogram part ####
@@ -948,48 +911,11 @@ class isoiWindow(QtWidgets.QMainWindow):
         """
         try:
             self.liveHistogram = LiveHistogram(self.mmc)
-            # Connections between LED settings button and histogram
-            self.Green.clicked.connect(self.liveHistogram.abort)
-            self.Red.clicked.connect(self.liveHistogram.abort)
-            self.Blue.clicked.connect(self.liveHistogram.abort)
+            #Note that there is a implicit connection with the abort fct of 
+            #the histogram in the self.ledToggle fct
             self.liveHistogram.start()  
         except:
             print 'cannot instanciate the LiveHistogram class'
-    def oldHisto(self):
-        """
-        Function that calculate and display a histogram.
-        """
-        self.histogram=True
-        triggerMode = 'Internal (Recommended for fast acquisitions)'
-        if self.triggerModeCheck(triggerMode):
-            (mask, h_h, h_w, pixMaxVal, bin_width, nbins) = histoInit(mmc)
-            cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
-            cv2.namedWindow('Video')
-            self.mmc.snapImage()
-            g = self.mmc.getImage() #Initialize g
-            self.mmc.startContinuousSequenceAcquisition(1)
-            while self.histogram:
-                    if self.mmc.getRemainingImageCount() > 0:
-                        g = self.mmc.getLastImage()
-                        rgb2 = cv2.cvtColor(g.astype("uint16"),cv2.COLOR_GRAY2RGB)
-                        rgb2[g>(pixMaxVal-2)]=mask[g>(pixMaxVal-2)]*256 #It cannot be compared to pixMaxVal because it will never reach this value
-                        cv2.imshow('Video', rgb2)
-
-                    else:
-                        print('No frame')
-
-                    h = histoCalc(nbins, pixMaxVal, bin_width, h_h, h_w, g)
-                    cv2.imshow('Histogram',h)
-
-                    if cv2.waitKey(33) == 27:
-                        break
-                    if cv2.getWindowProperty('Video', 1) == -1: #Condition verified when 'X' (close) button is pressed
-                        break
-                    elif cv2.getWindowProperty('Histogram', 1) == -1: #Condition verified when 'X' (close) button is pressed
-                        break
-
-            cv2.destroyAllWindows()
-            self.mmc.stopSequenceAcquisition()
             
             
     ##############################    
@@ -1056,8 +982,6 @@ class isoiWindow(QtWidgets.QMainWindow):
         Concatenate all the .tif to segment them in blue, red and green channels.
         Create new .txt files for each channels containing the timestamps.
         """
-        
-        #print self.analysisPath
         print 'loading ', filesName,' in folder : ',filesFolder
         #experimentFolderPath = self.analysisPath+'/'+experimentFolderName
         #print experimentFolderPath

@@ -11,28 +11,26 @@ TO DO :
     - Simultaneous display of crop region
 """
 import cv2
+import copy
 
-global image, refPt
+global refPt
 refPt = None
-image = None
 
 def crop_w_mouse(img, ROI):
     "img is open in a new window where a new ROI is set by mouse event. Return the ROI"
-    global image, refPt #TO FIX : give img in argument to onMouse fct
-    image = img
+    global refPt
     (x,y,w,h)=ROI[-4:] #Select last elements of the vector (2 fcts called by getROI() with different returns)
     refPt = None
     print "Default ROI x "+str(x)+" y "+str(y)+" w "+str(w)+" h "+str(h)
     cv2.namedWindow('Click to crop - Esc to close')
     cv2.imshow('Click to crop - Esc to close', img)
     while(True):
-        cv2.setMouseCallback('Click to crop - Esc to close',onMouse, 0)
+        cv2.setMouseCallback('Click to crop - Esc to close',onMouse, img)
         if cv2.waitKey(33) == 27:
             break
         if cv2.getWindowProperty('Click to crop - Esc to close', 1) == -1: #Condition verified when 'X' (close) button is pressed
             break
     cv2.destroyAllWindows()
-
     if refPt:           #Check if refPt is not empty. If he is, ROI keep the default value
         x= refPt[0][0]
         y= refPt[0][1]
@@ -44,9 +42,10 @@ def crop_w_mouse(img, ROI):
 def onMouse(event, x, y, flags, params):
     #### source : https://www.pyimagesearch.com/2015/03/09/capturing-mouse-click-events-with-python-and-opencv/####
     # grab references to the global variables
-    global refPt, image
+    global refPt
     
-    imageCopy = image
+    image = params
+    
 	# if the left mouse button was clicked, record the starting
 	# (x, y) coordinates and indicate that cropping is being
 	# performed
@@ -56,7 +55,8 @@ def onMouse(event, x, y, flags, params):
  
 	# check to see if the left mouse button was released
     elif event == cv2.EVENT_LBUTTONUP:
-		# record the ending (x, y) coordinates and indicate that
+		imageCopy = copy.deepcopy(image)
+        # record the ending (x, y) coordinates and indicate that
 		# the cropping operation is finished
 		refPt.append((x, y))
 

@@ -7,14 +7,10 @@ Created on Thu Sep 19 17:30:36 2019
 Containing Histogram Class
 """
 #Packages import
-from PyQt5.QtCore import QThread, pyqtSignal
-#from time import sleep
+from PyQt5.QtCore import QThread
 import numpy as np
 import cv2
-#from multiprocessing.pool import ThreadPool
 
-#Function import
-#from Labjack import waitForSignal, redOn, redOff, greenOn, greenOff, blueOn, blueOff, trigImage
 
 
 class LiveHistogram(QThread):
@@ -25,8 +21,6 @@ class LiveHistogram(QThread):
                             https://medium.com/@webmamoffice/getting-started-gui-s-with-python-pyqt-qthread-class-1b796203c18c
                                 --> https://gist.github.com/WEBMAMOFFICE/fea8e52c8105453628c0c2c648fe618f (source code)
     """
-    
-    modeChoice = pyqtSignal()
     
     
     def __init__(self, mmc, parent=None):
@@ -48,7 +42,6 @@ class LiveHistogram(QThread):
         
         #Acquisition parameters
         self.running = True
-        self.led =None
         
         
     def __del__(self):
@@ -56,7 +49,9 @@ class LiveHistogram(QThread):
 
 
     def _histoCalc(self, img):
-        #Calculate, normalize and display the histogram
+        """
+        Calculate, normalize and return the histogram
+        """
         #Create an empty image for the histogram
         h = np.zeros(( self.hist_height, self.hist_width))
         hist_g = cv2.calcHist([img],[0],None,[self.nbins],[0,self.pixMaxVal])
@@ -73,11 +68,21 @@ class LiveHistogram(QThread):
         #Show the histogram
         #rgb = np.zeros((mmc.getImageHeight(),mmc.getImageWidth(),3),dtype=np.uint16)
         
-        
-    def continousLedMode(self):
-        print 'old histogram version'
+    
+    def abort(self):
+        """
+        Change the value of the running bool to interrupt the histogram
+        """
+        self.running = False
+    
+    def run(self):
+        """
+        Get images from the camera and for each of them, a Histogram is calculated and displayed
+        """
+        #Windows initialisation
         cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
         cv2.namedWindow('Video')
+        
         self.mmc.snapImage()
         img = self.mmc.getImage() #Initialize img
         self.mmc.startContinuousSequenceAcquisition(1)
@@ -105,16 +110,6 @@ class LiveHistogram(QThread):
                 break
         cv2.destroyAllWindows()
         self.mmc.stopSequenceAcquisition()
-    
-    def abort(self):
-        """
-        Change the value of the running bool to interrupt the histogram
-        """
-        self.running = False
-    
-    def run(self):
-        print 'running thread'
-        self.continousLedMode()
         
         
 if __name__ == '__main__':
