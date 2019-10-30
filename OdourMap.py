@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from skimage import filters, transform, util
 from scipy import ndimage
 import cv2
+import os
 
 class OdourMap(QThread):
     """
@@ -32,6 +33,11 @@ class OdourMap(QThread):
         self.odourFolder = odourFolder
         if resultSavePath is None:
             self.resultSavePath = self.odourFolder
+        elif os.path.exists(resultSavePath):
+            self.resultSavePath = resultSavePath
+        else:
+            os.makedirs(resultSavePath)
+            self.resultSavePath = resultSavePath
         self.txtList = ParsingFiles.getTxtList(odourFolder) #WARNING : only the file name (with extension)
         self.redTifs = ParsingFiles.getTifLists(odourFolder, color ='R') #full path of the file #WARNING don't name a file with B at the end
         print self.redTifs
@@ -265,10 +271,19 @@ class OdourMap(QThread):
         tifffile.imsave(savePath, odMapAvg)
         return odMapAvg
         
-    def folderProcessing(self):
+    def avgMapSaving(self, color,tiffWriter=None):
         """
         Process a folder
         """
+        if color == 0:
+            if tiffWriter is None:
+                tiffWriter = tifffile.TiffWriter(self.resultSavePath+'/avgMaps_R.tif')
+            tiffWriter.save(self.redOdMapAvg)
+        elif color == 1:
+            if tiffWriter is None:
+                tiffWriter = tifffile.TiffWriter(self.resultSavePath+'/avgMaps_B.tif')
+            tiffWriter.save(self.blueOdMapAvg)
+        return tiffWriter
     
     def run(self):
         """
@@ -290,7 +305,7 @@ class OdourMap(QThread):
                     stimNb+=1
                 else:
                     print 'This tif is not a stack of frames and cannot be processed'
-            self.redOdMapAvg = self._mapAvging(odMapList, self.resultSavePath+'/R_avgMap.tif')
+            self.redOdMapAvg = self._mapAvging(odMapList, self.odourFolder+'/R_avgMap.tif')
         if self.blueProcess :
             print 'blue process'
             stimNb=0
@@ -305,7 +320,7 @@ class OdourMap(QThread):
                     stimNb+=1
                 else:
                     print 'This tif is not a stack of frames and cannot be processed'
-            self.blueOdMapAvg = self._mapAvging(odMapList, self.resultSavePath+'/B_avgMap.tif')
+            self.blueOdMapAvg = self._mapAvging(odMapList, self.odourFolder+'/B_avgMap.tif')
         
         
 if __name__ == '__main__':

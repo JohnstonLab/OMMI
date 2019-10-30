@@ -1180,20 +1180,31 @@ class isoiWindow(QtWidgets.QMainWindow):
         """
         selectedOdours = self.odourFoldersList.selectedItems()
         odour = selectedOdours[0]
+        odourMapList = []
         for odour in selectedOdours:
             odour = odour.text()
             print odour
             odourMap = None
             try:
-                odourMap = OdourMap(self.expFolderOPath+'/'+odour)
+                odourMap = OdourMap(self.expFolderOPath+'/'+odour, self.expFolderOPath+'/'+'Map_results')
             except:
                 print 'ERROR : please select a valid odour folder'
             if odourMap is not None:
+                odourMapList.append(odourMap)
                 odourMap.baselinLen = self.baselineLength.value()
                 odourMap.stimLen = self.stimLength.value()
                 odourMap.redProcess = self.redProcessBox.isChecked()
                 odourMap.blueProcess = self.blueProcessBox.isChecked()
                 odourMap.start()
+        #Saving the avg map in a same stack
+        rTiffWriter = None
+        bTiffWriter = None
+        for odourMap in odourMapList:
+            odourMap.wait()
+            if odourMap.redProcess:
+                rTiffWriter = odourMap.avgMapSaving(0,rTiffWriter)
+            elif odourMap.blueProcess:
+                bTiffWriter = odourMap.avgMapSaving(1,bTiffWriter)
             
     
     

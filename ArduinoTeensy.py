@@ -202,7 +202,7 @@ class Arduino(QObject):
         #Sending ms component
         for char in str(msIllumTime):
             self.sendChar(char)
-        time.sleep(0.8) # time for parse INT
+#        time.sleep(0.8) # time for parse INT
         intSent = self.readData(1, integers = True)
         print msIllumTime
         nbSent = intSent[0]
@@ -211,7 +211,7 @@ class Arduino(QObject):
         #Sending us component
         for char in str(usIllumTime):
             self.sendChar(char)
-        time.sleep(0.8)
+#        time.sleep(0.8)
         intSent = self.readData(1, integers = True)
         nbSent = intSent[0]
         if nbSent != usIllumTime:
@@ -244,7 +244,7 @@ class Arduino(QObject):
             #Send the greenFrameInterval variable
             for char in str(greenFrameInterval):
                 self.sendChar(char)
-        time.sleep(0.8) #Wait that ParseInt() fct of the arduino timed out
+#        time.sleep(0.8) #Wait that ParseInt() fct of the arduino timed out
         #Verification of the value sent
         intSent = self.readData(1, integers = True)
         nbSent = intSent[0]
@@ -267,7 +267,7 @@ class Arduino(QObject):
         #Send the LED alternation sequence
         for char in str(int(len(ledSeq))):
             self.sendChar(char)
-        time.sleep(0.8) #Wait that ParseInt() fct of the arduino timed out
+#        time.sleep(0.8) #Wait that ParseInt() fct of the arduino timed out
         #Verification of the value sent
         intSent = self.readData(1, integers = True)
         nbSent = intSent[0]
@@ -276,7 +276,7 @@ class Arduino(QObject):
         time.sleep(0.1)
         for ledInt in ledSeq:
             self.sendChar(str(ledInt))
-            time.sleep(0.8)
+#            time.sleep(0.8)
             intSent = self.readData(1, integers = True)
             print intSent
             nbSent = intSent[0]
@@ -435,14 +435,15 @@ def synchronization(illumTime, rgbLedRatio=None, greenFrameInterval=None, colorM
 if __name__ == '__main__':
     
     print 'test'
-#    blueArduino = Arduino(2)
+    blueArduino = Arduino(2)
 #    if blueArduino:
 #        blueArduino.blinkingLED(0.5)
 #    print blueArduino
-    illumTime = [10.07,10.07,10.07]
-    greenFrameInterval = 20
-    colorMode = 'Red and Blue'
-    synchronization(illumTime, greenFrameInterval = greenFrameInterval, colorMode = colorMode)
+    illumTime = [10.07,10.07,5]
+    greenFrameInterval = 5
+    colorMode = 'Blue only'
+    #synchronization(illumTime, greenFrameInterval = greenFrameInterval, colorMode = colorMode)
+    blueArduino.synchronization(illumTime,greenFrameInterval = greenFrameInterval,colorMode = colorMode)
 #    redArduino = Arduino(0)
 #    exposure = 10.07
 #    sync = redArduino.sendIllumTime(exposure)
