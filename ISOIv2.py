@@ -29,6 +29,7 @@ from SequenceAcquisition import SequenceAcquisition
 from SignalInterrupt import SignalInterrupt 
 from ArduinoTeensy import Arduino
 from OdourMap import OdourMap
+from LiveHistogram import LiveHistogram
 
 #Function import
 from histogram import histoInit, histoCalc
@@ -94,7 +95,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         
         # Connect push buttons
         self.cropBtn.clicked.connect(self.crop)
-        self.histoBtn.clicked.connect(self.oldHisto)
+        self.histoBtn.clicked.connect(self.launchHisto) #oldHisto
         self.runSaveBtn.clicked.connect(self.runCheck)
         self.runSaveBtn.setEnabled(False)
         self.abortBtn.setEnabled(False)
@@ -154,13 +155,6 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.overlapBox.addItem('Off')
         self.overlapBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'Overlap'))
         self.overlapBox.currentTextChanged.connect(self.overlapChange)
-
-        
-        #LEDs trigger mode selection
-#        self.ledTrigBox.addItem(isoiWindow.ledTriggerModes[1])
-#        self.ledTrigBox.addItem(isoiWindow.ledTriggerModes[0])
-#        self.ledTrigBox.setCurrentText(isoiWindow.ledTriggerModes[0])
-#        self.ledTrigBox.currentTextChanged.connect(self.ledTrigChange)
         
         #Color mode of rb alternance box
         self.rbColorBox.addItem(isoiWindow.rbColorModes[0])
@@ -426,32 +420,62 @@ class isoiWindow(QtWidgets.QMainWindow):
     
     
     ###LED ligtening###
+    def ledToggle(self, color=None):
+        """
+        Send informations to the LED drivers to make the good LED blinking.
+        """
+        self.histogram=False
+        print 'led toggle : ', color
+        ledDriverNb=[0,1,2] #[Red, Green, Blue]
+        exp = (self.mmc.getExposure()) # in ms
+        #list containing each illumTime for each LED
+        illumTimeList=[round(exp*(self.rExpRatio.value()),3),
+                       round(exp*(self.gExpRatio.value()),3),
+                       round(exp*(self.bExpRatio.value()),3)]
+        #driverList = []
+        for driverNb in ledDriverNb:
+            #driver init
+            driver = Arduino(driverNb)
+            #driverList.append(driver)
+            if driver.isConnected():
+                if color is None:
+                    driver.ledOff()
+                else:
+                    driver.oneColor(color,illumTimeList)
+                driver.closeConn()
+        
     def green(self,toggle_g):
         """
         Turn on or off the green LED in function of the QCheckBox state.
         """
         if toggle_g:
-            greenOn(self.labjack)
+            self.Red.setChecked(False)
+            self.Blue.setChecked(False)
+            self.ledToggle(1)
         else :
-            greenOff(self.labjack)
+            self.ledToggle()
           
     def red(self,toggle_r):
         """
         Turn on or off the red LED in function of the QCheckBox state.
         """
         if toggle_r:
-            redOn(self.labjack)
+            self.Green.setChecked(False)
+            self.Blue.setChecked(False)
+            self.ledToggle(0)
         else :
-            redOff(self.labjack)    
+            self.ledToggle()   
             
     def blue(self,toggle_b):
         """
         Turn on or off the blue LED in function of the QCheckBox state.
         """
         if toggle_b:
-            blueOn(self.labjack)
+            self.Red.setChecked(False)
+            self.Green.setChecked(False)
+            self.ledToggle(2)
         else :
-            blueOff(self.labjack)
+            self.ledToggle()
     
     ### CROP CAMERA IMAGE ###
     def crop(self):
@@ -915,10 +939,21 @@ class isoiWindow(QtWidgets.QMainWindow):
     #### Live Histogram part ####
     #############################
     
+    def launchHisto(self):
+        try:
+            self.liveHistogram = LiveHistogram(self.mmc)
+            # Connections between LED settings button and histogram
+            self.Green.stateChanged.connect(self.liveHistogram.abort)
+            self.Red.stateChanged.connect(self.liveHistogram.abort)
+            self.Blue.stateChanged.connect(self.liveHistogram.abort)
+            self.liveHistogram.start()  
+        except:
+            print 'cannot instanciate the LiveHistogram class'
     def oldHisto(self):
         """
         Function that calculate and display a histogram.
         """
+        self.histogram=True
         triggerMode = 'Internal (Recommended for fast acquisitions)'
         if self.triggerModeCheck(triggerMode):
             (mask, h_h, h_w, pixMaxVal, bin_width, nbins) = histoInit(mmc)
@@ -927,7 +962,7 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.mmc.snapImage()
             g = self.mmc.getImage() #Initialize g
             self.mmc.startContinuousSequenceAcquisition(1)
-            while True:
+            while self.histogram:
                     if self.mmc.getRemainingImageCount() > 0:
                         g = self.mmc.getLastImage()
                         rgb2 = cv2.cvtColor(g.astype("uint16"),cv2.COLOR_GRAY2RGB)

@@ -10,15 +10,10 @@ int frameCounter =0; // Count the frame acuired
 int voltage = 4095; //5V set at Cyclops DAC output
 
 //Initialization of variables for a specific mode
-bool rgbMode = false;
 std::vector<int> ledList; // initialize a int vector of non-determinated size
 int listSize =0;  
 
-bool rbMode = false;
 int greenFrameInterval;
-
-bool redMode = false;
-bool blueMode = false;
 
 //RB mode : acquisition always begin with a red LED ON
 bool red=true;
@@ -69,15 +64,41 @@ void loop()
         Serial.println(usIllumTime);
       }
 
+      /// Quick communication exchnage ///
       else if(incomingByte == 'R'){
+          ledList.clear();
+          listSize = 1;
+          ledList.push_back(0); //Put red only in the sequence list
+          //Set the acquisition mode
+          cyclops0.set_trigger( rgbModeFct, RISING); // cyclops trigger on rising edges
+      }
+      else if(incomingByte == 'G'){
+          ledList.clear();
+          listSize = 1;
+          ledList.push_back(1); //Put green only in the sequence list
+          //Set the acquisition mode
+          cyclops0.set_trigger( rgbModeFct, RISING); // cyclops trigger on rising edges
+      }
+      else if(incomingByte == 'B'){
+          ledList.clear();
+          listSize = 1;
+          ledList.push_back(2); //Put blue only in the sequence list
+          //Set the acquisition mode
+          cyclops0.set_trigger( rgbModeFct, RISING); // cyclops trigger on rising edges
+      }
+      else if(incomingByte == 'N'){
+          //Connect the trigger event function to "lightless" function
+          cyclops0.set_trigger(triggerEventRising, RISING);
+      }
+      else if(incomingByte == 'Z'){
         //Reset the frame counter to prepare next acquisition (with same parameters)
         frameCounter=0;
       }
       
+      /// Acquisition mode information section ///
       else if(incomingByte == 'M'){
         // Setting the alternation mode of the LED
         frameCounter=0; red = true; blue = false; //Reset default parameters
-        rgbMode = false; rbMode = false; redMode = false; blueMode = false;
         delay(100);//ensure that python software has send the inforomation
         incomingByte = Serial.read();
 
@@ -85,9 +106,8 @@ void loop()
       
         // if it's an L (ASCII 76), it recepts the LED list
         if(incomingByte == 'L'){
-          //Clear the old LED list and sets the alternation mode
+          //Clear the old LED list
           if(!ledList.empty()){ledList.clear();}
-          rgbMode = true;
           
           //Append the ledList
           listSize = Serial.parseInt();
@@ -98,28 +118,23 @@ void loop()
               incomingByte = Serial.parseInt();
               ledList.push_back(incomingByte);
               Serial.println(ledList[i]);
+          //Set the acquisition mode
           cyclops0.set_trigger( rgbModeFct, RISING); // cyclops trigger on rising edges
           }
         }
         else if(incomingByte =='G'){
-          //Set to rb mode
-          rbMode = true;
           //receive green frames interval
           greenFrameInterval = Serial.parseInt();
           cyclops0.set_trigger( rbModeFct, RISING); // cyclops trigger on rising edges
           Serial.println(greenFrameInterval);
         }
         else if(incomingByte =='R'){
-          //Set to redOnly mode
-          redMode = true;
           //receive green frames interval
           greenFrameInterval = Serial.parseInt();
           cyclops0.set_trigger( redModeFct, RISING); // cyclops trigger on rising edges
           Serial.println(greenFrameInterval);
         }
         else if(incomingByte =='B'){
-          //Set to blueOnly mode
-          blueMode = true;
           //receive green frames interval
           greenFrameInterval = Serial.parseInt();
           cyclops0.set_trigger( blueModeFct, RISING); // cyclops trigger on rising edges
@@ -140,10 +155,10 @@ void rgbModeFct()
 {
   if((ledList[frameCounter%listSize])== ledDriver)   //ONLY DIFF WITH green.ino (and blue.ino), READING THE GOOD CHAR IN LIST
   {
-    cyclops0.dac_load_voltage(voltage); //Turn green LED ON
+    cyclops0.dac_load_voltage(voltage); //Turn blue LED ON
     delay(msIllumTime);
     delayMicroseconds(usIllumTime);
-    cyclops0.dac_load_voltage(0); //Turn green LED OF
+    cyclops0.dac_load_voltage(0); //Turn blue LED OF
   }
   frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
 }

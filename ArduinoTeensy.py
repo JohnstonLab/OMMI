@@ -204,7 +204,7 @@ class Arduino(QObject):
             self.sendChar(char)
 #        time.sleep(0.8) # time for parse INT
         intSent = self.readData(1, integers = True)
-        print msIllumTime
+        print intSent,msIllumTime
         nbSent = intSent[0]
         if nbSent != msIllumTime:
             sync = False
@@ -213,6 +213,7 @@ class Arduino(QObject):
             self.sendChar(char)
 #        time.sleep(0.8)
         intSent = self.readData(1, integers = True)
+        print intSent,usIllumTime
         nbSent = intSent[0]
         if nbSent != usIllumTime:
             sync = False
@@ -259,6 +260,7 @@ class Arduino(QObject):
         """
         sync = True
         ledSeq = [0]*ledRatio[0]+[1]*ledRatio[1]+[2]*ledRatio[2]
+        print ledSeq
         #Send M char to inform arduino the mode will be set
         self.sendChar('M')
         #Send L char to chose the rgbMode and send the List
@@ -267,16 +269,15 @@ class Arduino(QObject):
         #Send the LED alternation sequence
         for char in str(int(len(ledSeq))):
             self.sendChar(char)
-#        time.sleep(0.8) #Wait that ParseInt() fct of the arduino timed out
+        time.sleep(0.05) #Wait that ParseInt() fct of the arduino timed out
         #Verification of the value sent
         intSent = self.readData(1, integers = True)
+        print intSent
         nbSent = intSent[0]
         if nbSent != len(ledSeq):
             sync = False
-        time.sleep(0.1)
         for ledInt in ledSeq:
             self.sendChar(str(ledInt))
-#            time.sleep(0.8)
             intSent = self.readData(1, integers = True)
             print intSent
             nbSent = intSent[0]
@@ -284,11 +285,42 @@ class Arduino(QObject):
                 sync = False
         return sync
 
+    ### Quick communication protocol ###
     def resetFrameCounter(self):
         """
-        Send R char to tell reset the framecounter of each arduino.
+        Send Z char to tell reset the framecounter of the arduino to Zero.
+        Can be used to speedup the process between loop acquisition.
         """
-        self.sendChar('R')
+        self.sendChar('Z')
+    
+    def oneColor(self, color, illumTimeList):
+        """
+        Put the cyclops driver in one color mode with the right time of illum
+        for the conceirned LED.
+        """
+        sync = False
+        failCount = 0
+        while(not sync and failCount > 10):
+            sync = self.sendIllumTime(illumTimeList[self.led])
+            print 'IllumTime sent : ', illumTimeList[self.led]
+            print 'sync value of attempt to set illumtime  : ', sync
+            if not sync:
+                failCount+=1
+                time.sleep(0.1*failCount)
+        #Window to prevent user that synchronization uncomplete
+        if color == 0:
+            self.sendChar('R')
+        elif color == 1:
+            self.sendChar('G')
+        elif color == 2:
+            self.sendChar('B')
+    
+    def ledOff(self):
+        """
+        Disconnect the current trigger mode of the LED driver, 
+        it will no more turn his LED on
+        """
+        self.sendChar('N')
     
     def readData(self,nlines,printData=False,array=True,integers=False,Floaters=False):
         
@@ -435,15 +467,16 @@ def synchronization(illumTime, rgbLedRatio=None, greenFrameInterval=None, colorM
 if __name__ == '__main__':
     
     print 'test'
-    blueArduino = Arduino(2)
+    #blueArduino = Arduino(2)
 #    if blueArduino:
 #        blueArduino.blinkingLED(0.5)
 #    print blueArduino
-    illumTime = [10.07,10.07,5]
+    illumTimeList = [10.07,10.07,5]
     greenFrameInterval = 5
     colorMode = 'Blue only'
-    #synchronization(illumTime, greenFrameInterval = greenFrameInterval, colorMode = colorMode)
-    blueArduino.synchronization(illumTime,greenFrameInterval = greenFrameInterval,colorMode = colorMode)
+    synchronization(illumTimeList, greenFrameInterval = greenFrameInterval, colorMode = colorMode)
+    #blueArduino.synchronization(illumTime,greenFrameInterval = greenFrameInterval,colorMode = colorMode)
+    #blueArduino.oneColor(2,illumTimeList)
 #    redArduino = Arduino(0)
 #    exposure = 10.07
 #    sync = redArduino.sendIllumTime(exposure)

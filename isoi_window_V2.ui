@@ -326,10 +326,6 @@
       <zorder>loadSettingsFileBtn</zorder>
       <zorder>unloadBtn</zorder>
       <zorder>loadBtn</zorder>
-      <zorder>gExpRatio</zorder>
-      <zorder>label_15</zorder>
-      <zorder>rExpRatio</zorder>
-      <zorder>bExpRatio</zorder>
      </widget>
      <widget class="QGroupBox" name="groupBox_2">
       <property name="geometry">
@@ -670,7 +666,6 @@
       <zorder>rgbMode</zorder>
       <zorder></zorder>
       <zorder>loopBtn</zorder>
-      <zorder>layoutWidget</zorder>
       <zorder>experimentDuration</zorder>
      </widget>
     </widget>
@@ -985,7 +980,7 @@
         <string>Create Odour Map for Selected Odours</string>
        </property>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
          <x>500</x>
@@ -1021,7 +1016,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
          <x>500</x>
@@ -1083,6 +1078,8 @@
         <string>load a folder...</string>
        </property>
       </widget>
+      <zorder>layoutWidget</zorder>
+      <zorder>loadOdourFolderBtn</zorder>
       <zorder>odourFoldersList</zorder>
       <zorder>label</zorder>
       <zorder>baselineLength</zorder>
@@ -1093,10 +1090,6 @@
       <zorder>mapBtn</zorder>
       <zorder>layoutWidget</zorder>
       <zorder>expFolderO</zorder>
-      <zorder>label_17</zorder>
-      <zorder>stimStartLabel</zorder>
-      <zorder>label_22</zorder>
-      <zorder>stimEndLabel</zorder>
      </widget>
     </widget>
    </widget>
