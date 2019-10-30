@@ -452,7 +452,8 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.Red.setChecked(False)
             self.Blue.setChecked(False)
             self.ledToggle(1)
-        else :
+        elif (not self.Blue.isChecked()) and (not self.Red.isChecked()) :
+            #Set to NO LED only if there is no other boxes checked (= will override)
             self.ledToggle()
           
     def red(self,toggle_r):
@@ -463,7 +464,8 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.Green.setChecked(False)
             self.Blue.setChecked(False)
             self.ledToggle(0)
-        else :
+        elif (not self.Green.isChecked()) and (not self.Blue.isChecked()) :
+            #Set to NO LED only if there is no other boxes checked (= will override)
             self.ledToggle()   
             
     def blue(self,toggle_b):
@@ -474,7 +476,8 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.Red.setChecked(False)
             self.Green.setChecked(False)
             self.ledToggle(2)
-        else :
+        elif (not self.Green.isChecked()) and (not self.Red.isChecked()) :
+            #Set to NO LED only if there is no other boxes checked (= will override)
             self.ledToggle()
     
     ### CROP CAMERA IMAGE ###
@@ -940,12 +943,15 @@ class isoiWindow(QtWidgets.QMainWindow):
     #############################
     
     def launchHisto(self):
+        """
+        Function that instanciate a live histogram object.
+        """
         try:
             self.liveHistogram = LiveHistogram(self.mmc)
             # Connections between LED settings button and histogram
-            self.Green.stateChanged.connect(self.liveHistogram.abort)
-            self.Red.stateChanged.connect(self.liveHistogram.abort)
-            self.Blue.stateChanged.connect(self.liveHistogram.abort)
+            self.Green.clicked.connect(self.liveHistogram.abort)
+            self.Red.clicked.connect(self.liveHistogram.abort)
+            self.Blue.clicked.connect(self.liveHistogram.abort)
             self.liveHistogram.start()  
         except:
             print 'cannot instanciate the LiveHistogram class'
