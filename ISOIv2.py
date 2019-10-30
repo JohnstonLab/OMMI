@@ -20,12 +20,12 @@ from time import time, sleep
 import os
 from os import path
 import ctypes
+import shutil
 
 
 
 #Class import
 from SequenceAcquisition import SequenceAcquisition
-from LiveHistogram import LiveHistogram
 from SignalInterrupt import SignalInterrupt 
 from ArduinoTeensy import Arduino
 from OdourMap import OdourMap
@@ -35,7 +35,7 @@ from histogram import histoInit, histoCalc
 from crop import crop_w_mouse
 from camInit import camInit, defaultCameraSettings
 from saveFcts import fileSizeCalculation, jsonFileLoading
-from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, blueOn, blueOff, waitForSignal, trigImage
+from Labjack import labjackInit, greenOn, greenOff, redOn, redOff, blueOn, blueOff
 from ParsingFiles import load2DArrayFromTxt, get_immediate_subdirectories, getTifLists, splitColorChannel, getTxtList
 #from ArduinoComm import connect, sendExposure, sendLedList, close
 
@@ -1122,6 +1122,8 @@ class isoiWindow(QtWidgets.QMainWindow):
                 if not os.path.exists(processedFolderPath):
                     os.makedirs(processedFolderPath)
                 self.splitChannels(stimName, experimentFolder, processedFolderPath)
+                #copy the .txt with all metadat in the processed folder
+                shutil.copy(experimentFolder+'/'+stimName+'.txt',processedFolderPath) 
             
                 
                 
@@ -1254,7 +1256,7 @@ if __name__ == '__main__':
     #Launch GUI
     app = QtWidgets.QApplication(sys.argv)
     #Change the window Icon
-    app.setWindowIcon(QtGui.QIcon('OMMI.png'))
+    app.setWindowIcon(QtGui.QIcon('OMMI_colours.png'))
     #Give an ID to the running application to separate it from python and show a different icon in the taskbar
     #source:https://stackoverflow.com/questions/1551605/how-to-set-applications-taskbar-icon-in-windows-7/1552105
     myappid = u'johnstonlab.OMMI.V2' # arbitrary string
