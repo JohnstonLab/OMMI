@@ -1032,6 +1032,7 @@ class isoiWindow(QtWidgets.QMainWindow):
             self.stimDic = jsonFileLoading(fileName)
             try:
                 valveList = self.stimDic["valveList"]
+                self.stimList.clear()
                 stimNb = 1
                 for valve in valveList:
                     self.stimList.addItem('S%(number)03d' % {"number": stimNb}+' : '+str(valve))
