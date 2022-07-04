@@ -96,12 +96,12 @@ class LiveHistogram(QThread):
                 else:
                     print('No frame')
             except:
-                print('HISTO : MMC acquisition error')
+                print 'HISTO : MMC acquisition error'
             try:    
                 h = self._histoCalc(img)
                 cv2.imshow('Histogram',h)
             except:
-                print('HISTO : Calculation of the histogram error')
+                print 'HISTO : Calculation of the histogram error'
             if cv2.waitKey(33) == 27:
                 break
             if cv2.getWindowProperty('Video', 1) == -1: #Condition verified when 'X' (close) button is pressed
@@ -114,5 +114,5 @@ class LiveHistogram(QThread):
         
 if __name__ == '__main__':
     
-    print('test of the histogram class and functionalities')
+    print 'test of the histogram class and functionalities'
 #    histogram = LiveHistogram(9)

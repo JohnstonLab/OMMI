@@ -37,7 +37,7 @@ def labjackInit():
         device = u3.U3() #Open first found U3
     except:
         #Handle all exceptions here
-        print("Error : labjack device non available")
+        print "Error : labjack device non available"
     return device
 
 def greenOn(device):
@@ -72,11 +72,11 @@ def blueOff(device):
     device.setFIOState(trig, 0)
 
 def trigExposure(device, exp):
-    print('pulse generation')
+    print 'pulse generation'
     device.setFIOState(trig, 1)
     sleep(exp*(0.001) ) #milliseconds conversion
     device.setFIOState(trig, 0)
-    print('pulse generated')
+    print 'pulse generated'
     
 def trigImage(device):
     """
@@ -131,7 +131,7 @@ def readSignal(device, channel):
     try:
         sigValue = device.getAIN(channel)
     except:
-        print('Error, no signal coming into the labjack')
+        print 'Error, no signal coming into the labjack'
     return sigValue
 
 def readOdourValve(device, channel):
@@ -164,7 +164,7 @@ def risingEdge(device, lj_channel, timeout=0.5):
         rEdge = True
         while (device.getAIN(lj_channel) < trigLevel) and rEdge: #get out of this loop only when a high state is detected
             if ((time.time()-timeoutCounter)>timeout):
-                print('rising edge detection timed out')
+                print 'rising edge detection timed out'
                 rEdge=False
     
     return rEdge
@@ -190,7 +190,7 @@ def fallingEdge(device, lj_channel):
 
 def snapImage(mmc):
     cv2.namedWindow('Image')
-    print('Window open')
+    print 'Window open'
     mmc.snapImage()
     g = mmc.getImage()
     cv2.imshow('Image', g)
@@ -201,26 +201,26 @@ def multiTrig(device, nbImages):
     for i in range(0,nbImages):
         waitForSignal(device, "TTL", "AIN", 0) ##CHECK ARM output of the cam is high
         trigImage(device) ## trig image i
-        print('image ',i,' triggered')
+        print 'image ',i,' triggered'
 
 def multiSnap(device, nbImages, mmc, imageList):
     greenOn(device)
     greenOff(device)
     for i in range(0,nbImages):
-        print('inside the for loop')
+        print 'inside the for loop'
         start = time.time()
         while(mmc.getRemainingImageCount()<1 and (time.time() - start)<2):
             continue
         #mmc.snapImage()
-        print('snapped')
+        print 'snapped'
         #img = mmc.getImage()
         #img = mmc.getLastImage()
         img=mmc.popNextImage()
-        print('got it')
+        print 'got it'
         imageList.append(img) 
         #greenOn(device)
         #greenOff(device)
-        print('image ',i)
+        print 'image ',i
 
 #### TESTING EXTERNAL TRIGGERING OF THE CAM ####
 ###Acquisition of 3 frames with one LED on

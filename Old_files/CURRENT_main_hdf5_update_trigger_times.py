@@ -29,9 +29,9 @@ from OII_ui import Ui_MainWindow
 
 import sys
 import os 
-os.chdir("C:\Users\johnstonlab\Documents\Micro-Manager-1.4")
+os.chdir("C:\\Users\johnstonlab\Documents\Micro-Manager-1.4")
 # makes "from OII_ui import Ui_MainWindow" fails, OI_ui.py and OI_ui.ui added to the folder to fix that
-print os.getcwd()
+print(os.getcwd())
 
 import time
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
@@ -49,8 +49,8 @@ from tifffile import imsave,imshow,imread
 from datetime import date
 import serial #arduino
 
-import Tkinter
-import tkFileDialog
+import tkinter
+import tkinter.filedialog
 import os
 import os.path as pth
 import scipy
@@ -126,11 +126,11 @@ locations=['COM4']
 
 for device in locations:
     try:
-        print "Trying...",device
+        print("Trying...",device)
         ser = serial.Serial(device, 9600)
         break
     except:
-        print "Failed to connect on",device
+        print("Failed to connect on",device)
 
 ## loop until the arduino tells us it is ready
 #while not connected:
@@ -156,7 +156,7 @@ def onmouse(event, x, y, flags, params):
     if event == cv.CV_EVENT_LBUTTONDOWN:
          down=True
 
-         print 'Start Mouse Position: '+str(x)+', '+str(y)
+         print('Start Mouse Position: '+str(x)+', '+str(y))
          sbox = [x, y]
          boxes.append(sbox)
 #         rect_start=(boxes[0][0],boxes[0][1])
@@ -169,10 +169,10 @@ def onmouse(event, x, y, flags, params):
 
     elif event == cv.CV_EVENT_LBUTTONUP:
         down=False
-        print 'End Mouse Position: '+str(x)+', '+str(y)
+        print('End Mouse Position: '+str(x)+', '+str(y))
         ebox = [x, y]
         boxes.append(ebox)
-        print boxes
+        print(boxes)
         crop = img[boxes[-2][1]:boxes[-1][1],boxes[-2][0]:boxes[-1][0]]
 
         cv2.imshow('crop',crop)
@@ -184,11 +184,11 @@ def onmouse(event, x, y, flags, params):
         k =  cv2.waitKey(0)
         if ord('r')== k:
             cv2.imwrite('Crop'+str(t)+'.jpg',crop)
-            print "Written to file"
+            print("Written to file")
 
 def crop_w_mouse(img):
         
-        print "crop"
+        print("crop")
         down = False
     
         
@@ -205,7 +205,7 @@ def crop_w_mouse(img):
         y= boxes[-2][1]
         w= boxes[-1][0] - x
         h= boxes[-1][1] - y
-        print "selectROI x "+str(x)+" y "+str(y)+" w "+str(w)+" h "+str(h)
+        print("selectROI x "+str(x)+" y "+str(y)+" w "+str(w)+" h "+str(h))
         mmc.setROI(x,y,w,h)
         
 def crop_w_mouse_live(img):
@@ -232,7 +232,7 @@ def crop_w_mouse_live(img):
         y= boxes[-2][1]
         w= boxes[-1][0] - x
         h= boxes[-1][1] - y
-        print "selectROI x "+str(x)+" y "+str(y)+" w "+str(w)+" h "+str(h)
+        print("selectROI x "+str(x)+" y "+str(y)+" w "+str(w)+" h "+str(h))
         mmc.setROI(x,y,w,h)
 
 
@@ -249,9 +249,9 @@ def saveAsMultipageTif_inter(datap,path,namep,m,k=512): ##TO FIX
 
     #d = np.asarray(descri)
     namepp=namep#os.path.split(path)[1]+'_' #get the name of the subfolder
-    print "nFrames "+str(nFrames)+" m "+str(m)
+    print("nFrames "+str(nFrames)+" m "+str(m))
     for i in range(0,nFrames/k):
-        print "XXX saving tiff "+str(m+i+1)
+        print("XXX saving tiff "+str(m+i+1))
         image = datap[i*k:(i*k)+k,:,:]
         filename = path+'/'+namep+'/raw/'+namepp+'%(number)04d.tif' % {"number": m+i+1}
         imsave(filename, image)#,description =d[i*k:(i*k)+k])
@@ -259,7 +259,7 @@ def saveAsMultipageTif_inter(datap,path,namep,m,k=512): ##TO FIX
     #print "test2"
         
     if (nFrames % k > 0 ): #buggy ???        
-        print "XXX saving tiff "+str(n+1)
+        print("XXX saving tiff "+str(n+1))
         image = datap[nFrames-(nFrames % k):nFrames-1]
         filename = path+'/'+namep+'/raw/'+namepp+'%(number)04d.tif' % {"number": n+1}
         imsave(filename, image)#,description =d[nFrames-(nFrames % k):nFrames-1])
@@ -274,7 +274,7 @@ def runEpoch(mmc,device,rep):
     global meta_index # list: epoch name, start frame, end frame
     
     namep=window.path.text()
-    print "create hdf5" 
+    print("create hdf5") 
     hdfpath = createHdf5andClose(namep,savepath)
     
     
@@ -287,18 +287,18 @@ def runEpoch(mmc,device,rep):
     count = 1 #epoch 0 effectuated before loop
     m=0 #tiff saving index
     namep=window.path.text()
-    print "namep..."+str(namep)
+    print("namep..."+str(namep))
 
     window.progressBar.setMinimum(0)
     
     window.progressBar.setMaximum(n_epoch+(rep-1)*n_epoch)
 
-    print str(n_epoch)
+    print(str(n_epoch))
     for i in range(n_epoch):
         total += epoch_seq[i][4]
         epoch_times.append(total)
-    print str(n_epoch)+" epochs"
-    print "should take "+str(total)+"s and repeated "+str(rep)+" time(s)"
+    print(str(n_epoch)+" epochs")
+    print("should take "+str(total)+"s and repeated "+str(rep)+" time(s)")
 
     mmc.prepareSequenceAcquisition('Zyla')
     #print "preparing sequence acquisition took", time.clock()-start, "seconds"                                         
@@ -310,7 +310,7 @@ def runEpoch(mmc,device,rep):
     
     
     for i in range(rep): #LOOP FOR TRIALS
-            print "trial "+str(i+1)
+            print("trial "+str(i+1))
             text_file = open(savepath+"/respi"+namep+"_trial_"+str(i+1)+".txt", 'w')
             text_file_globalTime.write( str(time.time())+",  "+str(i+1)+"\n")
             frame_i=0
@@ -334,11 +334,11 @@ def runEpoch(mmc,device,rep):
                     meta.append( (epoch_seq[count-1], i)) 
                 
                 if  (count < n_epoch) and (time.clock()-start+eps > epoch_times[count-1]) :
-                    print "count "+str(count)
-                    print epoch_seq[count-1][0]
+                    print("count "+str(count))
+                    print(epoch_seq[count-1][0])
 
-                    print frame_i
-                    print len(frames)-1
+                    print(frame_i)
+                    print(len(frames)-1)
                     #mmc.setProperty(DEVICE[0], 'Exposure', epoch_seq[count][1])
                     setLed(device,epoch_seq[count][2])
                     setOdor(device,epoch_seq[count][3])
@@ -357,7 +357,7 @@ def runEpoch(mmc,device,rep):
 #                        mmc.stopSequenceAcquisition()
 #                        mmc.clearCircularBuffer() 
                     if (epoch_seq[count][5] == 1):
-                        print "stop recording "+str(epoch_seq[count][4])+ "sec"
+                        print("stop recording "+str(epoch_seq[count][4])+ "sec")
                         time.sleep(epoch_seq[count][4])
                         mmc.clearCircularBuffer()
                         #meta_index.pop()
@@ -389,7 +389,7 @@ def runEpoch(mmc,device,rep):
             DAC1_VALUE = device.voltageToDACBits(0, dacNumber = 1, is16Bits = False)
             device.getFeedback(u3.DAC1_8(DAC1_VALUE))       
                       
-            print str(total)+"s acquisition took", time.clock()-start, "seconds"
+            print(str(total)+"s acquisition took", time.clock()-start, "seconds")
             
             mmc.stopSequenceAcquisition()
             mmc.clearCircularBuffer() 
@@ -401,29 +401,29 @@ def runEpoch(mmc,device,rep):
                     framesnp = np.asarray(frames)
                     
                     #display avg green
-                    print "save green"+str(i)+" in "+savepath
+                    print("save green"+str(i)+" in "+savepath)
                     scipy.misc.imsave(savepath+'/green'+str(i)+'.jpg', np.mean(framesnp[0:20],axis=0))
                     #plt.imshow(np.mean(framesnp[0:20],axis=0))
                     
                     #saveAsMultipageTif(framesnp,savepath,namep,meta,k=512)#
                     #m = saveAsMultipageTif_inter(framesnp,savepath,namep,m)
                     #print "number of tiff files :"+str(m)
-                    print "save trial hdf5"
-                    print m_i_trial[-1]
-                    print i+1
+                    print("save trial hdf5")
+                    print(m_i_trial[-1])
+                    print(i+1)
                     hdfs=saveTrialHdf5andClose(hdfpath,framesnp,m_i_trial[-1],i+1,epoch_seq) #modified added epoch
-                    print "closing hdfs"
+                    print("closing hdfs")
                     hdfs.close()
-                    print "closed"
+                    print("closed")
                     #print "save respiratory signal"
                     # text_file = open("respi"+".txt", 'w')
-                    print "empty frames list.."
+                    print("empty frames list..")
                     frames[:]=[]
                     text_file.close()
                     timeSpentSaving=time.time()-savingTime
                     newDelay=window.dur_2.value()-timeSpentSaving
-                    print "in total wating for "+str(window.dur_2.value())+" s"
-                    print "after time spent saving wating for "+str(newDelay)+" s"
+                    print("in total wating for "+str(window.dur_2.value())+" s")
+                    print("after time spent saving wating for "+str(newDelay)+" s")
                     if (newDelay>0):
                         time.sleep(newDelay)
             count =1
@@ -433,9 +433,9 @@ def runEpoch(mmc,device,rep):
 
     
     #print "nOfFrames :"+str(len(frames)) 
-    print "exposure was", mmc.getProperty('Zyla','Exposure')                                               
-    print "Framerate was", mmc.getProperty('Zyla','FrameRate')             
-    print "saving metadata, timestamps and comments"
+    print("exposure was", mmc.getProperty('Zyla','Exposure'))                                               
+    print("Framerate was", mmc.getProperty('Zyla','FrameRate'))             
+    print("saving metadata, timestamps and comments")
     
     if not os.path.exists(savepath+"/"+namep):
         os.makedirs(savepath+"/"+namep)
@@ -451,10 +451,10 @@ def runEpoch(mmc,device,rep):
     with open(savepath+"/"+namep+"/m_i_trial.p", "wb") as fppp:   #Pickling
         pickle.dump(m_i_trial, fppp)
 
-    print "restart kernel to be safe"
+    print("restart kernel to be safe")
     
     text_file_globalTime.close()
-    print "global time txt closed"
+    print("global time txt closed")
 
     
     window.progressBar.setValue(0)       
@@ -481,7 +481,7 @@ def setOdor(device,odor):
             #device.setFIOState(v1_lj, 1)
             DAC0_VALUE = device.voltageToDACBits(5.5, dacNumber =0, is16Bits = False)
             device.getFeedback(u3.DAC0_8(DAC0_VALUE))  
-    print "set odor to: "+str(odor)
+    print("set odor to: "+str(odor))
     
 def setLed(device,color):
     if color == 0:
@@ -494,7 +494,7 @@ def setLed(device,color):
         else:
             device.setFIOState(green_lj, 0)
             device.setFIOState(red_lj, 1)
-    print "set led to: "+str(color)
+    print("set led to: "+str(color))
     
     
 
@@ -593,11 +593,11 @@ class MyMainWindow(QtWidgets.QMainWindow):
         img = mmc.getImage()
         crop_w_mouse(img)
         #crop_w_mouse_live(img)
-        print "image width: "+str(mmc.getImageWidth())
-        print "image height: "+str(mmc.getImageHeight())
+        print("image width: "+str(mmc.getImageWidth()))
+        print("image height: "+str(mmc.getImageHeight()))
       
     def Histo(self):
-        print "press q to quit"
+        print("press q to quit")
 
         cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
         cv2.namedWindow('Video')
@@ -681,29 +681,29 @@ class MyMainWindow(QtWidgets.QMainWindow):
       timer.timeout.connect(update)
       timer.start(0)
       
-      print "snap"
+      print("snap")
       
     def expSliderFunc(self,expp):
       global exp
       exp=expp/float(div)
-      print "wanted exp: "+str(exp)
+      print("wanted exp: "+str(exp))
       #print "actual exp: "+mmc.getProperty('Zyla', 'Exposure')
       self.C_expSb.setValue(expp/float(div))
       self.E_expSb.setValue(expp/float(div))
       mmc.setProperty(DEVICE[0], 'Exposure', exp)
-      print "actual exp: "+mmc.getProperty('Zyla', 'Exposure')
+      print("actual exp: "+mmc.getProperty('Zyla', 'Exposure'))
       
     def binCh(self,i):
         global binn
         binn = self.binBox.currentText()
         mmc.setProperty('Zyla', 'Binning', str(binn))
-        print "Binning set at", mmc.getProperty('Zyla','Binning') 
+        print("Binning set at", mmc.getProperty('Zyla','Binning')) 
 
     def bitCh(self):
         global bit
         bit = self.bitBox.currentText()
         mmc.setProperty('Zyla', 'Sensitivity/DynamicRange', str(bit))
-        print "Bit depth set at", mmc.getProperty('Zyla','Sensitivity/DynamicRange') 
+        print("Bit depth set at", mmc.getProperty('Zyla','Sensitivity/DynamicRange')) 
         
 
       
@@ -715,20 +715,20 @@ class MyMainWindow(QtWidgets.QMainWindow):
       
     def green(self,toggle_g):
       if toggle_g:
-          print "green ON"
+          print("green ON")
           self.led.setValue(1)
           device.setFIOState(green_lj, 1)
       else :
-          print "green OFF"
+          print("green OFF")
           device.setFIOState(green_lj, 0)
           
     def red(self,toggle_r):
       if toggle_r:
-          print "red ON"
+          print("red ON")
           self.led.setValue(2)
           device.setFIOState(red_lj, 1)
       else :
-          print "red OFF"
+          print("red OFF")
           device.setFIOState(red_lj, 0)
           
           
@@ -736,21 +736,21 @@ class MyMainWindow(QtWidgets.QMainWindow):
     def valve1(self,toggle_v1):
       
       if toggle_v1:
-          print "valve1 ON"
+          print("valve1 ON")
           #device.setFIOState(v1_lj, 1)
           DAC0_VALUE = device.voltageToDACBits(5.5, dacNumber = 0, is16Bits = False)
           device.getFeedback(u3.DAC0_8(DAC0_VALUE))        # Set DAC0 to 5 V
           if self.Valve2.isChecked() : #if valve2 activated
               self.odo.setValue(2) #odor 2
-              print "odor: 2"
+              print("odor: 2")
           else :
               self.odo.setValue(1) #odor 1
-              print "odor: 1"
+              print("odor: 1")
 
 
       else :
-          print "valve1 OFF"
-          print "odor: 0"
+          print("valve1 OFF")
+          print("odor: 0")
           self.odo.setValue(0) #no odors: odor 0
           DAC0_VALUE = device.voltageToDACBits(0, dacNumber = 0, is16Bits = False)
           device.getFeedback(u3.DAC0_8(DAC0_VALUE))        # Set DAC0 to 5 V
@@ -760,34 +760,34 @@ class MyMainWindow(QtWidgets.QMainWindow):
     def valve2(self,toggle_v2):
         
       if toggle_v2:
-          print "valve2 ON"
+          print("valve2 ON")
           #device.setFIOState(v2_lj, 1)
           DAC1_VALUE = device.voltageToDACBits(5.5, dacNumber = 1, is16Bits = False)
           device.getFeedback(u3.DAC1_8(DAC1_VALUE))        # Set DAC0 to 5 V
           if self.Valve1.isChecked() : #if valve1 activated
               self.odo.setValue(2) #odor 2
-              print "odor: 2"
+              print("odor: 2")
           else :
               self.odo.setValue(0) #no odor
-              print "odor: 0"
+              print("odor: 0")
       else :
-          print "valve2 OFF"
+          print("valve2 OFF")
           #device.setFIOState(v2_lj, 0)
           DAC1_VALUE = device.voltageToDACBits(0, dacNumber = 1, is16Bits = False)
           device.getFeedback(u3.DAC1_8(DAC1_VALUE))        # Set DAC0 to 5 V
           if self.Valve1.isChecked() : #if valve2 activated
               self.odo.setValue(1) #odor 2
-              print "odor: 1"
+              print("odor: 1")
           else :
               self.odo.setValue(0) #no odor
-              print "odor: 0"
+              print("odor: 0")
           self.odo.setValue(1) #odor 1
     
         
         
     '''TAB2: Epochs and run'''
     def AddFunc(self):
-        print "added element in row "+str(self.listE.currentRow()+1)
+        print("added element in row "+str(self.listE.currentRow()+1))
         global epoch_seq
         global exp
         name = self.name.text()
@@ -802,10 +802,10 @@ class MyMainWindow(QtWidgets.QMainWindow):
 
         
     def RemFunc(self):
-        print "removed element in row "+str(self.listE.currentRow())
+        print("removed element in row "+str(self.listE.currentRow()))
         global epoch_seq
-        print epoch_seq
-        print len(epoch_seq)
+        print(epoch_seq)
+        print(len(epoch_seq))
         self.listE.takeItem(self.listE.currentRow()) #remove in gui
         epoch_seq.pop(self.listE.currentRow()) #remove in list
 
@@ -814,38 +814,38 @@ class MyMainWindow(QtWidgets.QMainWindow):
         
     def LoadEFunc(self):
       global epoch_seq
-      print "select file to load"
-      root = Tkinter.Tk()
+      print("select file to load")
+      root = tkinter.Tk()
       root.withdraw()
       currdir = "E:/OIIS epoch"
-      filepath = tkFileDialog.askopenfilename(initialdir=currdir, title='select epoch list')
+      filepath = tkinter.filedialog.askopenfilename(initialdir=currdir, title='select epoch list')
       with open(filepath, "rb") as fp:   # Unpickling
               epoch_seq = pickle.load(fp)
       for i in range(len(epoch_seq)):
               self.listE.addItem(epoch_seq[i][0] + ", e:" +str(epoch_seq[i][1])+", l:"+str(epoch_seq[i][2])+", o:" +str(epoch_seq[i][3]) +", d:"+str(epoch_seq[i][4]) + " s, noRecord: "+str(epoch_seq[i][5]))
-      print "epochs loaded"
+      print("epochs loaded")
       filepath.close()
       
       
     def SaveEFunc(self):
       global epoch_seq
-      root = Tkinter.Tk()
+      root = tkinter.Tk()
       root.withdraw()
-      print "select filepath to save"
+      print("select filepath to save")
       currdir = "E:/OIIS epoch"
-      filepath = tkFileDialog.asksaveasfilename(defaultextension=".p", initialdir=currdir, title='select savefile')
+      filepath = tkinter.filedialog.asksaveasfilename(defaultextension=".p", initialdir=currdir, title='select savefile')
       with open(filepath, "wb") as fp:   #Pickling
               pickle.dump(epoch_seq, fp)
-      print "epochs saved"
+      print("epochs saved")
       
       #running epochs
     def RunFunc(self):
 #        cv2.destroyAllWindows()
 #        mmc.stopSequenceAcquisition()
-        print "start run"
+        print("start run")
         rep=self.repeat.value()
         runEpoch(mmc,device,rep)
-        print "end run"
+        print("end run")
       
       
     def AbortFunc(self):
@@ -861,7 +861,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
       cv2.destroyAllWindows()
       mmc.stopSequenceAcquisition()
       #mmc.reset()
-      print "aborted"
+      print("aborted")
       
 
     
@@ -871,9 +871,9 @@ class MyMainWindow(QtWidgets.QMainWindow):
       namep=self.path.text()
       framesnp=np.asarray(frames)
       saveAsMultipageTif(framesnp,savepath,namep,meta,k=512)
-      print "tiff saved!!"
+      print("tiff saved!!")
       np.save(savepath+"/"+namep+"/numpy.npy",framesnp)
-      print "npy saved!!"
+      print("npy saved!!")
       with open(savepath+"/"+namep+"/epoch.p", "wb") as fp:   #Pickling
               pickle.dump(epoch_seq, fp)
       with open(savepath+"/"+namep+"/comment.p", "wb") as fpp:   #Pickling
@@ -882,7 +882,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
               pickle.dump(timestamps, fppp)
       with open(savepath+"/"+namep+"/meta.p", "wb") as fppp:   #Pickling
               pickle.dump(meta, fppp)
-      print "add. info saved"
+      print("add. info saved")
       
 
 
@@ -904,7 +904,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
       device.getFeedback(u3.DAC1_8(DAC1_VALUE))   
       device.close()
       
-      print "closing device"
+      print("closing device")
       ser.close() #arduino serial
       mmc.unloadAllDevices() 
             
@@ -921,7 +921,7 @@ if __name__ == '__main__':
         device = u3.U3() #Open first found U3
     except:
         #Handle all exceptions here
-        print "open error" # TO FIX : adapt error msg
+        print("open error") # TO FIX : adapt error msg
     """MicroManager Init"""
 
     mmc = MMCorePy.CMMCore()
@@ -934,7 +934,7 @@ if __name__ == '__main__':
     
     """initial camera properties"""
     mmc.setProperty('Zyla', 'Binning', binn)
-    print "Binning set at", mmc.getProperty('Zyla','Binning')  
+    print("Binning set at", mmc.getProperty('Zyla','Binning'))  
     mmc.setProperty('Zyla', 'Exposure', exp)
     mmc.setProperty('Zyla', 'AcquisitionWindow', AcqWindow)
     mmc.setProperty('Zyla', 'PixelReadoutRate', PixRR)
@@ -943,20 +943,20 @@ if __name__ == '__main__':
     mmc.setProperty('Zyla','Overlap','Off')
     
 
-    print mmc.getProperty('Zyla', 'Sensitivity/DynamicRange')
-    print mmc.getProperty('Zyla','ElectronicShutteringMode')
+    print(mmc.getProperty('Zyla', 'Sensitivity/DynamicRange'))
+    print(mmc.getProperty('Zyla','ElectronicShutteringMode'))
     
     
     
  
-    print "exp: " + str(exp)+" min: "+str(expMin)+" max: "+str(expMax)
+    print("exp: " + str(exp)+" min: "+str(expMin)+" max: "+str(expMax))
     exp=float(mmc.getProperty(DEVICE[0], 'Exposure'))
     expMin=float(mmc.getPropertyLowerLimit(DEVICE[0], 'Exposure'))
     #expMax=float(mmc.getPropertyUpperLimit(DEVICE[0], 'Exposure'))
-    print "exp: " + str(exp)+" "+str(expMin)+" "+str(expMax)
+    print("exp: " + str(exp)+" "+str(expMin)+" "+str(expMax))
     
-    print "image width: "+str(mmc.getImageWidth())
-    print "image height: "+str(mmc.getImageHeight())
+    print("image width: "+str(mmc.getImageWidth()))
+    print("image height: "+str(mmc.getImageHeight()))
     
 
     

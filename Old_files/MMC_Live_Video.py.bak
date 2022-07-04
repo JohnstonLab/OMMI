@@ -57,7 +57,7 @@ def main():
     mmc.startContinuousSequenceAcquisition(1)
     while True:
         remcount = mmc.getRemainingImageCount()
-        print(('Images in circular buffer: %s') % remcount)
+        print('Images in circular buffer: %s') % remcount
         if remcount > 0:
             # rgb32 = mmc.popNextImage()
             rgb32 = mmc.getLastImage()

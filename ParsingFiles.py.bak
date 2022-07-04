@@ -51,7 +51,7 @@ def load2DArrayFromTxt(path,parser="\t"):
             try:
                 arr[i,j]=float(content[i].split(parser)[j])
             except:
-                print(("Unreadable line "+str(i)))
+                print("Unreadable line "+str(i))
     return arr
 
 
@@ -119,22 +119,22 @@ def splitColorChannel(filesName, txtArray, tifsList, processedFolderPath):
     redTextFile = open(processedFolderPath+"/"+filesName+"_R"+".txt", 'w')
     greenTextFile = open(processedFolderPath+"/"+filesName+"_G"+".txt", 'w')
     blueTextFile = open(processedFolderPath+"/"+filesName+"_B"+".txt", 'w')
-    print('.txt init')
+    print'.txt init'
     #Create a tiffWriter
     redTif = tifffile.TiffWriter(processedFolderPath+"/"+filesName+"_R"+".tif", bigtiff=True)
     greenTif = tifffile.TiffWriter(processedFolderPath+"/"+filesName+"_G"+".tif", bigtiff=True)
     blueTif = tifffile.TiffWriter(processedFolderPath+"/"+filesName+"_B"+".tif", bigtiff=True)
-    print('.itf init')
+    print'.itf init'
     
     splitTifs(redTif, tifsList, 0, channel)
     splitTifs(greenTif, tifsList, 1, channel)
     splitTifs(blueTif, tifsList, 2, channel)
-    print('split .tif done')
+    print'split .tif done'
     
     splitTimestamps(redTextFile, time, odourValve, 0, channel)
     splitTimestamps(greenTextFile, time, odourValve, 1, channel)
     splitTimestamps(blueTextFile, time, odourValve, 2, channel)
-    print('split .txt done')
+    print'split .txt done'
     
     redTextFile.close()
     greenTextFile.close()
@@ -173,12 +173,12 @@ def splitTifs(tiffWriter, tifsList, numChannel, channel):
                 toSaveArray = np.nonzero(segmentChannel==numChannel)[0] #We now that it is 1D array
                                                                         #np.nonzero is the same function as np.where
             except:
-                print('no access to channel ?')
+                print'no access to channel ?'
             try:
                 for frameNb in toSaveArray:
                     tiffWriter.save(images[frameNb])
             except:
-                print('error with list')
+                print 'error with list'
 
 
 def splitTimestamps(textFile, time, odourValve, numChannel, channel):

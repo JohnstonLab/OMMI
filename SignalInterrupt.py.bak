@@ -26,7 +26,7 @@ class SignalInterrupt(QThread):
         self.waitTimeSeconds = waitTimeSeconds
         self.waitedState = waitedState
         self.running = True
-        print('S interrupt created with scan time : ', self.waitTimeSeconds)
+        print 'S interrupt created with scan time : ', self.waitTimeSeconds
     
     def __del__(self):
         self.wait()
@@ -51,9 +51,9 @@ class SignalInterrupt(QThread):
         """
         if signalState == self.waitedState:
             self.stateReachedInterrupt.emit()
-            print('Interrupt accepted')
+            print 'Interrupt accepted'
         else:
-            print('Interrupt rejected (non expected state)')
+            print 'Interrupt rejected (non expected state)'
     
     def run(self):
         """
@@ -69,11 +69,11 @@ class SignalInterrupt(QThread):
             signalState = self._signalState(readSignal(self.labjack, self.channel))    
             if signalPrevState != signalState:
                     self.interrupt.emit(signalState)
-                    print('interrupt detected')
+                    print 'interrupt detected'
                     if self.waitedState != None:
                         self._checkWantedState(signalState)
             signalPrevState =self._signalState(readSignal(self.labjack, self.channel)) 
-        print('run fct of Interrupt done')
+        print 'run fct of Interrupt done'
     
     def abort(self):
         """

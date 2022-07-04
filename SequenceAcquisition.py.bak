@@ -90,7 +90,7 @@ class SequenceAcquisition(QThread):
                                                                                 #RED = 0
                                                                                 #GREEN = 1
                                                                                 #BLUE = 2
-        print('LED sequence : ', self.ledSeq)
+        print 'LED sequence : ', self.ledSeq
         self.ledList = self.ledSeq*(int(self.nbFrames/(len(self.ledSeq)))+1) ## schedule LED lighting
         #NB : no return needed because each ledList and nbFrames are instance attribute
          
@@ -106,9 +106,9 @@ class SequenceAcquisition(QThread):
             self.nbFrames = int(self.duration/self.cycleTime)+1 ## Determine number of frames. (+1) because int round at the lower int
         #nbGreenFrames = self.rbGreenRatio[0] #nb of green frames in each green sequence #NOT YET USED
         nbGreenSequence = float(self.nbFrames)/self.greenFrameInterval #Dividing nbFrames by the green frame interval with a float to have float division
-        print('Nb of green frames : ', nbGreenSequence)
+        print 'Nb of green frames : ', nbGreenSequence
         nbGreenSequence = int(round(nbGreenSequence))
-        print('Nb of green frames : ', nbGreenSequence)
+        print 'Nb of green frames : ', nbGreenSequence
         #if self.colorMode == SequenceAcquisition.rbColorModes[0]:
         colorSeq=[0,2] #R & B alternation by default
         if self.colorMode == SequenceAcquisition.rbColorModes[1]:
@@ -130,7 +130,7 @@ class SequenceAcquisition(QThread):
         In charge of switching LED and saving metadata in a .txt file
         """
         imageCount=0
-        print('Transmitted ledOnDuration value : ',ledOnDuration)
+        print 'Transmitted ledOnDuration value : ',ledOnDuration
         
         #Timestamp to flag the beginning of acquisition 
         startAcquisitionTime = time()
@@ -170,7 +170,7 @@ class SequenceAcquisition(QThread):
         
         #close the metadata .txt file
         self.textFile.close()
-        print('end of the ledSwitchingThread')
+        print 'end of the ledSwitchingThread'
         return imageCount
         
     def _frameSaving(self):
@@ -198,7 +198,7 @@ class SequenceAcquisition(QThread):
         
         #Close tiff file open
         tiffWritersClose(self.tiffWriterList)
-        print('end of the _frameSavingThread')
+        print 'end of the _frameSavingThread'
         return imageCount
     
     def _circularBufferCleaning(self, imageCount):
@@ -207,11 +207,11 @@ class SequenceAcquisition(QThread):
         This step ensure that there is the same amount of metadata than frames saved.
         """
         if (not self.acqRunning) or (not self.loopRunning): #Check if sequence acquisition was aborted or loop was paused.
-            print(('cycleTime :',self.cycleTime))
+            print('cycleTime :',self.cycleTime)
             sleep(self.cycleTime)
-            print(('remaining images in the circular buffer :',self.mmc.getRemainingImageCount()))
+            print ('remaining images in the circular buffer :',self.mmc.getRemainingImageCount())
             while(self.mmc.getRemainingImageCount() > 0):
-                print('getting last image, num : ', imageCount)
+                print'getting last image, num : ', imageCount
                 img = self.mmc.popNextImage() #Gets and removes the next image from the circular buffer
                 saveFrame(img, self.tiffWriterList, (imageCount), self.maxFrames) # saving frame of previous acquisition
                 imageCount +=1
@@ -247,27 +247,27 @@ class SequenceAcquisition(QThread):
         Source for multithreading : https://stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-python
         Doc for multithreading : https://docs.python.org/2/library/multiprocessing.html
         """
-        print('New-Seq_acq')
+        print 'New-Seq_acq'
         exp = (self.mmc.getExposure())*0.001 #converted in s
         ledOnDuration = exp*self.expRatio[0]
-        print('time LED ON (s) : ', ledOnDuration)
+        print 'time LED ON (s) : ', ledOnDuration
         
-        print("Nb of frames : ", self.nbFrames)
+        print "Nb of frames : ", self.nbFrames
         imageCount = 0
         
         pool = ThreadPool(processes=2)
-        print('Pool initialized')
+        print 'Pool initialized'
         
         frameSavingThread = pool.apply_async(self._frameSaving,())
         sleep(0.005) ## WAIT FOR INITIALIZATION AND WAITFORSIGNAL FCT
         ledSwitchingThread = pool.apply_async(self._ledSwitching,(ledOnDuration,))
         imageCount = ledSwitchingThread.get()
-        print('Saving process counter : ', frameSavingThread.get())
-        print('LED process counter : ', imageCount)
+        print 'Saving process counter : ', frameSavingThread.get()
+        print 'LED process counter : ', imageCount
         #close the pool and wait for the work to finish
         pool.close()
         pool.join()
-        print('sequ acq done')
+        print 'sequ acq done'
         return imageCount
 
     def _metadataSaving(self):
@@ -280,7 +280,7 @@ class SequenceAcquisition(QThread):
         #Timestamp to flag the beginning of acquisition 
         if not self.startAcquisitionTime:
             self.startAcquisitionTime = time()
-        print('timestamp got')
+        print 'timestamp got'
         while(imageCount<(self.nbFrames) and self.acqRunning and self.loopRunning):
             if risingEdge(self.labjack, 3): #Labjack, channel, timeout(s)
                 startTime = time()	
@@ -298,7 +298,7 @@ class SequenceAcquisition(QThread):
         
         #close the metadata .txt file
         self.textFile.close()
-        print('end of the ledSwitchingThread')
+        print 'end of the ledSwitchingThread'
         return imageCount
     
     
@@ -315,21 +315,21 @@ class SequenceAcquisition(QThread):
             - Camera.FIRE > Labjack.AIN3
             - Camera.ARM > Labjack.AIN0
         """
-        print('Cyclops running')
+        print 'Cyclops running'
         
         pool = ThreadPool(processes=2)
-        print('Pool initialized')
+        print 'Pool initialized'
         
         ledSwitchingThread = pool.apply_async(self._metadataSaving,())
         sleep(0.001) ## WAIT FOR INITIALIZATION AND WAITFORSIGNAL FCT
         frameSavingThread = pool.apply_async(self._frameSaving,())
         imageCount = ledSwitchingThread.get()
-        print('Saving process counter : ', frameSavingThread.get())
-        print('LED process counter : ', imageCount)
+        print 'Saving process counter : ', frameSavingThread.get()
+        print 'LED process counter : ', imageCount
         #close the pool and wait for the work to finish
         pool.close()
         pool.join()
-        print('sequ acq done')
+        print 'sequ acq done'
         return imageCount
     
         
@@ -378,7 +378,7 @@ class SequenceAcquisition(QThread):
         if type(self.nbFrames) == int:
             self.nbFramesSig.emit(self.nbFrames)
         
-        print('acquisition Side : ', self.expRatio)
+        print 'acquisition Side : ', self.expRatio
         #Saving the configuration of the experiment file (.json)
         self.savePath = cfgFileSaving(self.experimentName, 
                                       self.nbFrames, 
@@ -472,9 +472,9 @@ class SequenceAcquisition(QThread):
             
             stimNumber = 1
             self.startAcquisitionTime = time()
-            print('start acquisition time :', self.startAcquisitionTime)
+            print 'start acquisition time :', self.startAcquisitionTime
             while(self.acqRunning):
-                print('Stimulation nb ', stimNumber)
+                print 'Stimulation nb ', stimNumber
                 self._loopPreparation(stimNumber)
                 #Wait for the raise of the SYNC signal
                 #if waitForSignal(self.labjack, channel=1): #waitForSignal(device, signalType="TTL", channelType="AIN", channel=1)
@@ -483,7 +483,7 @@ class SequenceAcquisition(QThread):
                 if self.acqRunning:
                     self.loopRunning = True
                     self.imageCount = self._seqAcqCyclops()
-                    print(self.imageCount)
+                    print self.imageCount
                     stimNumber += 1
                 else:
                     #Close tiff file open
@@ -491,21 +491,21 @@ class SequenceAcquisition(QThread):
                     #close the metadata .txt file
                     self.textFile.close()
                     saveFcts.acqFilesDel(self.stimName,self.savePath)
-                    print('abort loop')
+                    print 'abort loop'
             self.stopInterrupt.abort() #Stop the listenning action of the Interrupt
                 
             
         else:
-            print('Please select a valid mode of triggering the LED')
+            print 'Please select a valid mode of triggering the LED'
         
-        print('end of the thread')
+        print 'end of the thread'
         self.isFinished.emit()
             
     def pauseLoop(self):
         """
         Pause the acquisition in the loop mode. Action triggered by the end of a stim sync signal
         """
-        print('SYNC stim detected LOW')
+        print 'SYNC stim detected LOW'
         self.loopRunning = False
         
     def abort(self):
@@ -515,4 +515,4 @@ class SequenceAcquisition(QThread):
         try:
             self.acqRunning = False
         except:
-            print('Cannot abort properly')
+            print 'Cannot abort properly'

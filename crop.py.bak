@@ -21,7 +21,7 @@ def crop_w_mouse(img, ROI):
     global refPt
     (x,y,w,h)=ROI[-4:] #Select last elements of the vector (2 fcts called by getROI() with different returns)
     refPt = None
-    print("Default ROI x "+str(x)+" y "+str(y)+" w "+str(w)+" h "+str(h))
+    print "Default ROI x "+str(x)+" y "+str(y)+" w "+str(w)+" h "+str(h)
     cv2.namedWindow('Click to crop - Esc to close')
     cv2.imshow('Click to crop - Esc to close', img)
     while(True):
@@ -36,7 +36,7 @@ def crop_w_mouse(img, ROI):
         y= refPt[0][1]
         w= refPt[1][0] - x
         h= refPt[1][1] - y
-        print("selectROI x "+str(x)+" y "+str(y)+" w "+str(w)+" h "+str(h))
+        print "selectROI x "+str(x)+" y "+str(y)+" w "+str(w)+" h "+str(h)
     return (x,y,w,h)
         
 def onMouse(event, x, y, flags, params):

@@ -40,11 +40,11 @@ class OdourMap(QThread):
             self.resultSavePath = resultSavePath
         self.txtList = ParsingFiles.getTxtList(odourFolder) #WARNING : only the file name (with extension)
         self.redTifs = ParsingFiles.getTifLists(odourFolder, color ='R') #full path of the file #WARNING don't name a file with B at the end
-        print(self.redTifs)
+        print self.redTifs
         self.blueTifs = ParsingFiles.getTifLists(odourFolder, color ='B')
-        print(self.blueTifs)
+        print self.blueTifs
         self.stimNb = self._stimNbCalculation(self.txtList)
-        print('stimNb :', self.stimNb) 
+        print 'stimNb :', self.stimNb 
         #create a matrix of tuples which will contain (rEdge,fEdge) for each 
         #images stacks. Each row of this matrix correspond to a stim and each
         # column correspond to a color (column 0 > RED, column 1 > BLUE)
@@ -86,7 +86,7 @@ class OdourMap(QThread):
         elif type(filterSize) == int:
             self.filterSize = (filterSize,filterSize)
         else:
-            print('Wrong size type, filter size value : ',self.getFilterSize())
+            print 'Wrong size type, filter size value : ',self.getFilterSize()
     
     def getRescaleRatio(self):
         """
@@ -101,7 +101,7 @@ class OdourMap(QThread):
         if type(rescaleRatio) == float:
             self.rescaleRatio = rescaleRatio
         else:
-            print('Wrong size type, rescaling ratio value : ',self.getRescaleRatio())
+            print 'Wrong size type, rescaling ratio value : ',self.getRescaleRatio()
             
     def setBaselineLen(self, baselineLen):
         """
@@ -110,7 +110,7 @@ class OdourMap(QThread):
         if type(baselineLen) == int:
             self.baselinLen = baselineLen
         else:
-            print('Wrong size type, baseline length value : ',self.baselinLen)
+            print 'Wrong size type, baseline length value : ',self.baselinLen
             
     def setStimLen(self, stimLen):
         """
@@ -119,7 +119,7 @@ class OdourMap(QThread):
         if type(stimLen) == int:
             self.stimLen = stimLen
         else:
-            print('Wrong size type, stimulation length value : ',self.stimLen)
+            print 'Wrong size type, stimulation length value : ',self.stimLen
         
     def bAndSMaxLength(self):
         """
@@ -160,14 +160,14 @@ class OdourMap(QThread):
                     stimLen = fEdgeValue - rEdgeValue
                     if baselineLen < self.baselineLenMax:
                         self.baselineLenMax = baselineLen
-                        print('baselineMax : ',self.baselineLenMax)
+                        print 'baselineMax : ',self.baselineLenMax
                     if stimLen < self.stimLenMax:
                         self.stimLenMax = stimLen
-                        print('stim max : ',self.stimLenMax)
+                        print 'stim max : ',self.stimLenMax
                     try:    
                         self.rAndFEdges[stimNb,color] = (rEdgeValue,fEdgeValue)
                     except:
-                        print('array trouble')
+                        print 'array trouble'
                     
                 frameCounter+=1
                 prevValue=value
@@ -240,7 +240,7 @@ class OdourMap(QThread):
 #        tifffile.imsave(tif[:-4]+'_baseline.tif', baselineAvg)
 #        print tif[:-4]+'_baseline.tif'
         tifffile.imsave(tifName+'_map.tif',odMap)
-        print(tifName+'_map.tif')
+        print tifName+'_map.tif'
         
 #        #Display of the files generated ?        
 #        cv2.namedWindow('Stim AVG')
@@ -292,47 +292,47 @@ class OdourMap(QThread):
         print('run fct of the odourMap class called')
         
         if self.redProcess :
-            print('red process')
+            print 'red process'
             stimNb=0
             color=0
             odMapList = []
             for tif in self.redTifs:
                 tifArray = tifffile.imread(tif)
                 if len(tifArray.shape) == 3 :
-                    print('processing of : ', tif)
+                    print 'processing of : ', tif
                     tifName = tif[:-4]
                     odMapList.append(self._tifProcessing(tifName, tifArray, stimNb, color))
                     stimNb+=1
                 else:
-                    print('This tif is not a stack of frames and cannot be processed')
+                    print 'This tif is not a stack of frames and cannot be processed'
             self.redOdMapAvg = self._mapAvging(odMapList, self.odourFolder+'/R_avgMap.tif')
         if self.blueProcess :
-            print('blue process')
+            print 'blue process'
             stimNb=0
             color=1
             odMapList = []
             for tif in self.blueTifs:
                 tifArray = tifffile.imread(tif)
                 if len(tifArray.shape) == 3 :
-                    print('processing of : ', tif)
+                    print 'processing of : ', tif
                     tifName = tif[:-4]
                     odMapList.append(self._tifProcessing(tifName, tifArray, stimNb, color))
                     stimNb+=1
                 else:
-                    print('This tif is not a stack of frames and cannot be processed')
+                    print 'This tif is not a stack of frames and cannot be processed'
             self.blueOdMapAvg = self._mapAvging(odMapList, self.odourFolder+'/B_avgMap.tif')
         
         
 if __name__ == '__main__':
     
-    print('test of the odour map class and functionalities')
+    print 'test of the odour map class and functionalities'
     #odourMap = OdourMap('E:/OIIS Data/191025/ID723/10pc/OD8_processed')
     #odourMap = OdourMap('C:/data_OMMI/ID723/10pc/OD1_processed')
     #E:\OMMI\ID723\10pc\OD1_processed
     for od in range(1,2):
         odourMap = OdourMap('E:/OIIS Data/191028/ID724m/10pc/OD%i_processed'%(od)) #E:\OIIS Data\191025\ID723\1pc
         (rEdge,fEdge) = odourMap.rAndFEdges[0][0]
-        print(rEdge,fEdge)
+        print rEdge,fEdge
         odourMap.baselinLen = 100
         odourMap.stimLen = 150
         odourMap.redProcess = True

@@ -62,7 +62,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         
         
     def liveFunc(self):
-        print("video button pressed")
+        print "video button pressed"
         #Image capture and display
         mmc.snapImage()
         img = mmc.getImage()  # img - it's just numpy array
@@ -73,12 +73,12 @@ class MyMainWindow(QtWidgets.QMainWindow):
         
     def expSliderFunc(self, expVal):
         exp=expVal/float(div)
-        print("wanted exp: "+str(exp))
+        print "wanted exp: "+str(exp)
         try:
             mmc.setProperty('Camera', 'Exposure', exp)
-            print("actual exp: "+mmc.getProperty('Camera', 'Exposure'))
+            print "actual exp: "+mmc.getProperty('Camera', 'Exposure')
         except:
-            print("CMM err")
+            print "CMM err"
         
 ##Launching everything
 if __name__ == '__main__':
