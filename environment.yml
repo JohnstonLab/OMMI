@@ -1,0 +1,17 @@
+name: OMMI
+channels:
+  - conda-forge
+dependencies:
+  - python==3.9
+  - pip
+  - numpy>=1.16
+  - pyserial
+  - tifffile
+  - matplotlib
+  - scikit-image
+  - pymmcore
+  - pip:
+    - sti-LabJackPython
+    - pyqt5
+
+

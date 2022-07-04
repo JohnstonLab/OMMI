@@ -2,7 +2,7 @@
 """
 Created on Tue Aug 20 16:48:18 2019
 
-@author: Louis Vande Perre
+@author: Johnstonlab
 """
 
 import u3
@@ -11,7 +11,7 @@ from time import sleep
 ##### TEST NEEDED #####
 import cv2
 from camInit import camInit
-import MMCorePy
+import pymmcore
 from multiprocessing.pool import ThreadPool
 import matplotlib.pyplot as plt
 import threading
@@ -26,80 +26,80 @@ cameraTrig_lj = 0    #AIN0
 
 
 ####USELESS###
-## Boolean variable that will represent 
+## Boolean variable that will represent
 ## whether or not the arduino is connected
 #connected = False
 
-## establish connection to the serial port that your arduino 
+## establish connection to the serial port that your arduino
 ## is connected to.
 def labjackInit():
     try:
         device = u3.U3() #Open first found U3
     except:
         #Handle all exceptions here
-        print "Error : labjack device non available"
+        print("Error : labjack device non available")
     return device
 
 def greenOn(device):
     #print "green ON"
     device.setFIOState(green_lj, 1)
     device.setFIOState(trig, 1)
-    
+
 def greenOff(device):
     #print "green OFF"
     device.setFIOState(green_lj, 0)
     device.setFIOState(trig, 0)
-    
+
 
 def redOn(device):
     #print "red ON"
     device.setFIOState(red_lj, 1)
     device.setFIOState(trig, 1)
-    
+
 def redOff(device):
     #print "red OFF"
     device.setFIOState(red_lj, 0)
     device.setFIOState(trig, 0)
-    
+
 def blueOn(device):
     #print "red ON"
     device.setFIOState(blue_lj, 1)
     device.setFIOState(trig, 1)
-    
+
 def blueOff(device):
     #print "red OFF"
     device.setFIOState(blue_lj, 0)
     device.setFIOState(trig, 0)
 
 def trigExposure(device, exp):
-    print 'pulse generation'
+    print('pulse generation')
     device.setFIOState(trig, 1)
     sleep(exp*(0.001) ) #milliseconds conversion
     device.setFIOState(trig, 0)
-    print 'pulse generated'
-    
+    print('pulse generated')
+
 def trigImage(device):
     """
     Create a short-time pulse on the %trig output of the labjack.
-    Used to trigger an image when camera is in External trigger mode and %trig 
+    Used to trigger an image when camera is in External trigger mode and %trig
     connected to the TRIGGER input of the camera.
     """
     device.setFIOState(trig, 1)
     device.setFIOState(trig, 0)
 
-    
+
 def waitForSignal(device, signalType="TTL", channelType="AIN", channel=1):
     """
     Wait for a signal into the LabJack
-    
+
     signalType: string, default = "TTL"
         Sets the signal to expect. Currently supported is a +5.0V TTL
         signal.
-        
+
     channelType: string, default = "FIO"
-        Sets the type of input channel to listen on. Can be "FIO" 
+        Sets the type of input channel to listen on. Can be "FIO"
         (LabJack's digital I/O) or "AIN" (LabJack's analog input).
-    
+
     channel: int, default = 3
         Sets the channel of `channelType` to listen on.
     """
@@ -108,7 +108,7 @@ def waitForSignal(device, signalType="TTL", channelType="AIN", channel=1):
         while device.getDIState(channel) == 0:
             continue
         trigger = True
-        
+
     elif channelType == "AIN": ####Use a ANALOG input
         #print "WARNING: This might not work as expected, AIN mode still experimental." #NoWay
         if signalType == "TTL":
@@ -118,20 +118,20 @@ def waitForSignal(device, signalType="TTL", channelType="AIN", channel=1):
         trigger = True
     else:
         raise "Error: channelType: {wrongType} not recognised".format(wrongType=channelType)
-        
+
     return trigger
 
 def readSignal(device, channel):
     """
     Read a signal coming into the LabJack (AIN)
-    
+
     channel: int, default = 3
         Sets the channel of `channelType` to listen on.
     """
     try:
         sigValue = device.getAIN(channel)
     except:
-        print 'Error, no signal coming into the labjack'
+        print('Error, no signal coming into the labjack')
     return sigValue
 
 def readOdourValve(device, channel):
@@ -147,50 +147,50 @@ def readOdourValve(device, channel):
     return valveState
 
 
-    
+
 def risingEdge(device, lj_channel, timeout=0.5):
     """
     Wait for a rising edge (minimum %trigLevel V) into the LabJack AIN0 port (cameraTrig_lj variable)
-    
+
     return True when the risingedge is detected.
     """
     trigLevel = 2.4
     rEdge = False
-    
+
     #if (device.getAIN(cameraTrig_lj) > trigLevel):
         #print 'High state, cant wait for rising'
-    if(device.getAIN(lj_channel) < trigLevel): # Check that the signal is in low state  
+    if(device.getAIN(lj_channel) < trigLevel): # Check that the signal is in low state
         timeoutCounter=time.time()
         rEdge = True
         while (device.getAIN(lj_channel) < trigLevel) and rEdge: #get out of this loop only when a high state is detected
             if ((time.time()-timeoutCounter)>timeout):
-                print 'rising edge detection timed out'
+                print('rising edge detection timed out')
                 rEdge=False
-    
+
     return rEdge
-    
+
 def fallingEdge(device, lj_channel):
     """
     Wait for a falling edge (maximum %trigLevel V) into the LabJack AIN0 port (cameraTrig_lj variable)
-    
+
     return True when the risingedge is detected.
     """
     trigLevel = 0.5
     fEdge = False
-    
+
 #    if (device.getAIN(cameraTrig_lj) < trigLevel):
 #        print 'Low state, cant wait for falling'
-    if(device.getAIN(lj_channel) > trigLevel): # Check that the signal is in high state    
+    if(device.getAIN(lj_channel) > trigLevel): # Check that the signal is in high state
         while (device.getAIN(lj_channel) > trigLevel): #get out of this loop only when a low state is detected
             continue
         #print 'falling Edge detected'
         fEdge = True
-    
+
     return fEdge
 
 def snapImage(mmc):
     cv2.namedWindow('Image')
-    print 'Window open'
+    print('Window open')
     mmc.snapImage()
     g = mmc.getImage()
     cv2.imshow('Image', g)
@@ -201,33 +201,33 @@ def multiTrig(device, nbImages):
     for i in range(0,nbImages):
         waitForSignal(device, "TTL", "AIN", 0) ##CHECK ARM output of the cam is high
         trigImage(device) ## trig image i
-        print 'image ',i,' triggered'
+        print('image ',i,' triggered')
 
 def multiSnap(device, nbImages, mmc, imageList):
     greenOn(device)
     greenOff(device)
     for i in range(0,nbImages):
-        print 'inside the for loop'
+        print('inside the for loop')
         start = time.time()
         while(mmc.getRemainingImageCount()<1 and (time.time() - start)<2):
             continue
         #mmc.snapImage()
-        print 'snapped'
+        print('snapped')
         #img = mmc.getImage()
         #img = mmc.getLastImage()
         img=mmc.popNextImage()
-        print 'got it'
-        imageList.append(img) 
+        print('got it')
+        imageList.append(img)
         #greenOn(device)
         #greenOff(device)
-        print 'image ',i
+        print('image ',i)
 
 #### TESTING EXTERNAL TRIGGERING OF THE CAM ####
 ###Acquisition of 3 frames with one LED on
 #print 'trig Exposure test'
-#mmc = MMCorePy.CMMCore()
+#mmc = pymmcore.CMMCore()
 #mmc.unloadAllDevices()
-#DEVICE = camInit(mmc) 
+#DEVICE = camInit(mmc)
 #print (mmc.getLoadedDevices())
 #print(mmc.getDeviceType('Zyla'))
 ##print (mmc.getLoadedDevicesOfType('Camera'))
@@ -265,7 +265,7 @@ def multiSnap(device, nbImages, mmc, imageList):
 #plt.imshow(g2,cmap="gray")
 #plt.show()
 #
-##snap 
+##snap
 #sleep(1)
 #mmc.snapImage()
 #g3 =  mmc.getImage()
@@ -313,7 +313,7 @@ def multiSnap(device, nbImages, mmc, imageList):
 #pool.join()
 #greenOn(labjack) #flag the end of threads execution
 #sleep(0.002)
-#greenOff(labjack) 
+#greenOff(labjack)
 #print 'there are ',len(imageList), ' in the list'
 #for i in range(0,len(imageList)):
 #    plt.figure()
@@ -331,7 +331,7 @@ def multiSnap(device, nbImages, mmc, imageList):
 #multiSnap(labjack, nbImages, mmc, imageList)
 #greenOn(labjack) #flag the end of threads execution
 #sleep(0.002)
-#greenOff(labjack) 
+#greenOff(labjack)
 #print 'there are ',len(imageList), ' in the list'
 #for i in range(0,len(imageList)):
 #    plt.figure()
@@ -364,7 +364,7 @@ def multiSnap(device, nbImages, mmc, imageList):
 #pool.join()
 #greenOn(labjack) #flag the end of threads execution
 #sleep(0.002)
-#greenOff(labjack) 
+#greenOff(labjack)
 #print 'there are ',len(imageList), ' in the list'
 #for i in range(0,len(imageList)):
 #    plt.figure()
@@ -382,7 +382,7 @@ def multiSnap(device, nbImages, mmc, imageList):
 ###Using Threads
 #cv2.destroyAllWindows()
 #pool = ThreadPool(processes=2)
-    
+
 #async_result1 = pool.apply_async(snapImage, (mmc,))
 #async_result2 = pool.apply_async(trigExposure, (labjack,exp,))
 
@@ -392,7 +392,7 @@ def multiSnap(device, nbImages, mmc, imageList):
 #print 'execution done'
 
 ### MultipleSnap
-#for i in range(0,500):    
+#for i in range(0,500):
 #    mmc.snapImage()
 #    trigImage(labjack)
 #    sleep(intervalMs*0.001)
@@ -403,7 +403,7 @@ def multiSnap(device, nbImages, mmc, imageList):
 
 
 ###Square wave
-#for i in range(0,10):    
+#for i in range(0,10):
 #    trigExposure(labjack,exp)
 #    print 'count : ', i
 #    sleep(0.010)
@@ -419,5 +419,5 @@ def multiSnap(device, nbImages, mmc, imageList):
 #    if waitForSignal(device, 'TTL', 'AIN', 0):
 #        print 'Trigger received'
 #        imageCount+=1
-#        
+#
 #print 'acquisition done'
