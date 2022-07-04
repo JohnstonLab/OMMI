@@ -38,21 +38,21 @@ def crop_w_mouse(img, ROI):
         h= refPt[1][1] - y
         print("selectROI x "+str(x)+" y "+str(y)+" w "+str(w)+" h "+str(h))
     return (x,y,w,h)
-        
+
 def onMouse(event, x, y, flags, params):
     #### source : https://www.pyimagesearch.com/2015/03/09/capturing-mouse-click-events-with-python-and-opencv/####
     # grab references to the global variables
     global refPt
-    
+
     image = params
-    
+
 	# if the left mouse button was clicked, record the starting
 	# (x, y) coordinates and indicate that cropping is being
 	# performed
     if event == cv2.EVENT_LBUTTONDOWN:
         refPt = [(x, y)]
         cv2.imshow("Click to crop - Esc to close", image)
- 
+
 	# check to see if the left mouse button was released
     elif event == cv2.EVENT_LBUTTONUP:
 		imageCopy = copy.deepcopy(image)
@@ -64,4 +64,3 @@ def onMouse(event, x, y, flags, params):
 		cv2.rectangle(imageCopy, refPt[0], refPt[1], (0, 255  , 0), 2)
 		cv2.imshow("Click to crop - Esc to close", imageCopy)
     #print 'refPt value : ',refPt
-    

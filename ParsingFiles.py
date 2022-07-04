@@ -7,7 +7,7 @@ Created on Tue Oct 01 11:52:21 2019
 File regrouping all the methods used to parse and analyse the mutlipage .tif
 """
 
-import numpy as np 
+import numpy as np
 import os
 import fnmatch
 import tifffile
@@ -18,7 +18,7 @@ def getNumOfElem(filename,parser="\t"):
     """
     with open(filename) as f:
         content = f.readlines()
-        content = [x.strip() for x in content] 
+        content = [x.strip() for x in content]
         #Content is list of all the lines
         #Content[i].split(parser) return a list of the elements in line i
         numOfElem = len(content[0].split(parser))
@@ -47,7 +47,7 @@ def load2DArrayFromTxt(path,parser="\t"):
 
     for i in range(numOfLines):
         for j in range(numOfElem):
-            
+
             try:
                 arr[i,j]=float(content[i].split(parser)[j])
             except:
@@ -66,8 +66,8 @@ def get_immediate_subdirectories(a_dir):
 def getTxtList(currdir, hideExt=False):
     """
     Return the .txt file(s) NAME (not path) list in a folder.
-    """  
-    txtList=[]           
+    """
+    txtList=[]
     for file in os.listdir(currdir):
         if fnmatch.fnmatch(file, '*.txt'):
             if hideExt:
@@ -79,9 +79,9 @@ def getTxtList(currdir, hideExt=False):
 def getTifLists(currdir, fileName=None, color=None):
     """
     Return a list of the path of all .tif files in the folder.
-    FileName allows to check 
+    FileName allows to check
     """
-    tifsList=[]           
+    tifsList=[]
     for file in os.listdir(currdir):
         if fileName:
             if fnmatch.fnmatch(file, '*.tif') and str(file)[0:-8] == fileName: #Remove the incrementing nb of images
@@ -101,8 +101,8 @@ def splitColorChannel(filesName, txtArray, tifsList, processedFolderPath):
     """
     #Correction of the txtFile size
     #(Because the metadata and )
-    
-    
+
+
     #Separate infos from the .txt file
     time = txtArray[:,0]
     channel = txtArray[:,1]
@@ -110,7 +110,7 @@ def splitColorChannel(filesName, txtArray, tifsList, processedFolderPath):
     odourValve = txtArray[:,3]
     #respiration = txtFile[:,4] #useless
     #ledOnDuration =txtFile[:,5] #useless
-    
+
     #Create or verify that processed folder exsits
 #    savePath = filesFolder+'/Processed'
 #    if not os.path.exists(savePath):
@@ -125,25 +125,25 @@ def splitColorChannel(filesName, txtArray, tifsList, processedFolderPath):
     greenTif = tifffile.TiffWriter(processedFolderPath+"/"+filesName+"_G"+".tif", bigtiff=True)
     blueTif = tifffile.TiffWriter(processedFolderPath+"/"+filesName+"_B"+".tif", bigtiff=True)
     print('.itf init')
-    
+
     splitTifs(redTif, tifsList, 0, channel)
     splitTifs(greenTif, tifsList, 1, channel)
     splitTifs(blueTif, tifsList, 2, channel)
     print('split .tif done')
-    
+
     splitTimestamps(redTextFile, time, odourValve, 0, channel)
     splitTimestamps(greenTextFile, time, odourValve, 1, channel)
     splitTimestamps(blueTextFile, time, odourValve, 2, channel)
     print('split .txt done')
-    
+
     redTextFile.close()
     greenTextFile.close()
     blueTextFile.close()
-    
+
     redTif.close()
     greenTif.close()
     blueTif.close()
-        
+
 
 def txtFileSizeCorrection():
     """
@@ -155,7 +155,7 @@ def txtFileSizeCorrection():
     #could be useful in case of crash
     print ('Text and tif file size correction')
 
-       
+
 def splitTifs(tiffWriter, tifsList, numChannel, channel):
     """
     Loop through the .tif files and save by channel
@@ -165,7 +165,7 @@ def splitTifs(tiffWriter, tifsList, numChannel, channel):
     for tif in tifsList:
         with  tifffile.TiffFile(tif) as tif:
             images = tif.asarray() #WARNING EVEN NUMBER OF FRAMES
-            
+
             try :
                 startNb += nbFrames
                 nbFrames = int(images.shape[0])
@@ -191,21 +191,19 @@ def splitTimestamps(textFile, time, odourValve, numChannel, channel):
             textFile.write(str(time[frameNb])+'\t'+str(int(odourValve[frameNb]))+'\n')
     except:
         print('Parsing .txt file doesnt work')
-        
+
 ####TEST SECTION ###
-                
+
 #print 'TEST'
 ##txtArray = load2DArrayFromTxt('C:/data_OIIS/190925/ID709_strong_01pc/ID709_strong_01pc.txt',"\t") #EVEN nb of frames
 ##txtArray = load2DArrayFromTxt('C:/data_OIIS/191002/ID_test/oddNbOfFrames/oddNbOfFrames.txt',"\t") #Odd nb of frames
-#txtArray = load2DArrayFromTxt('C:/data_OIIS/191002/Default_folder_name/Abort/Abort.txt',"\t") #Odd nb of frames 
-##txtArray = load2DArrayFromTxt('C:/data_OIIS/191002/Default_folder_name/nonAbort/nonAbort.txt',"\t") #Odd nb of frames    
+#txtArray = load2DArrayFromTxt('C:/data_OIIS/191002/Default_folder_name/Abort/Abort.txt',"\t") #Odd nb of frames
+##txtArray = load2DArrayFromTxt('C:/data_OIIS/191002/Default_folder_name/nonAbort/nonAbort.txt',"\t") #Odd nb of frames
 ##tifsPathList = getTifLists('C:/data_OIIS/191002/ID_test/oddNbOfFrames')
 #tifsPathList = getTifLists('C:/data_OIIS/191002/Default_folder_name/Abort')
 ##tifsPathList = getTifLists('C:/data_OIIS/191002/Default_folder_name/nonAbort')
 #print('array txt and tif list ok')
 ##splitColorChannel('C:/data_OIIS/190925/ID709_strong_01pc', txtArray, tifsPathList)
-##splitColorChannel('C:/data_OIIS/191002/ID_test/oddNbOfFrames', txtArray, tifsPathList)   
-#splitColorChannel('C:/data_OIIS/191002/Default_folder_name/Abort', txtArray, tifsPathList) 
-##splitColorChannel('C:/data_OIIS/191002/Default_folder_name/nonAbort', txtArray, tifsPathList)   
-
-    
+##splitColorChannel('C:/data_OIIS/191002/ID_test/oddNbOfFrames', txtArray, tifsPathList)
+#splitColorChannel('C:/data_OIIS/191002/Default_folder_name/Abort', txtArray, tifsPathList)
+##splitColorChannel('C:/data_OIIS/191002/Default_folder_name/nonAbort', txtArray, tifsPathList)

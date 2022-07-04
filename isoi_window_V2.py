@@ -599,4 +599,3 @@ class Ui_MainWindow(object):
         self.loadOdourFolderBtn.setText(_translate("MainWindow", "Load Experiment Folder"))
         self.expFolderO.setText(_translate("MainWindow", "load a folder..."))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("MainWindow", "Odour Map Creation"))
-

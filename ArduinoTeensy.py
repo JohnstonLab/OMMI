@@ -29,23 +29,23 @@ class Arduino(QObject):
 
     def __init__(self, led,speed=9600, timeout=1, parent=None):
         """ CLASS CONSTRUCTOR """
-        
+
         QObject.__init__(self,parent)
-        
+
         self.led = led
         self.speed = speed
         self.timeout = timeout
-        
+
         self.connected = False
         self.ser = None
         self.port = None
-        
+
         attempt = 0
         while (not self.connected) and attempt<20:
             self._portScanning()
             time.sleep(0.5)
             attempt+=1
-            
+
     def _portScanning(self):
         """
         Check all the computer's ports and try to connect to Teensy devices.
@@ -70,12 +70,12 @@ class Arduino(QObject):
                 print("Failed to connect on",portsList[i][0])
                 i+=1
 
-    
+
     def _ledHandshake(self):
         """
         Check which LED is controlled by this Teensy.
         """
-        
+
         self.sendChar('C') #Send C char for Connection.
         ledDriver = self.readData(1,printData=True,integers = True) #nlines,printData=False,array=True,integers=False,Floaters=False
         if ledDriver[0] == self.led:
@@ -84,14 +84,14 @@ class Arduino(QObject):
         else:
             self.ser.close()
             self.ser=None
-    
+
     def __repr__(self):
-        """ 
-        How the object is representing itself when printed/called 
-        """        
-        
+        """
+        How the object is representing itself when printed/called
+        """
+
         return "Arduino object:\n\nArduino connected to: %s\nspeed: %s\n" %(self.port,self.speed)
-    
+
     def blinkingLED(self,delay):
         """
         Turn on the LED at certain time interval.
@@ -101,19 +101,19 @@ class Arduino(QObject):
             self.sendChar('H')   # send the byte string 'H'
             time.sleep(delay)   # wait delay seconds
             self.sendChar('L')   # send the byte string 'L'
-    
+
     def sendChar(self,char):
-        
+
         """ SEND A CHARACTER (CHAR) TO ARDUINO through serial port"""
-        
+
         if len(str(char))>1 or char == "":
             raise ValueError('Only a single character is allowed')
-        
+
         # Optional print
         # print(bytes(str(char).encode()))
-        
+
         valueToWrite = bytes(str(char).encode())
-        
+
         try:
             send = self.ser.write(valueToWrite)
 #            print(
@@ -121,24 +121,24 @@ class Arduino(QObject):
 #            Data sent succesfully.
 #            Data sent: %s
 #            Immediate response: %s
-#            """ 
+#            """
 #            %(char,send))
         except Exception as e:
             print(("Some error occurred, here is the exception: ",e))
 
 
     def sendInteger(self, integer,printR=False):
-        
-        """ 
+
+        """
             SEND AN INTEGER (INT) TO ARDUINO through serial port
             Optionally a report is printed if printR = True
-            Note that integers are converted into raw binary code readable 
+            Note that integers are converted into raw binary code readable
             from Arduino through the module struct.
-        
-            Special thanks to Ignacio Vazquez-Abrams for the suggestion on 
+
+            Special thanks to Ignacio Vazquez-Abrams for the suggestion on
             StackOverflow.
         """
-        
+
         try:
             integer = int(integer)
         except Exception as e:
@@ -150,7 +150,7 @@ class Arduino(QObject):
                 print(("Sent the integer %s succesfully" %integer))
         except Exception as e:
             print(("Some error occurred, here is the exception: ",e))
-    
+
     def sendFloat(self, floatNb, printR = False):
         """
         Send a float to arduino through serial port.
@@ -169,16 +169,16 @@ class Arduino(QObject):
         except Exception as e:
             print(("Some error occurred, here is the exception: ",e))
 
-    
+
     def sendIntArray(self,array,delay=2,printR=False):
-        
-        """            
+
+        """
             SEND AN ARRAY OF INTEGERS (INT) TO ARDUINO through serial port
             Optionally a report is printed if printR = True
-            
+
             Note that the array is sent as a sequence of integers
         """
-        
+
         try:
             for i in array:
                 self.sendInteger(i)
@@ -190,7 +190,7 @@ class Arduino(QObject):
         except Exception as e:
             print(("Some error occurred, here is the exception: ",e))
 
-   
+
     def sendIllumTime(self, illumTime):
         """
         Send the time within a LED ON from the beggining of an acquisition.
@@ -218,7 +218,7 @@ class Arduino(QObject):
         if nbSent != usIllumTime:
             sync = False
         return sync
-    
+
     def rbModeSettings(self, greenFrameInterval, colorMode):
         """
         Change the LED alternation mode to rbMode and send the interval between
@@ -252,10 +252,10 @@ class Arduino(QObject):
         if nbSent != greenFrameInterval:
             sync = False
         return sync
-    
+
     def rgbModeSettings(self, ledRatio):
         """
-        Change the LED alternation mode to rgbMode and send the LED alternation 
+        Change the LED alternation mode to rgbMode and send the LED alternation
         sequence to the LED driver.
         """
         sync = True
@@ -265,7 +265,7 @@ class Arduino(QObject):
         self.sendChar('M')
         #Send L char to chose the rgbMode and send the List
         self.sendChar('L')
-        
+
         #Send the LED alternation sequence
         for char in str(int(len(ledSeq))):
             self.sendChar(char)
@@ -292,7 +292,7 @@ class Arduino(QObject):
         Can be used to speedup the process between loop acquisition.
         """
         self.sendChar('Z')
-    
+
     def oneColor(self, color, illumTimeList):
         """
         Put the cyclops driver in one color mode with the right time of illum
@@ -314,51 +314,51 @@ class Arduino(QObject):
             self.sendChar('G')
         elif color == 2:
             self.sendChar('B')
-    
+
     def ledOff(self):
         """
-        Disconnect the current trigger mode of the LED driver, 
+        Disconnect the current trigger mode of the LED driver,
         it will no more turn his LED on
         """
         self.sendChar('N')
-    
+
     def readData(self,nlines,printData=False,array=True,integers=False,Floaters=False):
-        
+
         """
             READ DATA FROM ARDUINO through serial port.
-            
-            The function reads the first nlines and returns an array of 
+
+            The function reads the first nlines and returns an array of
             strings by default.
             If printData is true it prints the data to the console.
             If array is True it returns an array.
-            If integers or Floaters are either True, it returns an array of 
+            If integers or Floaters are either True, it returns an array of
             either integers or float.
-            
+
             Use the Serial.print() function on Arduino to send data
             Serial port on Arduino should be initialized at 9600 baud.
             Example:
                     void setup()
                     {
-                        Serial.begin(9600);                    
+                        Serial.begin(9600);
                     }
-                    
+
                     void loop()
                     {
-                        // Sending integer 1 each second 
+                        // Sending integer 1 each second
                         Serial.print(1);
-                        delay(1000);                        
+                        delay(1000);
                     }
-                    
+
             Carefully note that the function will loop until it collects
             exactly nlines readings or exceptions.
         """
-        
+
         data = []
-        
+
         i = 0
-        
+
         while i < nlines:
-            
+
             try:
                 print('trying to read')
                 value = self.ser.readline()
@@ -368,11 +368,11 @@ class Arduino(QObject):
             except Exception as e:
                 print(e)
                 i += 1
-                
+
         if printData:
             for k in data:
                 print(k)
-                
+
         if array and not integers and not Floaters:
             return data
         elif array and integers and not Floaters:
@@ -393,8 +393,8 @@ class Arduino(QObject):
             return dataToReturn
         else:
             print("Nothing to return since array = False")
-    
-    
+
+
     def synchronization(self, illumTime, rgbLedRatio=None, greenFrameInterval=None, colorMode=None):
         """
         Function in charge of the
@@ -415,26 +415,26 @@ class Arduino(QObject):
                 self.rbModeSettings(greenFrameInterval,colorMode)#TO DO : add the checking of color mode here
             self.closeConn()
         self.syncFinished.emit()
-    
+
     def isConnected(self):
         """
         This function return True if the serial communication is open, False if not
         """
         return self.connected
-    
+
     def closeConn(self):
-        """ 
+        """
         CLOSE THE USB CONNECTION
         """
-        
+
         self.ser.close()
         self.connected = False
         print(("Arduino connection to "+str(self.port)+" closed!"))
-        
+
 
 ### Arduino-related function
-        
-         
+
+
 def synchronization(illumTime, rgbLedRatio=None, greenFrameInterval=None, colorMode=None):
     """
     Initialize and send the information to each LED driver.
@@ -463,9 +463,9 @@ def synchronization(illumTime, rgbLedRatio=None, greenFrameInterval=None, colorM
 
 
 ###TEST SECTION :
-        
+
 if __name__ == '__main__':
-    
+
     print('test')
     #blueArduino = Arduino(2)
 #    if blueArduino:

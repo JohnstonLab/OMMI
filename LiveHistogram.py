@@ -21,11 +21,11 @@ class LiveHistogram(QThread):
                             https://medium.com/@webmamoffice/getting-started-gui-s-with-python-pyqt-qthread-class-1b796203c18c
                                 --> https://gist.github.com/WEBMAMOFFICE/fea8e52c8105453628c0c2c648fe618f (source code)
     """
-    
-    
+
+
     def __init__(self, mmc, parent=None):
         QThread.__init__(self,parent) #Call the parent class constructor
-        
+
         self.mmc = mmc
         #Set hist parameters
         self.hist_height = 512
@@ -34,16 +34,16 @@ class LiveHistogram(QThread):
         self.bin_width = self.hist_width/self.nbins
         self.pixMaxVal=65536
         self.ledOnDuration = 0.0005
-        
+
         #Create a red mask to display the saturated pixel on this mask
         mask_red = np.ones((self.mmc.getImageHeight(),self.mmc.getImageWidth()),dtype=np.uint8) * 255
         self.mask = np.zeros((self.mmc.getImageHeight(),self.mmc.getImageWidth(),3),dtype=np.uint8)
         self.mask[:,:,2] = mask_red[:,:] #red mask (0,0,256) (b,g,r)
-        
+
         #Acquisition parameters
         self.running = True
-        
-        
+
+
     def __del__(self):
         self.wait()
 
@@ -57,24 +57,24 @@ class LiveHistogram(QThread):
         hist_g = cv2.calcHist([img],[0],None,[self.nbins],[0,self.pixMaxVal])
         cv2.normalize(hist_g,hist_g,self.hist_height,cv2.NORM_MINMAX)
         hist=np.uint16(np.around(hist_g))
-    
+
         #Loop through each bin and plot the rectangle in black
         for x,y in enumerate(hist):
             cv2.rectangle(h,(x*self.bin_width,y),(x*self.bin_width + self.bin_width-1,self.hist_height),(255),-1)
-    
+
         #Flip upside down
         h=np.flipud(h)
         return h
         #Show the histogram
         #rgb = np.zeros((mmc.getImageHeight(),mmc.getImageWidth(),3),dtype=np.uint16)
-        
-    
+
+
     def abort(self):
         """
         Change the value of the running bool to interrupt the histogram
         """
         self.running = False
-    
+
     def run(self):
         """
         Get images from the camera and for each of them, a Histogram is calculated and displayed
@@ -82,7 +82,7 @@ class LiveHistogram(QThread):
         #Windows initialisation
         cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
         cv2.namedWindow('Video')
-        
+
         self.mmc.snapImage()
         img = self.mmc.getImage() #Initialize img
         self.mmc.startContinuousSequenceAcquisition(1)
@@ -97,7 +97,7 @@ class LiveHistogram(QThread):
                     print('No frame')
             except:
                 print('HISTO : MMC acquisition error')
-            try:    
+            try:
                 h = self._histoCalc(img)
                 cv2.imshow('Histogram',h)
             except:
@@ -110,9 +110,9 @@ class LiveHistogram(QThread):
                 break
         cv2.destroyAllWindows()
         self.mmc.stopSequenceAcquisition()
-        
-        
+
+
 if __name__ == '__main__':
-    
+
     print('test of the histogram class and functionalities')
 #    histogram = LiveHistogram(9)
