@@ -2,15 +2,22 @@
 """
 Created on Fri Aug 16 11:20:42 2019
 
-@author: Louis Vande Perre
+@author: Johnstonlab
 
 Camera initialization function. Initialize a device and load all paramaters
 """
+
+# specify path to micromanager folder and path to µManager config file that has the hardware details of the camera
+mmPath = 'C:/Program Files/Micro-Manager-2.0/'
+configPath = 'C:/Users/johnstonlab/Documents/MMConfig_demo.cfg'
+
+
 #DEVICE to load - Label, Description, Name
 #DEVICE = ['Camera', 'DemoCamera', 'DCam']
 #DEVICE = ['Zyla','AndorSDK3','Andor sCMOS Camera']
-#DEVICE = ['Andor sCMOS Camera','SDK3 Device Adapter for sCMOS Camera','Andor sCMOS Camera/AndorSDK3']
 DEVICE = ['Zyla','AndorSDK3','Andor sCMOS Camera']
+
+# generate some defaults for your camera, below are for a Andor Zyla 5.5
 
 #Acquisition Window (Full Image 128x128 512x512 1392x1040 1920x1080 2048x2048)
 AcqWindow= "Full Image"
@@ -18,9 +25,9 @@ AcqWindow= "Full Image"
 #PixelReadoutRate (200 MHz - lowest noise  560 MHz - fastest readout)
 PixRR="560 MHz - fastest readout"
 
-#Binning (1x1 2x2 4x4 8x8 ) #NOT AVAILABLE IN DEMO
+#Binning (1x1 2x2 4x4 8x8 )
 binn=['1x1','2x2','4x4','8x8']
-#binn="1" #For demo Cam
+
 
 #Sensitivity/DynamicRange
 #( 12-bit (high well capacity) 12-bit (low noise) 16-bit (low noise & high well capacity))
@@ -31,26 +38,28 @@ exp=10.01
 
 import os
 
+
 def camInit(mmc):
     """
-    Initialize the camera specified in DEVICE list above.
+    Initialize the camera specified by your µManager config file indicated above.
+    Load and initialise this camera and set default properties for the camera as detailed above.
     """
-    
+
     # mmc.loadDevice(*DEVICE)
     cwd = os.getcwd()
-    os.chdir('C:/Program Files/Micro-Manager-2.0/')
-    mmc.loadSystemConfiguration("C:/Users/johnstonlab/Documents/MMConfig_demo.cfg")
+    os.chdir(mmPath)
+    mmc.loadSystemConfiguration(configPath)
     mmc.initializeAllDevices()
     mmc.setCameraDevice(DEVICE[0])
     os.chdir(cwd)
     mmc.setProperty(DEVICE[0], 'TriggerMode', 'Internal (Recommended for fast acquisitions)') #Internal (Recommended for fast acquisitions) #External
     mmc.setProperty(DEVICE[0], 'Binning', binn[2])
     mmc.setExposure(DEVICE[0], exp)
-    mmc.setProperty(DEVICE[0], 'AcquisitionWindow', AcqWindow) #NOT AVAILABLE IN DEMO
-    mmc.setProperty(DEVICE[0], 'PixelReadoutRate', PixRR) #NOT AVAILABLE IN DEMO
-    mmc.setProperty(DEVICE[0], 'Sensitivity/DynamicRange', bit[2]) #NOT AVAILABLE IN DEMO
-    mmc.setProperty(DEVICE[0],'ElectronicShutteringMode','Global') #Rolling Global #NOT AVAILABLE IN DEMO
-    mmc.setProperty(DEVICE[0],'Overlap','Off') #NOT AVAILABLE IN DEMO
+    mmc.setProperty(DEVICE[0], 'AcquisitionWindow', AcqWindow)
+    mmc.setProperty(DEVICE[0], 'PixelReadoutRate', PixRR)
+    mmc.setProperty(DEVICE[0], 'Sensitivity/DynamicRange', bit[2])
+    mmc.setProperty(DEVICE[0],'ElectronicShutteringMode','Global') #Rolling Global
+    mmc.setProperty(DEVICE[0],'Overlap','Off')
 
     return DEVICE
 
