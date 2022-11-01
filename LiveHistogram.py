@@ -17,7 +17,7 @@ import time
 class LiveHistogram(QThread):
     """
     Class for live histogram object.
-    This class is in charge of acquire and display live acquisition, calculate and display a histogram.
+    This class is in charge of acquiring and displaying live images and calculating and displaying a histogram.
     Source for QThread management (inspiration) :  https://nikolak.com/pyqt-threading-tutorial/
                             https://medium.com/@webmamoffice/getting-started-gui-s-with-python-pyqt-qthread-class-1b796203c18c
                                 --> https://gist.github.com/WEBMAMOFFICE/fea8e52c8105453628c0c2c648fe618f (source code)
@@ -103,6 +103,7 @@ class LiveHistogram(QThread):
                 print('HISTO : MMC acquisition error')
             try:
                 h = self._histoCalc(img)
+                print(h.shape)
                 cv2.imshow('Histogram',h)
             except:
                 print('HISTO : Calculation of the histogram error')
