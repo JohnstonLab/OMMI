@@ -10,6 +10,7 @@ Containing Histogram Class
 from PyQt5.QtCore import QThread
 import numpy as np
 import cv2
+import time
 
 
 
@@ -57,6 +58,7 @@ class LiveHistogram(QThread):
         hist_g = cv2.calcHist([img],[0],None,[self.nbins],[0,self.pixMaxVal])
         cv2.normalize(hist_g,hist_g,self.hist_height,cv2.NORM_MINMAX)
         hist=np.uint16(np.around(hist_g))
+        # print(hist.shape)
 
         #Loop through each bin and plot the rectangle in black
         for x,y in enumerate(hist):
@@ -80,16 +82,18 @@ class LiveHistogram(QThread):
         Get images from the camera and for each of them, a Histogram is calculated and displayed
         """
         #Windows initialisation
-        cv2.namedWindow('Histogram', cv2.CV_WINDOW_AUTOSIZE)
+        cv2.namedWindow('Histogram',) # removed 'cv2.CV_WINDOW_AUTOSIZE' as namedWondow autosizes be default
         cv2.namedWindow('Video')
 
         self.mmc.snapImage()
         img = self.mmc.getImage() #Initialize img
         self.mmc.startContinuousSequenceAcquisition(1)
+        # time.sleep(1)
         while self.running:
             try:
-                if self.mmc.getRemainingImageCount() > 0:
+                if self.mmc.getRemainingImageCount() > -1:
                     img = self.mmc.getLastImage()
+                    # print(img.shape)
                     rgb2 = cv2.cvtColor(img.astype("uint16"),cv2.COLOR_GRAY2RGB)
                     rgb2[img>(self.pixMaxVal-2)]=self.mask[img>(self.pixMaxVal-2)]*256 #It cannot be compared to pixMaxVal because it will never reach this value
                     cv2.imshow('Video', rgb2)

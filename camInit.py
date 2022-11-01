@@ -8,6 +8,8 @@ Camera initialization function. Initialize a device and load all paramaters
 """
 #DEVICE to load - Label, Description, Name
 #DEVICE = ['Camera', 'DemoCamera', 'DCam']
+#DEVICE = ['Zyla','AndorSDK3','Andor sCMOS Camera']
+#DEVICE = ['Andor sCMOS Camera','SDK3 Device Adapter for sCMOS Camera','Andor sCMOS Camera/AndorSDK3']
 DEVICE = ['Zyla','AndorSDK3','Andor sCMOS Camera']
 
 #Acquisition Window (Full Image 128x128 512x512 1392x1040 1920x1080 2048x2048)
@@ -27,15 +29,20 @@ bit= ['12-bit (high well capacity)','12-bit (low noise)',"16-bit (low noise & hi
 #Exposure
 exp=10.01
 
+import os
+
 def camInit(mmc):
     """
     Initialize the camera specified in DEVICE list above.
     """
-
-    mmc.loadDevice(*DEVICE)
+    
+    # mmc.loadDevice(*DEVICE)
+    cwd = os.getcwd()
+    os.chdir('C:/Program Files/Micro-Manager-2.0/')
+    mmc.loadSystemConfiguration("C:/Users/johnstonlab/Documents/MMConfig_demo.cfg")
     mmc.initializeAllDevices()
     mmc.setCameraDevice(DEVICE[0])
-
+    os.chdir(cwd)
     mmc.setProperty(DEVICE[0], 'TriggerMode', 'Internal (Recommended for fast acquisitions)') #Internal (Recommended for fast acquisitions) #External
     mmc.setProperty(DEVICE[0], 'Binning', binn[2])
     mmc.setExposure(DEVICE[0], exp)

@@ -256,8 +256,8 @@ class isoiWindow(QtWidgets.QMainWindow):
         with the real exposure.
         """
         #exp=expVal/float(div)
-        self.C_expSb.setValue(expVal) #update spinbox value
-        self.expSlider.setValue(expVal) #update slider value
+        self.C_expSb.setValue(int(expVal)) #update spinbox value
+        self.expSlider.setValue(int(expVal)) #update slider value
         try:
             self.mmc.setExposure(DEVICE[0], expVal)
             self.realExp.setText(str(self.mmc.getExposure()))
@@ -1223,7 +1223,12 @@ class isoiWindow(QtWidgets.QMainWindow):
 if __name__ == '__main__':
 
     """MicroManager Init"""
+    #mm_dir = "C:/Program Files/Micro-Manager-2.0/"  #change to your MM path  C:\Program Files\Micro-Manager-2.0
+    #cwd = os.getcwd()
+    #os.chdir('C:/Program Files/Micro-Manager-2.0/')
     mmc = pymmcore.CMMCore()
+    #mmc.setDeviceAdapterSearchPaths([mm_dir])
+    #mmc.loadSystemConfiguration("C:/Users/johnstonlab/Documents/MMConfig_demo.cfg") # path to configuration file
 
     """Camera Init"""
     DEVICE = camInit(mmc) # TO FIX, give DEVICE at some function only
