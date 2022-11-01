@@ -55,12 +55,11 @@ def onMouse(event, x, y, flags, params):
 
 	# check to see if the left mouse button was released
     elif event == cv2.EVENT_LBUTTONUP:
-		imageCopy = copy.deepcopy(image)
+        imageCopy = copy.deepcopy(image)
         # record the ending (x, y) coordinates and indicate that
 		# the cropping operation is finished
-		refPt.append((x, y))
-
+        refPt.append((x, y))
 		# draw a rectangle around the region of interest
-		cv2.rectangle(imageCopy, refPt[0], refPt[1], (0, 255  , 0), 2)
-		cv2.imshow("Click to crop - Esc to close", imageCopy)
+        cv2.rectangle(imageCopy, refPt[0], refPt[1], (0, 255  , 0), 2)
+        cv2.imshow("Click to crop - Esc to close", imageCopy)
     #print 'refPt value : ',refPt
