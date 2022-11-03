@@ -10,7 +10,7 @@ Containing Histogram Class
 from PyQt5.QtCore import QThread
 import numpy as np
 import cv2
-import time
+
 
 
 
@@ -85,7 +85,7 @@ class LiveHistogram(QThread):
         self.mmc.snapImage()
         img = self.mmc.getImage() #Initialize img
         self.mmc.startContinuousSequenceAcquisition(1)
-        # time.sleep(1)
+        
         while self.running:
             try:
                 if self.mmc.getRemainingImageCount() > 0:
