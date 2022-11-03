@@ -54,21 +54,18 @@ class LiveHistogram(QThread):
         Calculate, normalize and return the histogram
         """
         #Create an empty image for the histogram
-        h = np.zeros(( self.hist_height, self.hist_width))
+        h = np.ones(( self.hist_height, self.hist_width))*255
         hist_g = cv2.calcHist([img],[0],None,[self.nbins],[0,self.pixMaxVal])
         cv2.normalize(hist_g,hist_g,self.hist_height,cv2.NORM_MINMAX)
-        hist=np.uint16(np.around(hist_g))
-        # print(hist.shape)
-
+        hist=np.uint16(np.around(hist_g))[:,0]
+        
         #Loop through each bin and plot the rectangle in black
         for x,y in enumerate(hist):
-            cv2.rectangle(h,(x*self.bin_width,y),(x*self.bin_width + self.bin_width-1,self.hist_height),(255),-1)
-
+            cv2.rectangle(h,(x,0),(x,y),(0),-1)
         #Flip upside down
         h=np.flipud(h)
         return h
-        #Show the histogram
-        #rgb = np.zeros((mmc.getImageHeight(),mmc.getImageWidth(),3),dtype=np.uint16)
+        
 
 
     def abort(self):
@@ -91,19 +88,17 @@ class LiveHistogram(QThread):
         # time.sleep(1)
         while self.running:
             try:
-                if self.mmc.getRemainingImageCount() > -1:
+                if self.mmc.getRemainingImageCount() > 0:
                     img = self.mmc.getLastImage()
-                    # print(img.shape)
                     rgb2 = cv2.cvtColor(img.astype("uint16"),cv2.COLOR_GRAY2RGB)
                     rgb2[img>(self.pixMaxVal-2)]=self.mask[img>(self.pixMaxVal-2)]*256 #It cannot be compared to pixMaxVal because it will never reach this value
-                    cv2.imshow('Video', rgb2)
+                    cv2.imshow('Video', rgb2)                   
                 else:
                     print('No frame')
             except:
                 print('HISTO : MMC acquisition error')
             try:
                 h = self._histoCalc(img)
-                print(h.shape)
                 cv2.imshow('Histogram',h)
             except:
                 print('HISTO : Calculation of the histogram error')
