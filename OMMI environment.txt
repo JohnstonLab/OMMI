@@ -1,15 +1,16 @@
-name: OMMI1
+name: OMMI
 channels:
   - conda-forge
 dependencies:
-  - python>=3.9
+  - python==3.9
   - pip
   - numpy>=1.16
-  - numba>=0.43.1
-  - scipy
-  - pyqt
-  - hdbscan
-  - pytables
+  - pyserial
+  - tifffile
+  - pqt5
+  - matplotlib
+  - scikit-image
+  - pymmcore
 
 numpy
 scipy
@@ -19,7 +20,7 @@ pyserial
 pqt5
 scikit-image
 
-pymmcore
+
 
 pip install pymmcore
 

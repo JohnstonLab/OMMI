@@ -2,16 +2,16 @@
 #include <vector>
 //dual LED triggering
 
-int ledDriver = 0; //This script will be uploaded on the RED(0) LED DRIVER
+int ledDriver = 2; //This script will be uploaded on the BLUE(2) LED DRIVER
 int msIllumTime = 5 ; //ms component of the illumination time
 int usIllumTime = 0; //us component
 int incomingByte;    // a variable to read incoming serial data into
-int frameCounter =0; // Count the frame acuired
+int frameCounter =0; // Count the frame acquired
 int voltage = 4095; //5V set at Cyclops DAC output
 
 //Initialization of variables for a specific mode
-std::vector<int> ledList; // initialize a int vector of non-determinated size
-int listSize =0; 
+std::vector<int> ledList; // initialize a int vector of non-determined size
+int listSize =0;  
 
 int greenFrameInterval;
 
@@ -22,15 +22,15 @@ bool blue=false;
 
 // Create a single cyclops object. CH0 corresponds to a physical board with
 // jumper pads soldered so that OC0, CS0, TRIG0, and A0 are used.
-// And limit current 500 mA
-// Because LED is limited to 500 mA : https://www.thorlabs.com/thorproduct.cfm?partnumber=M810L3
-Cyclops cyclops0(CH0, 500);
+// And limit current 1000 mA
+// LED datasheet : https://www.thorlabs.com/thorproduct.cfm?partnumber=M470L3
+Cyclops cyclops0(CH0, 1000);
 
 
 void setup()
 {
   Cyclops::begin(); // start the cyclops device
-  cyclops0.dac_load_voltage(0); // set the DAC ouptut at 0V
+  cyclops0.dac_load_voltage(0); // set the DAC output at 0V
   cyclops0.set_trigger( triggerEventRising, RISING); // cyclops trigger on rising edges
   
   // initialize serial communication:
@@ -53,7 +53,7 @@ void loop()
         Serial.println(ledDriver);  
       }
       
-      // if it's a capital E, it recepts the exposure
+      // if it's a capital E, it reports the exposure
       else if (incomingByte == 'E') {
         msIllumTime = Serial.parseInt();
         //delay(100);//ensure that python software is ready to receive the information
@@ -64,7 +64,7 @@ void loop()
         Serial.println(usIllumTime);
       }
 
-      /// Quick communication exchnage ///
+      /// Quick communication exchange ///
       else if(incomingByte == 'R'){
           ledList.clear();
           listSize = 1;
@@ -94,25 +94,27 @@ void loop()
         //Reset the frame counter to prepare next acquisition (with same parameters)
         frameCounter=0;
       }
-
+      
       /// Acquisition mode information section ///
       else if(incomingByte == 'M'){
         // Setting the alternation mode of the LED
         frameCounter=0; red = true; blue = false; //Reset default parameters
-        delay(100);//ensure that python software has send the inforomation
+        delay(100);//ensure that python software has send the information
         incomingByte = Serial.read();
 
         
       
-        // if it's an L (ASCII 76), it recepts the LED list
-        if (incomingByte == 'L') {
-          //Clear the old LED list and sets the alternation mode
-          if(!ledList.empty()){ledList.clear();} 
+        // if it's an L (ASCII 76), it reports the LED list
+        if(incomingByte == 'L'){
+          //Clear the old LED list
+          if(!ledList.empty()){ledList.clear();}
           
           //Append the ledList
           listSize = Serial.parseInt();
+          //delay(100); //Python must to have time to read the info
           Serial.println(listSize);
           for(int i = 0; i < listSize; ++i){
+              //delay(100); //ensure that python software has send the information
               incomingByte = Serial.parseInt();
               ledList.push_back(incomingByte);
               Serial.println(ledList[i]);
@@ -138,53 +140,51 @@ void loop()
           cyclops0.set_trigger( blueModeFct, RISING); // cyclops trigger on rising edges
           Serial.println(greenFrameInterval);
         }
-        
       }
     }
 }
 
 void triggerEventRising()
 {
-  
   Serial.println("Rising edge detected");
   
-  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
+  frameCounter+=1; //Each rising edge correspond to a frame acquisition
 }
 
 void rgbModeFct()
 {
   if((ledList[frameCounter%listSize])== ledDriver)   //ONLY DIFF WITH green.ino (and blue.ino), READING THE GOOD CHAR IN LIST
   {
-    cyclops0.dac_load_voltage(voltage); //Turn red LED ON
+    cyclops0.dac_load_voltage(voltage); //Turn blue LED ON
     delay(msIllumTime);
     delayMicroseconds(usIllumTime);
-    cyclops0.dac_load_voltage(0); //Turn red LED OFF
+    cyclops0.dac_load_voltage(0); //Turn blue LED OF
   }
-  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
+  frameCounter+=1; //Each rising edge correspond to a frame acquisition
 }
 
 void rbModeFct()
 {
   if(frameCounter%greenFrameInterval == 0){
-    //turn green LED ON and OFF 
+    //turn green LED ON and OFF  
   }
   else{
-    if(red){
-      cyclops0.dac_load_voltage(voltage); //Turn red LED ON
+    if(blue){
+      cyclops0.dac_load_voltage(voltage); //Turn blue LED ON
       delay(msIllumTime);
       delayMicroseconds(usIllumTime);
-      cyclops0.dac_load_voltage(0); //Turn red LED OFF
-      red=!red;
+      cyclops0.dac_load_voltage(0); //Turn blue LED OFF
+      blue=!blue;
     }
     else{
-      //turn blue LED ON and OFF
-      red=!red;
+      //turn red LED ON and OFF
+      blue=!blue;
     }
   }
-  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
+  frameCounter+=1; //Each rising edge correspond to a frame acquisition
 }
 
-void redModeFct()
+void blueModeFct()
 {
   if(frameCounter%greenFrameInterval == 0){
     //turn green LED ON and OFF 
@@ -195,11 +195,11 @@ void redModeFct()
     delayMicroseconds(usIllumTime);
     cyclops0.dac_load_voltage(0); //Turn red LED OFF
   }
-  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
+  frameCounter+=1; //Each rising edge correspond to a frame acquisition
 }
 
-void blueModeFct()
+void redModeFct()
 {
   //Nothing to do
-  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
+  frameCounter+=1; //Each rising edge correspond to a frame acquisition
 }

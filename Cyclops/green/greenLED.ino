@@ -6,11 +6,11 @@ int ledDriver = 1; //This script will be uploaded on the RED(0) LED DRIVER
 int msIllumTime = 5 ; //ms component of the illumination time
 int usIllumTime = 0; //us component
 int incomingByte;    // a variable to read incoming serial data into
-int frameCounter =0; // Count the frame acuired
+int frameCounter =0; // Count the frame acquired
 int voltage = 4095; //5V set at Cyclops DAC output
 
 //Initialization of variables for a specific mode
-std::vector<int> ledList; // initialize a int vector of non-determinated size
+std::vector<int> ledList; // initialize a int vector of non-determined size
 int listSize =0; 
 
 int greenFrameInterval;
@@ -30,7 +30,7 @@ Cyclops cyclops0(CH0, 1000);
 void setup()
 {
   Cyclops::begin(); // start the cyclops device
-  cyclops0.dac_load_voltage(0); // set the DAC ouptut at 0V
+  cyclops0.dac_load_voltage(0); // set the DAC output at 0V
   cyclops0.set_trigger( triggerEventRising, RISING); // cyclops trigger on rising edges
   
   // initialize serial communication:
@@ -53,7 +53,7 @@ void loop()
         Serial.println(ledDriver);  
       }
       
-      // if it's a capital E, it recepts the exposure
+      // if it's a capital E, it sets the exposure
       else if (incomingByte == 'E') {
         msIllumTime = Serial.parseInt();
         //delay(100);//ensure that python software is ready to receive the information
@@ -66,7 +66,7 @@ void loop()
 
 
 
-      /// Quick communication exchnage ///
+      /// Quick communication exchange ///
       else if(incomingByte == 'R'){
           ledList.clear();
           listSize = 1;
@@ -102,12 +102,12 @@ void loop()
       else if(incomingByte == 'M'){
         // Setting the alternation mode of the LED
         frameCounter=0; red = true; blue = false; //Reset default parameter
-        delay(100);//ensure that python software has send the inforomation
+        delay(100);//ensure that python software has send the information
         incomingByte = Serial.read();
 
         
       
-        // if it's an L (ASCII 76), it recepts the LED list
+        // if it's an L (ASCII 76), it sets the LED list
         if (incomingByte == 'L') {
           //Clear the old LED list
           if(!ledList.empty()){ledList.clear();}
@@ -150,7 +150,7 @@ void triggerEventRising()
 {
   Serial.println("Rising edge detected");
   
-  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
+  frameCounter+=1; //Each rising edge correspond to a frame acquisition
 }
 
 void rgbModeFct()
@@ -162,7 +162,7 @@ void rgbModeFct()
     delayMicroseconds(usIllumTime);
     cyclops0.dac_load_voltage(0); //Turn green LED OFF
   }
-  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
+  frameCounter+=1; //Each rising edge correspond to a frame acquisition
 }
 
 void rbModeFct()
@@ -176,7 +176,7 @@ void rbModeFct()
   else{
     //alternate between blue and red LEDs
   }
-  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
+  frameCounter+=1; //Each rising edge correspond to a frame acquisition
 }
 
 void redModeFct()
@@ -190,7 +190,7 @@ void redModeFct()
   else{
     //Turn red LED ON and OFF
   }
-  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
+  frameCounter+=1; //Each rising edge correspond to a frame acquisition
 }
 
 void blueModeFct()
@@ -204,5 +204,5 @@ void blueModeFct()
   else{
     //Turn blue LED ON and OFF
   }
-  frameCounter+=1; //Eaching rising edge correspond to a frame acquisition
+  frameCounter+=1; //Each rising edge correspond to a frame acquisition
 }

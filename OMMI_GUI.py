@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'isoi_window_V2.ui'
+# Form implementation generated from reading ui file 'OMMI_GUI.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
