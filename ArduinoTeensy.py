@@ -2,7 +2,7 @@
 """
 Created on Tue Sep 03 11:54:21 2019
 
-@author: Louis Vande Perre
+@author: Johnstonlab
 
 Script containing the ArduinoTeensy class code.
 

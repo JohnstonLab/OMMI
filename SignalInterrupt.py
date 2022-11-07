@@ -2,7 +2,7 @@
 """
 Created on Thu Oct 03 16:06:44 2019
 
-@author: Louis Vande Perre
+@author: Johnstonlab
 
 File containing the waiting for a signal thread.
 """

@@ -2,7 +2,7 @@
 """
 Created on Thu Sep 19 17:30:36 2019
 
-@author: johnstonlab
+@author: Johnstonlab
 
 Containing Histogram Class
 """

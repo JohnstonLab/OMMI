@@ -2,10 +2,10 @@
 """
 Created on Thu Aug 15 12:21:37 2019
 
-@author: Louis Vande Perre
+@author: Johnstonlab
 
 Crop function with MM 1.4. This file contains all .py function used to crop an image.
-Used in ISOI software.
+Used in OMMI software.
 
 TO DO :
     - Simultaneous display of crop region

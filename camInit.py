@@ -4,7 +4,7 @@ Created on Fri Aug 16 11:20:42 2019
 
 @author: Johnstonlab
 
-Camera initialization function. Initialize a device and load all paramaters
+Camera initialisation function. Initialise a device and load all parameters
 """
 
 # specify path to micromanager folder and path to µManager config file that has the hardware details of the camera
@@ -13,8 +13,6 @@ configPath = 'C:/Users/johnstonlab/Documents/MMConfig_demo.cfg'
 
 
 #DEVICE to load - Label, Description, Name
-#DEVICE = ['Camera', 'DemoCamera', 'DCam']
-#DEVICE = ['Zyla','AndorSDK3','Andor sCMOS Camera']
 DEVICE = ['Zyla','AndorSDK3','Andor sCMOS Camera']
 
 # generate some defaults for your camera, below are for a Andor Zyla 5.5
@@ -27,7 +25,6 @@ PixRR="560 MHz - fastest readout"
 
 #Binning (1x1 2x2 4x4 8x8 )
 binn=['1x1','2x2','4x4','8x8']
-
 
 #Sensitivity/DynamicRange
 #( 12-bit (high well capacity) 12-bit (low noise) 16-bit (low noise & high well capacity))
@@ -63,14 +60,14 @@ def camInit(mmc):
 
     return DEVICE
 
-def defaultCameraSettings(isoiWindow):
+def defaultCameraSettings(OMMIwindow):
     """
     Set the camera settings to default configuration and update the GUI.
     """
 
-    isoiWindow.mmc.clearROI()
-    isoiWindow.exposureChange(exp)
-    isoiWindow.binChange(binn[2])
-    isoiWindow.bitChange(bit[2])
-    isoiWindow.shutChange('Global')
-    isoiWindow.overlapChange('Off')
+    OMMIwindow.mmc.clearROI()
+    OMMIwindow.exposureChange(exp)
+    OMMIwindow.binChange(binn[2])
+    OMMIwindow.bitChange(bit[2])
+    OMMIwindow.shutChange('Global')
+    OMMIwindow.overlapChange('Off')

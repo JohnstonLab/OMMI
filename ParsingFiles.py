@@ -2,7 +2,7 @@
 """
 Created on Tue Oct 01 11:52:21 2019
 
-@author: Louis Vande Perre
+@author: Johnstonlab
 
 File regrouping all the methods used to parse and analyse the mutlipage .tif
 """

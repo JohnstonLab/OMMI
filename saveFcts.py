@@ -2,7 +2,7 @@
 """
 Created on Fri Aug 16 13:59:59 2019
 
-@author: Louis Vande Perre
+@author: Johnstonlab
 
 Please set savePath.
 This file contains all saving-related functions.

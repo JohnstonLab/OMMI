@@ -2,7 +2,7 @@
 """
 Created on Thu Oct 24 16:47:58 2019
 
-@author: Louis Vande Perre
+@author: Johnstonlab
 
 class for Map segmentation
 """

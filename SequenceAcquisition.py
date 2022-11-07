@@ -2,7 +2,7 @@
 """
 Created on Thu Sep 19 17:05:33 2019
 
-@author: Louis Vande Perre
+@author: Johnstonlab
 
 Class of Sequence Acquisition
 """
