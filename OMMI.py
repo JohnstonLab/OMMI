@@ -2,9 +2,9 @@
 """
 Created on Tue Sep 17 10:51:18 2019
 
-@author: Louis Vande Perre
+@author: Johnstonlab
 
-Main file of ISOI software.
+Main file of OMMI software.
 v2 - using thread to launch an acquisition.
 
 """
@@ -42,7 +42,7 @@ from ParsingFiles import load2DArrayFromTxt, get_immediate_subdirectories, getTi
 
 
 
-class isoiWindow(QtWidgets.QMainWindow):
+class OMMIwindow(QtWidgets.QMainWindow):
     ### Class attributes - needed for displays information ###
 
     #trackbar
@@ -129,17 +129,17 @@ class isoiWindow(QtWidgets.QMainWindow):
         ###### ComboBoxes ######
 
         #Binning selection
-        self.binBox.addItem(isoiWindow.binn[0])
-        self.binBox.addItem(isoiWindow.binn[1])
-        self.binBox.addItem(isoiWindow.binn[2])
-        self.binBox.addItem(isoiWindow.binn[3])
+        self.binBox.addItem(OMMIwindow.binn[0])
+        self.binBox.addItem(OMMIwindow.binn[1])
+        self.binBox.addItem(OMMIwindow.binn[2])
+        self.binBox.addItem(OMMIwindow.binn[3])
         self.binBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'Binning'))
         self.binBox.currentTextChanged.connect(self.binChange)
 
         #Bit depth selection
-        self.bitBox.addItem(isoiWindow.bit[0])
-        self.bitBox.addItem(isoiWindow.bit[1])
-        self.bitBox.addItem(isoiWindow.bit[2])
+        self.bitBox.addItem(OMMIwindow.bit[0])
+        self.bitBox.addItem(OMMIwindow.bit[1])
+        self.bitBox.addItem(OMMIwindow.bit[2])
         self.bitBox.setCurrentText(self.mmc.getProperty(self.DEVICE[0], 'Sensitivity/DynamicRange'))
         self.bitBox.currentTextChanged.connect(self.bitChange)
 
@@ -157,60 +157,60 @@ class isoiWindow(QtWidgets.QMainWindow):
         self.overlapBox.currentTextChanged.connect(self.overlapChange)
 
         #Color mode of rb alternance box
-        self.rbColorBox.addItem(isoiWindow.rbColorModes[0])
-        self.rbColorBox.addItem(isoiWindow.rbColorModes[1])
-        self.rbColorBox.addItem(isoiWindow.rbColorModes[2])
-        self.rbColorBox.setCurrentText(isoiWindow.rbColorModes[0])
+        self.rbColorBox.addItem(OMMIwindow.rbColorModes[0])
+        self.rbColorBox.addItem(OMMIwindow.rbColorModes[1])
+        self.rbColorBox.addItem(OMMIwindow.rbColorModes[2])
+        self.rbColorBox.setCurrentText(OMMIwindow.rbColorModes[0])
 
         ####### Slider #####
-        self.expSlider.setMinimum(isoiWindow.expMin)
-        self.expSlider.setMaximum(isoiWindow.expMax)
+        self.expSlider.setMinimum(OMMIwindow.expMin)
+        self.expSlider.setMaximum(OMMIwindow.expMax)
         self.expSlider.setValue(self.mmc.getExposure())
         self.expSlider.valueChanged.connect(self.exposureChange)
-        self.expSlider.setSingleStep(isoiWindow.step*10) ##doesn't affect anything
+        self.expSlider.setSingleStep(OMMIwindow.step * 10) ##doesn't affect anything
 
         #### Spinboxes ###
 
         #EXPOSURE
-        self.C_expSb.setMaximum(isoiWindow.expMax)
-        self.C_expSb.setMinimum(isoiWindow.expMin)
+        self.C_expSb.setMaximum(OMMIwindow.expMax)
+        self.C_expSb.setMinimum(OMMIwindow.expMin)
         self.C_expSb.setValue(self.mmc.getExposure())
         self.C_expSb.valueChanged.connect(self.exposureChange)
-        self.C_expSb.setSingleStep(isoiWindow.step)
+        self.C_expSb.setSingleStep(OMMIwindow.step)
 
         #Experiment duration
-        self.experimentDuration.setSingleStep(float(isoiWindow.step))
+        self.experimentDuration.setSingleStep(float(OMMIwindow.step))
         self.experimentDuration.setMaximum(1000)
 
         #LEDs ratios
-        self.gRatio.setMinimum(isoiWindow.ledFrameNbMin)
-        self.rRatio.setMinimum(isoiWindow.ledFrameNbMin)
-        self.bRatio.setMinimum(isoiWindow.ledFrameNbMin)
-        self.gRatio.setMaximum(isoiWindow.ledFrameNbMax)
-        self.rRatio.setMaximum(isoiWindow.ledFrameNbMax)
-        self.bRatio.setMaximum(isoiWindow.ledFrameNbMax)
+        self.gRatio.setMinimum(OMMIwindow.ledFrameNbMin)
+        self.rRatio.setMinimum(OMMIwindow.ledFrameNbMin)
+        self.bRatio.setMinimum(OMMIwindow.ledFrameNbMin)
+        self.gRatio.setMaximum(OMMIwindow.ledFrameNbMax)
+        self.rRatio.setMaximum(OMMIwindow.ledFrameNbMax)
+        self.bRatio.setMaximum(OMMIwindow.ledFrameNbMax)
 
         #File size
-        self.framePerFileBox.setValue(isoiWindow.framePerFileDefault)
+        self.framePerFileBox.setValue(OMMIwindow.framePerFileDefault)
         self.framePerFileBox.valueChanged.connect(self.updateFramesPerFile.emit)
 
         #Inteval red LED on
-        self.rExpRatio.setValue(isoiWindow.ratioDefault)
-        self.rExpRatio.setMaximum(isoiWindow.ratioMax)
-        self.rExpRatio.setSingleStep(isoiWindow.ratioStep)
-        self.rExpRatio.setMinimum(isoiWindow.ratioMin)
+        self.rExpRatio.setValue(OMMIwindow.ratioDefault)
+        self.rExpRatio.setMaximum(OMMIwindow.ratioMax)
+        self.rExpRatio.setSingleStep(OMMIwindow.ratioStep)
+        self.rExpRatio.setMinimum(OMMIwindow.ratioMin)
 
         #Inteval green LED on
-        self.gExpRatio.setValue(isoiWindow.ratioDefault)
-        self.gExpRatio.setMaximum(isoiWindow.ratioMax)
-        self.gExpRatio.setSingleStep(isoiWindow.ratioStep)
-        self.gExpRatio.setMinimum(isoiWindow.ratioMin)
+        self.gExpRatio.setValue(OMMIwindow.ratioDefault)
+        self.gExpRatio.setMaximum(OMMIwindow.ratioMax)
+        self.gExpRatio.setSingleStep(OMMIwindow.ratioStep)
+        self.gExpRatio.setMinimum(OMMIwindow.ratioMin)
 
         #Inteval blue LED on
-        self.bExpRatio.setValue(2*isoiWindow.ratioDefault)
-        self.bExpRatio.setMaximum(isoiWindow.ratioMax)
-        self.bExpRatio.setSingleStep(isoiWindow.ratioStep)
-        self.bExpRatio.setMinimum(isoiWindow.ratioMin)
+        self.bExpRatio.setValue(2 * OMMIwindow.ratioDefault)
+        self.bExpRatio.setMaximum(OMMIwindow.ratioMax)
+        self.bExpRatio.setSingleStep(OMMIwindow.ratioStep)
+        self.bExpRatio.setMinimum(OMMIwindow.ratioMin)
 
         #####
 
@@ -617,7 +617,7 @@ class isoiWindow(QtWidgets.QMainWindow):
         #sizeMax = self.fileSize.value()
         ROI = self.mmc.getROI()
         bitDepth = self.bitBox.currentText()
-        if bitDepth == isoiWindow.bit[2]:
+        if bitDepth == OMMIwindow.bit[2]:
             bitPPix = 16 #Nb of bits per pixel
         else:
             bitPPix = 12
@@ -1243,6 +1243,6 @@ if __name__ == '__main__':
     #source:https://stackoverflow.com/questions/1551605/how-to-set-applications-taskbar-icon-in-windows-7/1552105
     myappid = 'johnstonlab.OMMI.V2' # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-    window = isoiWindow(mmc, DEVICE, labjack)
+    window = OMMIwindow(mmc, DEVICE, labjack)
     window.show()
     sys.exit(app.exec_())

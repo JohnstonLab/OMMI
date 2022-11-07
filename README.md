@@ -1,5 +1,5 @@
 # OMMI - Optical Multi-Modal Imaging
-This software enables low cost multi-wavelengh imaging using [cyclops LED drivers](https://open-ephys.org/cyclops) and any scientific camera compatible with µManager 2 and has a pin out signalling frame capture. Additional a [labjack](https://labjack.com/products/u3-hv) enables simultaneous acquisition of additional signals such as respiration or other stimulus events.
+This software enables low cost multi-wavelengh imaging using [cyclops LED drivers](https://open-ephys.org/cyclops) and any scientific camera compatible with µManager 2 that has a pin out signalling frame capture. Additionaly a [labjack](https://labjack.com/products/u3-hv) enables simultaneous acquisition of auxiliary signals such as respiration or stimulus events.
 
 An example use case is shown below: The response map for the olfactory receptor neurons synapsing in glomeruli in the olfactory bulb (measured with intrinsic signal optical imaging) and for the interneurons which are labelled with GCaMP6 ( measured with fluorescent imaging). The traces to the right show the response of 3 different glomeruli with the respiration signal shown below.
 
@@ -19,15 +19,16 @@ Out of the box it is designed to work with an ANDOR sCMOS camera, it has been te
 5. Install the [arduino IDE](https://www.arduino.cc/en/software), then install the teensy boards by:  
 	- To install Teensy on Arduino IDE 2.0.0, click File > Preferences.  In “Additional boards manager URLs”, copy this link: https://www.pjrc.com/teensy/package_teensy_index.json
 6. Use the Arduino IDE to load the appropriate sketch onto each of your cyclops LED drivers for the red, green and blue LEDs.
-7.  Install OMMI:
-	1.  ‘clone or download https://github.com/JohnstonLab/OMMI.git’
-	2. Change directory to OMMI folder containing environment.yml file
-	3. `conda env create -f environment.yml`
-	4. `conda activate OMMI`
-	5. `python -m OMMI`
+7. Install OMMI:
+	1. Clone or download https://github.com/JohnstonLab/OMMI.git
+	2. Open an anaconda promt and...
+	2. 'cd' (Change directory) to the OMMI folder containing environment.yml file
+	3. Create a new environment using `conda env create -f environment.yml`
+	4. Then activate the new environment `conda activate OMMI`
+	5. And finally launch OMMI with `python -m OMMI`
 
 
-# Notes on camera choice
+### Notes on camera choice
 - A camera with a GPIO or accessible signal for frame firing/acquisition is necessary
 - For intrinsic signal imaging selecting a camera with a high well depth best SNR and appropriate frame rates for your needs
-- Consideration of shutter type rolling vs global. Global is required for Fourier based analysis methods, e.g. [Kalatsky, V.A. & Stryker, M.P. (2003), Neuron, 38, 529-545.](10.1016/s0896-6273(03)00286-1) 
+- Consideration to the shutter type, rolling vs global. Global is required for Fourier based analysis methods, e.g. [Kalatsky, V.A. & Stryker, M.P. (2003), Neuron, 38, 529-545.](10.1016/s0896-6273(03)00286-1) 
