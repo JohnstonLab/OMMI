@@ -24,7 +24,7 @@ Out of the box it is designed to work with an ANDOR sCMOS camera, it has been te
 8. Modify lines 13 and 14 of 'camInit.py' to specify the paths to your µManager folder and config file (created in step 3).
 9. Check the device manager to see what the teeny boards in the cyclops are called. If their name does not contain 'Teensy', you need to modify line 62 of 'ArduinoTeensy.py' so that the search string when scanning for ports contains a string that matches what your teensy are named in the device manager.
 10. Install OMMI:
-	2. Open an anaconda prompt and...
+	1. Open an anaconda prompt and...
 	2. 'cd' (Change directory) to the OMMI folder containing environment.yml file
 	3. Create a new environment using `conda env create -f environment.yml`
 	4. Then activate the new environment `conda activate OMMI`
