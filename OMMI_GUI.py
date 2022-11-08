@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'isoi_window_V2.ui'
+# Form implementation generated from reading ui file 'OMMI_GUI.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -599,4 +599,3 @@ class Ui_MainWindow(object):
         self.loadOdourFolderBtn.setText(_translate("MainWindow", "Load Experiment Folder"))
         self.expFolderO.setText(_translate("MainWindow", "load a folder..."))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("MainWindow", "Odour Map Creation"))
-
