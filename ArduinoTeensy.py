@@ -59,7 +59,7 @@ class Arduino(QObject):
         for i in range(0,len(portsList)):
             try:
                 print("Trying...",portsList[i][0])
-                if ('Teensy' in portsList[i][1]) and (not self.connected):  ## change from 'Teensy' to 'USB Serial Device' dependi
+                if ('Teensy' in portsList[i][1]) and (not self.connected):  ## change the search string from 'Teensy' to 'USB Serial Device' or whatever name is assigned to the cyclops teensys as shown in the device manager
                     self.ser = serial.Serial(portsList[i][0], self.speed, timeout=self.timeout)
                     self.port=portsList[i][0]
                     self._ledHandshake()

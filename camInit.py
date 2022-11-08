@@ -7,15 +7,14 @@ Created on Fri Aug 16 11:20:42 2019
 Camera initialisation function. Initialise a device and load all parameters
 """
 
+import os
+
 # specify path to micromanager folder and path to µManager config file that has the hardware details of the camera
 mmPath = 'C:/Program Files/Micro-Manager-2.0/'
 configPath = 'C:/Program Files/Micro-Manager-2.0/zyla.cfg'
 
 
-#DEVICE to load - Label, Description, Name
-# DEVICE = ['Zyla','AndorSDK3','Andor sCMOS Camera']
-
-# generate some defaults for your camera, below are for a Andor Zyla 5.5
+# Then set appropriate defaults for your camera, below are for a Andor Zyla 5.5
 
 #Acquisition Window (Full Image 128x128 512x512 1392x1040 1920x1080 2048x2048)
 AcqWindow= "Full Image"
@@ -33,8 +32,10 @@ bit= ['12-bit (high well capacity)','12-bit (low noise)',"16-bit (low noise & hi
 #Exposure
 exp=10.01
 
-import os
 
+# The function below loads your camera using a config file that you created with µManager
+# It then applies the defaults defined above to the camera, you can get the correct syntax and available camera options
+# for the camera of your choice using the device property browser in µManager. 
 
 def camInit(mmc):
 	"""

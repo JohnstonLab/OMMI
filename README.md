@@ -14,14 +14,17 @@ Out of the box it is designed to work with an ANDOR sCMOS camera, it has been te
 1. Install MicroManager-2 (API) must [use a nightly build later than 2022-10-31](https://micro-manager.org/Micro-Manager_Nightly_Builds), but avoid   releases between 2022-10-25 and 2022-10-30 due to [known issues](https://github.com/micro-manager/mmCoreAndDevices/issues/288)  
 2. Install Andor Driver Pack or the driver for the camera you wish to use.
    - On the Select Destination Location dialog, click browse and choose the current Micro-Manager installation directory. Then click Yes to confirm that you do want to install to that folder.
-3. Add micromanager folder to path 
-4. Install the [Labjack U3 software bundle](https://labjack.com/pages/support?doc=/quickstart/u3/u3-quickstart-for-windows-overview/). 
+3. Check your camera works with µManager by creating a configuration using the [Hardware Configuration Wizard[(https://micro-manager.org/Micro-Manager_Configuration_Guide). Create a configuration with just you camera and save this (you will use this file later to load you camera). 
+4. Add micromanager folder to path 
+5. Install the [Labjack U3 software bundle](https://labjack.com/pages/support?doc=/quickstart/u3/u3-quickstart-for-windows-overview/). 
 5. Install the [arduino IDE](https://www.arduino.cc/en/software), then install the teensy boards by:  
 	- To install Teensy on Arduino IDE 2.0.0, click File > Preferences.  In “Additional boards manager URLs”, copy this link: https://www.pjrc.com/teensy/package_teensy_index.json
 6. Use the Arduino IDE to load the appropriate sketch onto each of your cyclops LED drivers for the red, green and blue LEDs.
-7. Install OMMI:
-	1. Clone or download https://github.com/JohnstonLab/OMMI.git
-	2. Open an anaconda promt and...
+7. Download or clone the OMMI repository:  https://github.com/JohnstonLab/OMMI.git
+8. Modify lines 13 and 14 of 'camInit.py' to specify the paths to your µManager folder and config file (created in step 3).
+9. Check the device manager to see what the teeny boards in the cyclops are called. If their name does not contain 'Teensy', you need to modify line 62 of 'ArduinoTeensy.py' so that the search string when scanning for ports contains a string that matches what your teensy are named in the device manager.
+10. Install OMMI:
+	2. Open an anaconda prompt and...
 	2. 'cd' (Change directory) to the OMMI folder containing environment.yml file
 	3. Create a new environment using `conda env create -f environment.yml`
 	4. Then activate the new environment `conda activate OMMI`
