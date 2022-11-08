@@ -1,17 +1,18 @@
-name: OMMI
+name: OMMI_test3
 channels:
   - conda-forge
 dependencies:
-  - python==3.9.13
+  - python==3.8.10
   - pip
   - numpy>=1.16
   - pyserial
   - tifffile
   - matplotlib
   - scikit-image
-  - pymmcore
+  - opencv
   - pip:
     - sti-LabJackPython
     - pyqt5
+    - pymmcore
 
 

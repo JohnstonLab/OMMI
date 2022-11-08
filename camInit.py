@@ -9,11 +9,11 @@ Camera initialisation function. Initialise a device and load all parameters
 
 # specify path to micromanager folder and path to µManager config file that has the hardware details of the camera
 mmPath = 'C:/Program Files/Micro-Manager-2.0/'
-configPath = 'C:/Users/johnstonlab/Documents/MMConfig_demo.cfg'
+configPath = 'C:/Program Files/Micro-Manager-2.0/zyla.cfg'
 
 
 #DEVICE to load - Label, Description, Name
-DEVICE = ['Zyla','AndorSDK3','Andor sCMOS Camera']
+# DEVICE = ['Zyla','AndorSDK3','Andor sCMOS Camera']
 
 # generate some defaults for your camera, below are for a Andor Zyla 5.5
 
@@ -37,28 +37,27 @@ import os
 
 
 def camInit(mmc):
-    """
+	"""
     Initialize the camera specified by your µManager config file indicated above.
     Load and initialise this camera and set default properties for the camera as detailed above.
     """
-
-    # mmc.loadDevice(*DEVICE)
-    cwd = os.getcwd()
-    os.chdir(mmPath)
-    mmc.loadSystemConfiguration(configPath)
-    mmc.initializeAllDevices()
-    mmc.setCameraDevice(DEVICE[0])
-    os.chdir(cwd)
-    mmc.setProperty(DEVICE[0], 'TriggerMode', 'Internal (Recommended for fast acquisitions)') #Internal (Recommended for fast acquisitions) #External
-    mmc.setProperty(DEVICE[0], 'Binning', binn[2])
-    mmc.setExposure(DEVICE[0], exp)
-    mmc.setProperty(DEVICE[0], 'AcquisitionWindow', AcqWindow)
-    mmc.setProperty(DEVICE[0], 'PixelReadoutRate', PixRR)
-    mmc.setProperty(DEVICE[0], 'Sensitivity/DynamicRange', bit[2])
-    mmc.setProperty(DEVICE[0],'ElectronicShutteringMode','Global') #Rolling Global
-    mmc.setProperty(DEVICE[0],'Overlap','Off')
-
-    return DEVICE
+    
+	cwd = os.getcwd()
+	os.chdir(mmPath)
+	mmc.loadSystemConfiguration(configPath)
+	mmc.initializeAllDevices()
+	DEVICE = mmc.getLoadedDevices()
+	mmc.setCameraDevice(DEVICE[0])
+	os.chdir(cwd)
+	mmc.setProperty(DEVICE[0], 'TriggerMode', 'Internal (Recommended for fast acquisitions)')
+	mmc.setProperty(DEVICE[0], 'Binning', binn[2])
+	mmc.setExposure(DEVICE[0], exp)
+	mmc.setProperty(DEVICE[0], 'AcquisitionWindow', AcqWindow)
+	mmc.setProperty(DEVICE[0], 'PixelReadoutRate', PixRR)
+	mmc.setProperty(DEVICE[0], 'Sensitivity/DynamicRange', bit[2])
+	mmc.setProperty(DEVICE[0],'ElectronicShutteringMode','Global') #Rolling Global
+	mmc.setProperty(DEVICE[0],'Overlap','Off')
+	return DEVICE
 
 def defaultCameraSettings(OMMIwindow):
     """
