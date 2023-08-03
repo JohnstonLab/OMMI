@@ -1,5 +1,6 @@
 # OMMI - Optical Multi-Modal Imaging
-![DOI](https://zenodo.org/badge/218604511.svg)](https://zenodo.org/badge/latestdoi/218604511)
+[![DOI](https://zenodo.org/badge/218604511.svg)](https://zenodo.org/badge/latestdoi/218604511)
+
 This software enables low cost multi-wavelengh imaging using [cyclops LED drivers](https://open-ephys.org/cyclops) and any scientific camera compatible with µManager 2 that has a pin out signalling frame capture. Additionaly a [labjack](https://labjack.com/products/u3-hv) enables simultaneous acquisition of auxiliary signals such as respiration or stimulus events.
 
 An example use case is shown below: The response map for the olfactory receptor neurons synapsing in glomeruli in the olfactory bulb (measured with intrinsic signal optical imaging) and for the interneurons which are labelled with GCaMP6 ( measured with fluorescent imaging). The traces to the right show the response of 3 different glomeruli with the respiration signal shown below.
